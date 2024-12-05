@@ -6,6 +6,8 @@ Programming projects for Stanford's AA228V/CS238V _Validation of Safety-Critical
 
 <p align="center"> <img src="./media/coverart.svg"> </p>
 
+Uses the [`StanfordAA228V.jl`](https://github.com/sisl/StanfordAA228V.jl) Julia package.
+
 # Projects
 - **[Project 0](./project0)** — _A light-weight introduction to falsification._
 - **[Project 1](./project1)** — _Efficiently finding the most-likely failure._
