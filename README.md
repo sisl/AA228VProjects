@@ -22,7 +22,7 @@ For additional installation help, [please post on Ed](https://edstem.org/us/cour
 - https://git-scm.com/book/en/v2/Getting-Started-Installing-Git
 
 ## 2. Install Julia
-**Requires Julia 1.11+**: https://julialang.org/downloads/
+**Recommend Julia 1.11+**: https://julialang.org/downloads/
 
 - Windows users:
     ```
@@ -36,8 +36,6 @@ For additional installation help, [please post on Ed](https://edstem.org/us/cour
 This will give you the `julia` command in your terminal.
 
 ## 3. Install Packages
-> ⚠ **Work-in-progress. This will be greatly simplified shortly.**
-
 1. Clone this git repo:
     1. Open a terminal and navigate to where you want the code to live.
     1. Run:
@@ -54,8 +52,14 @@ This will give you the `julia` command in your terminal.
         ```
 
 ## (Skip unless otherwise instructed) Update AA228VProjects
-- Open a terminal and navigate to your "AA228VProjects" directory.
-- Run: `git pull`
+1. Open a terminal and navigate to your "AA228VProjects" directory.
+1. Run: `git pull`
+1. Open Julia: `julia`
+1. Run:
+    ```julia
+    using Pkg
+    Pkg.Registry.update()
+    ```
 
 
 # Julia Compiler Speed
