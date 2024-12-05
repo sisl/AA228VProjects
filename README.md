@@ -57,6 +57,9 @@ This will give you the `julia` command in your terminal.
     dev .
     ```
 
+## Julia Compiler Speed
+Julia is a just-in-time (JIT) compiled language. Don't be alarmed if the first time you run the installed code it's slow. This is because Julia will precompile the required packages. The next time you run it will be _much_ faster.
+
 ## Update StanfordAA228V (if necessary)
 - Open a terminal and navigate to your "StanfordAA228V.jl" directory.
 - Run: `git pull`
