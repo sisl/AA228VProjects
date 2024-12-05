@@ -18,10 +18,10 @@ Uses the [`StanfordAA228V.jl`](https://github.com/sisl/StanfordAA228V.jl) Julia 
 # Installation
 For additional installation help, [please post on Ed](https://edstem.org/us/courses/69226/discussion).
 
-## Install `git`
+## 1. Install `git`
 - https://git-scm.com/book/en/v2/Getting-Started-Installing-Git
 
-## Install Julia
+## 2. Install Julia
 **Requires Julia 1.11+**: https://julialang.org/downloads/
 
 - Windows users:
@@ -35,34 +35,31 @@ For additional installation help, [please post on Ed](https://edstem.org/us/cour
 
 This will give you the `julia` command in your terminal.
 
-## Install Packages
+## 3. Install Packages
 > ⚠ **Work-in-progress. This will be greatly simplified shortly.**
 
 1. Clone this git repo:
     1. Open a terminal and navigate to where you want the code to live.
     1. Run:
         ```
-        git clone https://github.com/sisl/StanfordAA228V.jl
         git clone https://github.com/sisl/AA228Projects
         ```
-1. Navigate to the code: `cd StanfordAA228V.jl`
-1. Open Julia: `julia`
-1. In the Julia REPL, go into pkg mode: `]`
-1. Add **Pluto** and **PlutoUI** in pkg mode:
-    ```
-    add Pluto PlutoUI
-    ```
-1. Add the **StanfordAA228V** package in pkg mode:
-    ```
-    dev .
-    ```
+1. Install SISL Julia package registry and install `Pluto`:
+    1. Open `julia` in a terminal.
+    1. Run:
+        ```julia
+        using Pkg
+        Pkg.Registry.add(url="https://github.com/sisl/General.git")
+        Pkg.add("Pluto")
+        ```
 
-## Julia Compiler Speed
-Julia is a just-in-time (JIT) compiled language. Don't be alarmed if the first time you run the installed code it's slow. This is because Julia will precompile the required packages. The next time you run it will be _much_ faster.
-
-## Update StanfordAA228V (if necessary)
-- Open a terminal and navigate to your "StanfordAA228V.jl" directory.
+## (Skip unless otherwise instructed) Update AA228VProjects
+- Open a terminal and navigate to your "AA228VProjects" directory.
 - Run: `git pull`
+
+
+# Julia Compiler Speed
+Julia is a just-in-time (JIT) compiled language. Don't be alarmed if the first time you run the installed code it's slow. This is because Julia will precompile the required packages. The next time you run it will be _much_ faster.
 
 
 # Teaching Team
