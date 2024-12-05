@@ -7,10 +7,10 @@ Programming projects for Stanford's AA228V/CS238V _Validation of Safety-Critical
 <p align="center"> <img src="./media/coverart.svg"> </p>
 
 # Projects
-- **[Project 0](./projects/project0)** — _A light-weight introduction to falsification._
-- **[Project 1](./projects/project1)** — _Efficiently finding the most-likely failure._
-- **[Project 2](./projects/project2)** — _TODO._
-- **[Project 3](./projects/project3)** — _TODO._
+- **[Project 0](./project0)** — _A light-weight introduction to falsification._
+- **[Project 1](./project1)** — _Efficiently finding the most-likely failure._
+- **[Project 2](./project2)** — _TODO._
+- **[Project 3](./project3)** — _TODO._
 
 # Installation
 For additional installation help, [please post on Ed](https://edstem.org/us/courses/69226/discussion).
