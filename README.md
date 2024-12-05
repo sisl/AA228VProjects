@@ -36,7 +36,7 @@ For additional installation help, [please post on Ed](https://edstem.org/us/cour
 This will give you the `julia` command in your terminal.
 
 ## Install Packages
-> Work-in-progress.
+> **Work-in-progress. This will be greatly simplified shortly.**
 
 1. Clone this git repo:
     1. Open a terminal and navigate to where you want the code to live.
