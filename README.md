@@ -54,13 +54,7 @@ This will give you the `julia` command in your terminal.
 ## (Skip unless otherwise instructed) Update AA228VProjects
 1. Open a terminal and navigate to your "AA228VProjects" directory.
 1. Run: `git pull`
-1. Open Julia: `julia`
-1. Run:
-    ```julia
-    using Pkg
-    Pkg.Registry.update()
-    ```
-
+1. Open the specific Pluto notebook and follow the update instructions within.
 
 # Julia Compiler Speed
 Julia is a just-in-time (JIT) compiled language. Don't be alarmed if the first time you run the installed code it's slow. This is because Julia will precompile the required packages. The next time you run it will be _much_ faster.
