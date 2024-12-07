@@ -47,7 +47,7 @@ This will give you the `julia` command in your terminal.
     1. Run:
         ```julia
         using Pkg
-        Pkg.Registry.add(url="https://github.com/sisl/General.git")
+        Pkg.Registry.add(url="https://github.com/sisl/Registry.git")
         Pkg.add("Pluto")
         ```
 
