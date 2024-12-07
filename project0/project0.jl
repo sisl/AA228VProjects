@@ -19,7 +19,11 @@ end
 # ╔═╡ 173388ab-207a-42a6-b364-b2c1cb335f6b
 # ╠═╡ show_logs = false
 begin
-	using StanfordAA228V
+	import MarkdownLiteral: @mdx
+
+	using Pkg
+	using Downloads
+	using TOML
 	using Distributions
 	using PlutoUI
 	using Random
@@ -32,16 +36,8 @@ begin
 	md"> **Package management**."
 end
 
-# ╔═╡ 60f72d30-ab80-11ef-3c20-270dbcdf0cc4
-md"""
-# Project 0: Falsification introduction
-_A light-weight introduction to falsification._
-
-**Task**: Simply count the number of failures for a 1D Gaussian environment.
-- Write a function `num_failures(sys, ψ; m)` that given a system and specification, returns the number of failures over `m` rollouts.
-
-If you encounter issues, [please ask us on Ed](https://edstem.org/us/courses/69226/discussion).
-"""
+# ╔═╡ 8f08e006-2d70-4173-a02e-267e8486f5c8
+using StanfordAA228V
 
 # ╔═╡ 17fa8557-9656-4347-9d44-213fd3b635a6
 Markdown.parse("""
@@ -179,12 +175,15 @@ begin
 	catch err
 		@warn err
 	end
-	𝑓 = UsingThisViolatesTheHonorCode.num_failures_test
+	𝑡𝑟𝑖𝑔𝑔𝑒𝑟 = true
 	md"""
 	# Backend
 	_Helper functions and project management._
 	"""
 end
+
+# ╔═╡ 956603a8-5a5f-41b8-ba52-b0a678433342
+𝑓 = UsingThisViolatesTheHonorCode.num_failures_test; 𝑡𝑟𝑖𝑔𝑔𝑒𝑟;
 
 # ╔═╡ c151fc99-af4c-46ae-b55e-f50ba21f1f1c
 begin
@@ -199,35 +198,38 @@ begin
 	<p><div class='container'><div class='line'></div><span class='text' style='color:#B1040E'><b><code>&lt;END CODE&gt;</code></b></span><div class='line'></div></div></p>
 	"""
 
+	function info(text; title="Information")
+		return Markdown.MD(Markdown.Admonition("info", title, [text]))
+	end
+
 	function hint(text; title="Hint")
 		return Markdown.MD(Markdown.Admonition("hint", title, [text]))
 	end
 
-	function almost()
-		text=md"""
+	function almost(text=md"""
 		Please modify the `num_failures` function (currently returning `nothing`, which is the default).
 
 		(Please only submit when this is **green**.)
-		"""
+		""")
 		return Markdown.MD(Markdown.Admonition("warning", "Warning!", [text]))
 	end
 
 	function keep_working()
 		text = md"""
 		The answers are not quite right.
-		
+
 		(Please only submit when this is **green**.)
 		"""
 		return Markdown.MD(Markdown.Admonition("danger", "Keep working on it!", [text]))
 	end
 
-	function correct()
-		text = md"""
+	function correct(text=md"""
 		All tests have passed, you're done with Project 0!
-		
+
 		Please submit `project0.jl` (this file) to Gradescope.
-		"""
-		return Markdown.MD(Markdown.Admonition("correct", "Tests passed!", [text]))
+
+		**📩 Please see the [Submission](#submission) section at the top of the page.**"""; title="Tests passed!")
+		return Markdown.MD(Markdown.Admonition("correct", title, [text]))
 	end
 
 	html_space() = html"<br><br><br><br><br><br><br><br><br><br><br><br><br><br>"
@@ -236,16 +238,90 @@ begin
 
 	global SEED = sum(Int.(collect("AA228V"))) # Cheeky seed value :)
 
-	DarkModeIndicator() = PlutoUI.HypertextLiteral.@htl("""
-		<span>
-		<script>
-			const span = currentScript.parentElement
-			span.value = window.matchMedia('(prefers-color-scheme: dark)').matches
-		</script>
-		</span>
-	""")
+	Bonds = PlutoUI.BuiltinsNotebook.AbstractPlutoDingetjes.Bonds
+
+	struct DarkModeIndicator
+		default::Bool
+	end
+
+	DarkModeIndicator(; default::Bool=false) = DarkModeIndicator(default)
+
+	function Base.show(io::IO, ::MIME"text/html", link::DarkModeIndicator)
+		print(io, """
+			<span>
+			<script>
+				const span = currentScript.parentElement
+				span.value = window.matchMedia('(prefers-color-scheme: dark)').matches
+			</script>
+			</span>
+		""")
+	end
+
+	Base.get(checkbox::DarkModeIndicator) = checkbox.default
+	Bonds.initial_value(b::DarkModeIndicator) = b.default
+	Bonds.possible_values(b::DarkModeIndicator) = [false, true]
+	Bonds.validate_value(b::DarkModeIndicator, val) = val isa Bool
+
+	struct OpenDirectory
+		default::Bool
+		text
+	end
+
+	OpenDirectory(;default::Bool=false, text="Link") = OpenDirectory(default, text)
+	OpenDirectory(text="Link"; default::Bool=false) = OpenDirectory(default, text)
+
+	function Base.show(io::IO, ::MIME"text/html", link::OpenDirectory)
+		print(io, """
+			<span>
+			<code><a href='#;'>$(link.text)</a></code>
+			<script>
+
+				// Select elements relative to `currentScript`
+				const span = currentScript.parentElement
+				const link = span.querySelector("a")
+
+				link.addEventListener("click", (e) => {
+					span.value = true
+					span.dispatchEvent(new CustomEvent("input"))
+					span.value = false
+					span.dispatchEvent(new CustomEvent("input"))
+					e.preventDefault()
+				})
+
+				// Set the initial value
+				span.value = false
+
+			</script>
+			</span>""")
+	end
+
+	Base.get(checkbox::OpenDirectory) = checkbox.default
+	Bonds.initial_value(b::OpenDirectory) = b.default
+	Bonds.possible_values(b::OpenDirectory) = [false, true]
+	Bonds.validate_value(b::OpenDirectory, val) = val isa Bool
+
+	this_dir = @__DIR__
 
 	md"> **Helper functions and variables**."
+end
+
+# ╔═╡ 2eec992f-0581-4b7b-a14f-ad119c230ae2
+Markdown.MD(@mdx("### Submission"),
+Markdown.parse("""
+Once completed, you will submit **this file** (`project0.jl`) to Gradescope.
+
+The directory of the notebook is located here:"""),
+md"""
+- $(@bind directory_trigger OpenDirectory(this_dir))
+    - ↑ Click to open directory.""",
+md"""
+If you encounter issues, [please ask us on Ed](https://edstem.org/us/courses/69226/discussion).
+""")
+
+# ╔═╡ a3ce3d69-83f0-4ab3-b579-827d793b511e
+if directory_trigger
+	@info "Opening local directory..."
+	sleep(1)
 end
 
 # ╔═╡ ea2f1380-6071-4a20-9b87-daf7d2b7ee33
@@ -330,6 +406,21 @@ begin
 	end
 end
 
+# ╔═╡ 8461e634-8830-477c-99c8-894dea63d5ce
+begin
+	if !ismissing(directory_trigger) && directory_trigger
+		try
+			if Sys.iswindows()
+				run(`explorer $(abspath(this_dir))`)
+			elseif Sys.isapple()
+				run(`open $(abspath(this_dir))`)
+			elseif Sys.islinux()
+				run(`xdg-open $(abspath(this_dir))`)
+			end
+		catch end
+	end
+end; md"> **Helper for opening local directories**."
+
 # ╔═╡ a6931d1e-08ad-4592-a54c-fd76cdc51294
 @bind dark_mode DarkModeIndicator()
 
@@ -391,6 +482,74 @@ end
 # ╔═╡ ef084fea-bf4d-48d9-9c84-8cc1dd98f2d7
 TableOfContents()
 
+# ╔═╡ 0039e38b-37cc-47c4-bf3d-aa86a281f150
+function get_version(pkg::Module)
+	pkgname = string(pkg)
+	deps = Pkg.dependencies()
+	for (uuid, info) in deps
+		if info.name == pkgname
+			return info.version
+		end
+	end
+	return missing
+end
+
+# ╔═╡ 9fa9453a-4d98-4105-aac2-2996cfd07aa8
+function validate_version(pkg::Module)
+	pkgname = string(pkg)
+	current_version = string(get_version(pkg))
+	local latest_version
+
+	try
+		for reg in Pkg.Registry.reachable_registries()
+		    for (uuid, pkgdata) in reg.pkgs
+				if pkgdata.name == pkgname
+					path = joinpath(reg.path, pkgdata.path)
+					package_toml = TOML.parsefile(joinpath(path, "Package.toml"))
+					repo = package_toml["repo"]
+					github_path = replace(repo, "git@github.com:"=>"")
+					github_path = replace(github_path, ".git"=>"")
+					branch = match(r"refs/heads/(\w+)", readchomp(`git ls-remote --symref $repo HEAD`)).captures[1]
+					raw_url = "https://raw.githubusercontent.com/$github_path/refs/heads/$branch/Project.toml"
+					github_toml = TOML.parse(read(Downloads.download(raw_url), String))
+					latest_version = github_toml["version"]
+					break
+		        end
+		    end
+		end
+		return current_version == latest_version
+	catch err
+		return true, missing
+	end
+end
+
+# ╔═╡ f53306f6-1072-40ae-bf65-1927e5eae088
+begin
+	global update_md = Markdown.parse("")
+	try
+		if !validate_version(StanfordAA228V)
+			global update_md = Markdown.MD(
+				almost(md"""
+				Your `StanfordAA228V` package is out-of-date. Please update it via the instructions below.
+
+				**Then restart the notebook.**
+
+				_(This warning may persist after restart, wait until the notebook finishes loading entirely)_"""),				md"""$(LocalResource(joinpath(@__DIR__, "..", "media", dark_mode ? "update-package-dark-mode.gif" : "update-package.gif")))"""
+			)
+		end
+	catch err
+		rethrow(err)
+	end
+
+Markdown.MD(update_md, md"""
+# Project 0: Falsification introduction
+_A light-weight introduction to falsification._
+
+**Task**: Simply count the number of failures for a 1D Gaussian environment.
+- Write a function `num_failures(sys, ψ; m)` that given a system and specification, returns the number of failures over `m` rollouts.
+""")
+end
+
 # ╔═╡ c9c45286-58a4-40e6-b2a4-d828e627c6ec
 html"""
 <style>
@@ -422,17 +581,22 @@ PLUTO_PROJECT_TOML_CONTENTS = """
 [deps]
 Base64 = "2a0f44e3-6c83-55bd-87e4-b1978d98bd5f"
 Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
+Downloads = "f43a241f-c20a-4ad4-852c-f6b1247861c6"
+MarkdownLiteral = "736d6165-7244-6769-4267-6b50796e6954"
+Pkg = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
 Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
 PlutoUI = "7f904dfe-b85e-4ff6-b463-dae2292396a8"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 StanfordAA228V = "6f6e590e-f8c2-4a21-9268-94576b9fb3b1"
+TOML = "fa267f1f-6049-4f14-aa54-33bafae1ed76"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [compat]
 Distributions = "~0.25.113"
+MarkdownLiteral = "~0.1.1"
 Plots = "~1.40.9"
 PlutoUI = "~0.7.60"
-StanfordAA228V = "~0.1.2"
+StanfordAA228V = "~0.1.5"
 """
 
 # ╔═╡ 00000000-0000-0000-0000-000000000002
@@ -441,7 +605,7 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.11.2"
 manifest_format = "2.0"
-project_hash = "7fbbe3d34bf85a1cc435d3d95945728b40ef2a18"
+project_hash = "8573e0815cb86a93a723c357b64a749d9e2132ce"
 
 [[deps.AbstractFFTs]]
 deps = ["LinearAlgebra"]
@@ -613,6 +777,12 @@ git-tree-sha1 = "362a287c3aa50601b0bc359053d5c2468f0e7ce0"
 uuid = "5ae59095-9a9b-59fe-a467-6f913c188581"
 version = "0.12.11"
 
+[[deps.CommonMark]]
+deps = ["Crayons", "PrecompileTools"]
+git-tree-sha1 = "3faae67b8899797592335832fccf4b3c80bb04fa"
+uuid = "a80b9123-70ca-4bc0-993e-6e3bcb318db6"
+version = "0.8.15"
+
 [[deps.CommonSubexpressions]]
 deps = ["MacroTools"]
 git-tree-sha1 = "cda2cfaebb4be89c9084adaca7dd7333369715c5"
@@ -665,6 +835,11 @@ version = "1.5.8"
 git-tree-sha1 = "439e35b0b36e2e5881738abc8857bd92ad6ff9a8"
 uuid = "d38c429a-6771-53c6-b99e-75d170b6e991"
 version = "0.6.3"
+
+[[deps.Crayons]]
+git-tree-sha1 = "249fe38abf76d48563e2f4556bebd215aa317e15"
+uuid = "a8cc5b0e-0ffa-5ad4-8c14-923d3ee1735f"
+version = "4.1.1"
 
 [[deps.DataAPI]]
 git-tree-sha1 = "abe83f3a2f1b857aac70ef8b269080af17764bbe"
@@ -745,9 +920,9 @@ version = "1.6.0"
 
 [[deps.EpollShim_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl"]
-git-tree-sha1 = "8e9441ee83492030ace98f9789a654a6d0b1f643"
+git-tree-sha1 = "8a4be429317c42cfae6a7fc03c31bad1970c310d"
 uuid = "2702e6a9-849d-5ed8-8c21-79e8b8f9ee43"
-version = "0.0.20230411+0"
+version = "0.0.20230411+1"
 
 [[deps.ExceptionUnwrapping]]
 deps = ["Test"]
@@ -757,9 +932,9 @@ version = "0.1.11"
 
 [[deps.Expat_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl"]
-git-tree-sha1 = "cc5231d52eb1771251fbd37171dbc408bcc8a1b6"
+git-tree-sha1 = "e51db81749b0777b2147fbe7b783ee79045b8e99"
 uuid = "2e619515-83b5-522b-bb60-26c02a35a201"
-version = "2.6.4+0"
+version = "2.6.4+1"
 
 [[deps.ExpressionExplorer]]
 git-tree-sha1 = "7005f1493c18afb2fa3bdf06e02b16a9fde5d16d"
@@ -887,15 +1062,15 @@ version = "0.2.0"
 
 [[deps.GR]]
 deps = ["Artifacts", "Base64", "DelimitedFiles", "Downloads", "GR_jll", "HTTP", "JSON", "Libdl", "LinearAlgebra", "Preferences", "Printf", "Qt6Wayland_jll", "Random", "Serialization", "Sockets", "TOML", "Tar", "Test", "p7zip_jll"]
-git-tree-sha1 = "ee28ddcd5517d54e417182fec3886e7412d3926f"
+git-tree-sha1 = "52adc6828958ea8a0cf923d53aa10773dbca7d5f"
 uuid = "28b8d3ca-fb5f-59d9-8090-bfdbd6d07a71"
-version = "0.73.8"
+version = "0.73.9"
 
 [[deps.GR_jll]]
 deps = ["Artifacts", "Bzip2_jll", "Cairo_jll", "FFMPEG_jll", "Fontconfig_jll", "FreeType2_jll", "GLFW_jll", "JLLWrappers", "JpegTurbo_jll", "Libdl", "Libtiff_jll", "Pixman_jll", "Qt6Base_jll", "Zlib_jll", "libpng_jll"]
-git-tree-sha1 = "f31929b9e67066bee48eec8b03c0df47d31a74b3"
+git-tree-sha1 = "4e9e2966af45b06f24fd952285841428f1d6e858"
 uuid = "d2c73de3-f751-5644-a686-071e5b155ba9"
-version = "0.73.8+0"
+version = "0.73.9+0"
 
 [[deps.Gettext_jll]]
 deps = ["Artifacts", "CompilerSupportLibraries_jll", "JLLWrappers", "Libdl", "Libiconv_jll", "Pkg", "XML2_jll"]
@@ -905,9 +1080,9 @@ version = "0.21.0+0"
 
 [[deps.Glib_jll]]
 deps = ["Artifacts", "Gettext_jll", "JLLWrappers", "Libdl", "Libffi_jll", "Libiconv_jll", "Libmount_jll", "PCRE2_jll", "Zlib_jll"]
-git-tree-sha1 = "b36c7e110080ae48fdef61b0c31e6b17ada23b33"
+git-tree-sha1 = "48b5d4c75b2c9078ead62e345966fa51a25c05ad"
 uuid = "7746bdde-850d-59dc-9ae8-88ece973131d"
-version = "2.82.2+0"
+version = "2.82.2+1"
 
 [[deps.Graphite2_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
@@ -928,9 +1103,9 @@ version = "1.0.2"
 
 [[deps.HTTP]]
 deps = ["Base64", "CodecZlib", "ConcurrentUtilities", "Dates", "ExceptionUnwrapping", "Logging", "LoggingExtras", "MbedTLS", "NetworkOptions", "OpenSSL", "PrecompileTools", "Random", "SimpleBufferStream", "Sockets", "URIs", "UUIDs"]
-git-tree-sha1 = "ae350b8225575cc3ea385d4131c81594f86dfe4f"
+git-tree-sha1 = "6c22309e9a356ac1ebc5c8a217045f9bae6f8d9a"
 uuid = "cd3eb016-35fb-5094-929b-558a96fad6f3"
-version = "1.10.12"
+version = "1.10.13"
 
 [[deps.HarfBuzz_jll]]
 deps = ["Artifacts", "Cairo_jll", "Fontconfig_jll", "FreeType2_jll", "Glib_jll", "Graphite2_jll", "JLLWrappers", "Libdl", "Libffi_jll"]
@@ -1231,6 +1406,12 @@ version = "1.1.2"
 deps = ["Base64"]
 uuid = "d6f4376e-aef5-505a-96c1-9c027394607a"
 version = "1.11.0"
+
+[[deps.MarkdownLiteral]]
+deps = ["CommonMark", "HypertextLiteral"]
+git-tree-sha1 = "0d3fa2dd374934b62ee16a4721fe68c418b92899"
+uuid = "736d6165-7244-6769-4267-6b50796e6954"
+version = "0.1.1"
 
 [[deps.MbedTLS]]
 deps = ["Dates", "MbedTLS_jll", "MozillaCACerts_jll", "NetworkOptions", "Random", "Sockets"]
@@ -1599,10 +1780,10 @@ uuid = "992d4aef-0814-514b-bc4d-f2e9a6c4116f"
 version = "1.0.3"
 
 [[deps.SignalTemporalLogic]]
-deps = ["InteractiveUtils", "Markdown", "Zygote"]
-git-tree-sha1 = "5fbd28f4de5d850d07adb040790b240190c706dd"
+deps = ["InteractiveUtils", "Markdown", "PlutoUI", "Zygote"]
+git-tree-sha1 = "40e6c51e6d2e7571de6ad1d4dc7e7c94a50f21dc"
 uuid = "a79a9ddd-d50e-4d85-a979-5d85760e62a0"
-version = "0.1.0"
+version = "1.0.0"
 
 [[deps.SimpleBufferStream]]
 git-tree-sha1 = "f305871d2f381d21527c770d4788c06c097c9bc1"
@@ -1648,9 +1829,9 @@ version = "1.0.2"
 
 [[deps.StanfordAA228V]]
 deps = ["BSON", "Distributions", "ForwardDiff", "GridInterpolations", "LinearAlgebra", "Optim", "Parameters", "Plots", "Pluto", "PlutoUI", "Random", "SignalTemporalLogic", "Statistics"]
-git-tree-sha1 = "4de02446e86613969ffea87ce449dee07ee39d16"
+git-tree-sha1 = "9b65c7f1ebfd7ae20dc9f9a7fbd1c61d7aa3691c"
 uuid = "6f6e590e-f8c2-4a21-9268-94576b9fb3b1"
-version = "0.1.2"
+version = "0.1.5"
 
 [[deps.StaticArrays]]
 deps = ["LinearAlgebra", "PrecompileTools", "Random", "StaticArraysCore"]
@@ -2155,7 +2336,10 @@ version = "1.4.1+1"
 """
 
 # ╔═╡ Cell order:
-# ╟─60f72d30-ab80-11ef-3c20-270dbcdf0cc4
+# ╠═8f08e006-2d70-4173-a02e-267e8486f5c8
+# ╟─f53306f6-1072-40ae-bf65-1927e5eae088
+# ╟─2eec992f-0581-4b7b-a14f-ad119c230ae2
+# ╟─a3ce3d69-83f0-4ab3-b579-827d793b511e
 # ╟─17fa8557-9656-4347-9d44-213fd3b635a6
 # ╠═22feee3d-4627-4358-9937-3c780b7e8bcb
 # ╟─45f7c3a5-5763-43db-aba8-41ef8db39a53
@@ -2186,11 +2370,15 @@ version = "1.4.1+1"
 # ╟─d72be566-6ad7-4817-8590-a504a699a4da
 # ╟─cee165f0-049f-4ea3-8f19-04e66947a397
 # ╟─6302729f-b34a-4a18-921b-d194fe834208
+# ╟─956603a8-5a5f-41b8-ba52-b0a678433342
 # ╟─ba6c082b-6e62-42fc-a85c-c8b7efc89b88
 # ╟─173388ab-207a-42a6-b364-b2c1cb335f6b
 # ╟─c151fc99-af4c-46ae-b55e-f50ba21f1f1c
+# ╟─8461e634-8830-477c-99c8-894dea63d5ce
 # ╠═a6931d1e-08ad-4592-a54c-fd76cdc51294
 # ╠═ef084fea-bf4d-48d9-9c84-8cc1dd98f2d7
+# ╟─0039e38b-37cc-47c4-bf3d-aa86a281f150
+# ╟─9fa9453a-4d98-4105-aac2-2996cfd07aa8
 # ╟─c9c45286-58a4-40e6-b2a4-d828e627c6ec
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
