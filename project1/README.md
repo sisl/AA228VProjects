@@ -1,11 +1,13 @@
 # AA228V/CS238V: Project 1
 [![website](https://img.shields.io/badge/website-Stanford-b31b1b.svg)](https://aa228v.stanford.edu/project-1/)
-[![html](https://img.shields.io/badge/static%20html-Project%201-0072B2)](https://htmlview.glitch.me/?https://github.com/sisl/AA228VProjects/blob/main/media/html/project1.html)
+<a href="https://htmlview.glitch.me/?https://github.com/sisl/AA228VProjects/blob/main/media/html/project1.html"><img src="https://img.shields.io/badge/static%20html-Project%201-0072B2#gh-light-mode-only"></a>
+<a href="https://htmlview.glitch.me/?https://github.com/sisl/AA228VProjects/blob/main/media/html/project1-dark.html"><img src="https://img.shields.io/badge/static%20html-Project%201-0072B2#gh-dark-mode-only"></a>
+
 
 _Efficiently finding the most-likely failure._
 
-<!-- <p align="center"> <img src="./../media/project0-gaussian.svg#gh-light-mode-only"> </p> -->
-<!-- <p align="center"> <img src="./../media/project0-gaussian-dark.svg#gh-dark-mode-only"> </p> -->
+<p align="center"> <img src="./../media/project0-gaussian.svg#gh-light-mode-only"> </p>
+<p align="center"> <img src="./../media/project0-gaussian-dark.svg#gh-dark-mode-only"> </p>
 
 # Steps
 1. Open Pluto:
