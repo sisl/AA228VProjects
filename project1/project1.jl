@@ -1670,7 +1670,7 @@ html_half_space()
 
 # ╔═╡ 5563f0da-7552-4879-a38a-ba1748d39d52
 begin
-	pendulum_gif_name = dark_mode ? "pendulum-dark-mode.gif" : "pendulum.gif"
+	pendulum_gif_name = dark_mode ? "pendulum-dark.gif" : "pendulum.gif"
 
 	if false
 		pendulum_anim = @animate for t in 1:get_depth(sys_medium)
@@ -1696,7 +1696,7 @@ try LocalResource(joinpath(@__DIR__, "..", "media", pendulum_gif_name)) catch en
 
 # ╔═╡ 98cbe931-d362-4039-97ba-41e0049619a3
 begin
-	cas_gif_name = dark_mode ? "cas-dark-mode.gif" : "cas.gif"
+	cas_gif_name = dark_mode ? "cas-dark.gif" : "cas.gif"
 	cas_fps = 15
 	cas_repeat = cas_fps # Repeat last frame x times
 
@@ -1898,7 +1898,7 @@ begin
 				**Then restart the notebook.**
 
 				_(This warning may persist after restart, wait until the notebook finishes loading entirely)_"""),
-				md"""$(LocalResource(joinpath(@__DIR__, "..", "media", dark_mode ? "update-package-dark-mode.gif" : "update-package.gif")))"""
+				md"""$(LocalResource(joinpath(@__DIR__, "..", "media", dark_mode ? "update-package-dark.gif" : "update-package.gif")))"""
 			)
 		end
 	catch end
@@ -2080,7 +2080,7 @@ Optim = "~1.10.0"
 Parameters = "~0.12.3"
 Plots = "~1.40.9"
 PlutoUI = "~0.7.60"
-StanfordAA228V = "~0.1.8"
+StanfordAA228V = "~0.1.9"
 """
 
 # ╔═╡ 00000000-0000-0000-0000-000000000002
@@ -2089,7 +2089,7 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.11.2"
 manifest_format = "2.0"
-project_hash = "b7f3d1e2fb9833f726267662a360f342d8ed4a53"
+project_hash = "48ac20b2099229f113a2702eb2bf0931b83f3115"
 
 [[deps.AbstractFFTs]]
 deps = ["LinearAlgebra"]
@@ -3313,9 +3313,9 @@ version = "1.0.2"
 
 [[deps.StanfordAA228V]]
 deps = ["BSON", "Distributions", "ForwardDiff", "GridInterpolations", "LinearAlgebra", "Optim", "Parameters", "Plots", "Pluto", "PlutoUI", "Random", "SignalTemporalLogic", "Statistics"]
-git-tree-sha1 = "24a9dbdc0650297c9f919fe38fa7d886a186936d"
+git-tree-sha1 = "cd28ceeb3a1e89d8c1586cba3b9c377da0151733"
 uuid = "6f6e590e-f8c2-4a21-9268-94576b9fb3b1"
-version = "0.1.8"
+version = "0.1.9"
 
 [[deps.StaticArrays]]
 deps = ["LinearAlgebra", "PrecompileTools", "Random", "StaticArraysCore"]

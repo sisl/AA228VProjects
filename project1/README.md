@@ -4,8 +4,13 @@
 
 _Efficiently finding the most-likely failure._
 
-<p align="center"> <img src="./../media/cas.gif#gh-light-mode-only"> </p>
-<p align="center"> <img src="./../media/cas-dark-mode.gif#gh-dark-mode-only"> </p>
+<p align="center">
+    <picture>
+        <source media="(prefers-color-scheme: light)" srcset="./../media/cas.gif">
+        <source media="(prefers-color-scheme: dark)" srcset="./../media/cas-dark.gif">
+        <img src="./../media/cas.gif">
+    </picture>
+</p>
 
 # Steps
 1. Open Pluto:
@@ -21,6 +26,12 @@ _Efficiently finding the most-likely failure._
             ┌ Info:
             └ Opening http://localhost:1234/ in your default browser... ~ have fun!
             ```
-1. Open the `project1.jl` notebook from Pluto through this box (`<PATH_TO_AA228VProjects>/project1/project1.jl`): <p align="center"> <img src="./../media/pluto-open.png#gh-light-mode-only"> </p><p align="center"> <img src="./../media/pluto-open-dark.png#gh-dark-mode-only"> </p>
+1. Open the `project1.jl` notebook from Pluto through this box (`<PATH_TO_AA228VProjects>/project1/project1.jl`): <p align="center">
+    <picture>
+        <source media="(prefers-color-scheme: light)" srcset="./../media/pluto-open.png">
+        <source media="(prefers-color-scheme: dark)" srcset="./../media/pluto-open-dark.png">
+        <img src="./../media/pluto-open.png">
+    </picture>
+</p>
     - Click `Run notebook code`.
 1. See `project1.jl` within Pluto for details.

@@ -484,7 +484,7 @@ begin
 
 				**Then restart the notebook.**
 
-				_(This warning may persist after restart, wait until the notebook finishes loading entirely)_"""),				md"""$(LocalResource(joinpath(@__DIR__, "..", "media", dark_mode ? "update-package-dark-mode.gif" : "update-package.gif")))"""
+				_(This warning may persist after restart, wait until the notebook finishes loading entirely)_"""),				md"""$(LocalResource(joinpath(@__DIR__, "..", "media", dark_mode ? "update-package-dark.gif" : "update-package.gif")))"""
 			)
 		end
 	catch err
@@ -604,7 +604,7 @@ Distributions = "~0.25.113"
 MarkdownLiteral = "~0.1.1"
 Plots = "~1.40.9"
 PlutoUI = "~0.7.60"
-StanfordAA228V = "~0.1.8"
+StanfordAA228V = "~0.1.9"
 """
 
 # ╔═╡ 00000000-0000-0000-0000-000000000002
@@ -613,7 +613,7 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.11.2"
 manifest_format = "2.0"
-project_hash = "d1ee8fb20206f7afa5ebfe35de066d48703bdd71"
+project_hash = "bd7f620235ed89c396e2a8a02502c2725b9dff0d"
 
 [[deps.AbstractFFTs]]
 deps = ["LinearAlgebra"]
@@ -1837,9 +1837,9 @@ version = "1.0.2"
 
 [[deps.StanfordAA228V]]
 deps = ["BSON", "Distributions", "ForwardDiff", "GridInterpolations", "LinearAlgebra", "Optim", "Parameters", "Plots", "Pluto", "PlutoUI", "Random", "SignalTemporalLogic", "Statistics"]
-git-tree-sha1 = "24a9dbdc0650297c9f919fe38fa7d886a186936d"
+git-tree-sha1 = "cd28ceeb3a1e89d8c1586cba3b9c377da0151733"
 uuid = "6f6e590e-f8c2-4a21-9268-94576b9fb3b1"
-version = "0.1.8"
+version = "0.1.9"
 
 [[deps.StaticArrays]]
 deps = ["LinearAlgebra", "PrecompileTools", "Random", "StaticArraysCore"]
