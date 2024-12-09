@@ -36,19 +36,20 @@ For additional installation help, [please post on Ed](https://edstem.org/us/cour
 This will give you the `julia` command in your terminal.
 
 ## 3. Install Packages
-1. Clone this git repo:
+_**Note**: You only need to do this once._
+1. _Clone this git repo:_
     1. Open a terminal and navigate to where you want the code to live.
     1. Run:
         ```
         git clone https://github.com/sisl/AA228VProjects
         ```
-1. Install SISL Julia package registry and install `Pluto`:
+1. _Install [**Pluto**](https://plutojl.org/) and the SISL Julia package registry:_
     1. Open `julia` in a terminal.
     1. Run:
         ```julia
         using Pkg
-        Pkg.Registry.add(url="https://github.com/sisl/Registry.git")
         Pkg.add("Pluto")
+        Registry.add(url="https://github.com/sisl/Registry.git")
         ```
 
 ## (Skip unless otherwise instructed) Update AA228VProjects
