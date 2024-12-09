@@ -19,6 +19,8 @@ end
 # ╔═╡ 173388ab-207a-42a6-b364-b2c1cb335f6b
 # ╠═╡ show_logs = false
 begin
+	ENV["JULIA_PKG_USE_CLI_GIT"] = true
+
 	import MarkdownLiteral: @mdx
 
 	using Pkg
@@ -33,7 +35,7 @@ begin
 	
 	default(fontfamily="Computer Modern", framestyle=:box) # LaTeX-style plotting
 
-	md"> **Package management**."
+	md"> _Package management._"
 end
 
 # ╔═╡ 8f08e006-2d70-4173-a02e-267e8486f5c8
@@ -302,7 +304,7 @@ begin
 
 	this_dir = @__DIR__
 
-	md"> **Helper functions and variables**."
+	md"> _Helper functions and variables._"
 end
 
 # ╔═╡ 2eec992f-0581-4b7b-a14f-ad119c230ae2
@@ -419,7 +421,7 @@ begin
 			end
 		catch end
 	end
-end; md"> **Helper for opening local directories**."
+end; md"> _Helper for opening local directories._"
 
 # ╔═╡ a6931d1e-08ad-4592-a54c-fd76cdc51294
 @bind dark_mode DarkModeIndicator()
@@ -496,31 +498,36 @@ end
 
 # ╔═╡ 9fa9453a-4d98-4105-aac2-2996cfd07aa8
 function validate_version(pkg::Module)
-	pkgname = string(pkg)
-	current_version = string(get_version(pkg))
-	local latest_version
-
-	try
-		for reg in Pkg.Registry.reachable_registries()
-		    for (uuid, pkgdata) in reg.pkgs
-				if pkgdata.name == pkgname
-					path = joinpath(reg.path, pkgdata.path)
-					package_toml = TOML.parsefile(joinpath(path, "Package.toml"))
-					repo = package_toml["repo"]
-					repo = replace(repo, "git@github.com:"=>"https://github.com/")
-					github_path = replace(repo, "https://github.com/"=>"")
-					github_path = replace(github_path, ".git"=>"")
-					branch = match(r"refs/heads/(\w+)", readchomp(`git ls-remote --symref $repo HEAD`)).captures[1]
-					raw_url = "https://raw.githubusercontent.com/$github_path/refs/heads/$branch/Project.toml"
-					github_toml = TOML.parse(read(Downloads.download(raw_url), String))
-					latest_version = github_toml["version"]
-					break
-		        end
-		    end
-		end
-		return current_version == latest_version
-	catch err
+	if haskey(ENV, "JL_SKIP_228V_UPDATE_CHECK")
+		# Skip for Gradescope
 		return true
+	else
+		pkgname = string(pkg)
+		current_version = string(get_version(pkg))
+		local latest_version
+	
+		try
+			for reg in Pkg.Registry.reachable_registries()
+			    for (uuid, pkgdata) in reg.pkgs
+					if pkgdata.name == pkgname
+						path = joinpath(reg.path, pkgdata.path)
+						package_toml = TOML.parsefile(joinpath(path, "Package.toml"))
+						repo = package_toml["repo"]
+						repo = replace(repo, "git@github.com:"=>"https://github.com/")
+						github_path = replace(repo, "https://github.com/"=>"")
+						github_path = replace(github_path, ".git"=>"")
+						branch = match(r"refs/heads/(\w+)", readchomp(`git ls-remote --symref $repo HEAD`)).captures[1]
+						raw_url = "https://raw.githubusercontent.com/$github_path/refs/heads/$branch/Project.toml"
+						github_toml = TOML.parse(read(Downloads.download(raw_url), String))
+						latest_version = github_toml["version"]
+						break
+			        end
+			    end
+			end
+			return current_version == latest_version
+		catch err
+			return true
+		end
 	end
 end
 
@@ -2376,10 +2383,10 @@ version = "1.4.1+1"
 # ╟─173388ab-207a-42a6-b364-b2c1cb335f6b
 # ╟─c151fc99-af4c-46ae-b55e-f50ba21f1f1c
 # ╟─8461e634-8830-477c-99c8-894dea63d5ce
-# ╠═a6931d1e-08ad-4592-a54c-fd76cdc51294
-# ╠═ef084fea-bf4d-48d9-9c84-8cc1dd98f2d7
 # ╟─0039e38b-37cc-47c4-bf3d-aa86a281f150
 # ╟─9fa9453a-4d98-4105-aac2-2996cfd07aa8
+# ╟─a6931d1e-08ad-4592-a54c-fd76cdc51294
+# ╟─ef084fea-bf4d-48d9-9c84-8cc1dd98f2d7
 # ╟─c9c45286-58a4-40e6-b2a4-d828e627c6ec
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
