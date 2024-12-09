@@ -1,7 +1,6 @@
 # AA228V/CS238V: Project 0
 [![website](https://img.shields.io/badge/website-Stanford-b31b1b.svg)](https://aa228v.stanford.edu/project-0/)
-<a href="https://htmlview.glitch.me/?https://github.com/sisl/AA228VProjects/blob/main/media/html/project0.html"><img src="https://img.shields.io/badge/static%20html-Project%200-0072B2#gh-light-mode-only"></a>
-<a href="https://htmlview.glitch.me/?https://github.com/sisl/AA228VProjects/blob/main/media/html/project0-dark.html"><img src="https://img.shields.io/badge/static%20html-Project%200-0072B2#gh-dark-mode-only"></a>
+[![html](https://img.shields.io/badge/static%20html-Project%200-0072B2)](https://sisl.github.io/AA228VProjects/media/html/project0.html)
 
 _A light-weight introduction to falsification._
 
