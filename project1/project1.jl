@@ -1812,9 +1812,6 @@ Your leaderboard entry on Gradescope should look something like this:
 """)
 end
 
-# ╔═╡ d924f472-fd86-4843-9305-0b54049b65bd
-𝔼_pdf_small
-
 # ╔═╡ 5a1ed20d-788b-4655-bdd8-069545f48929
 begin
 	function extract(env::SimpleGaussian, input)
@@ -3952,7 +3949,6 @@ version = "1.4.1+1"
 # ╟─1bb92755-65e3-457e-84cd-252eae5e4d7e
 # ╟─6d5c805b-330c-4b04-a51c-15e674352b1b
 # ╟─d9ab8278-eb76-4a36-aa0e-4ec74704f5e0
-# ╠═d924f472-fd86-4843-9305-0b54049b65bd
 # ╟─860ec509-3a86-4842-9471-6b1a0b8f366d
 # ╠═54741d81-39e0-4a47-b84d-c41c8eb7611b
 # ╟─6559cf16-a474-4533-a2c7-ccbc02480a76
