@@ -40,7 +40,7 @@ This will give you the `julia` command in your terminal.
     1. Open a terminal and navigate to where you want the code to live.
     1. Run:
         ```
-        git clone https://github.com/sisl/AA228Projects
+        git clone https://github.com/sisl/AA228VProjects
         ```
 1. Install SISL Julia package registry and install `Pluto`:
     1. Open `julia` in a terminal.
