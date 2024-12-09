@@ -423,8 +423,82 @@ begin
 	end
 end; md"> _Helper for opening local directories._"
 
+# ╔═╡ 0039e38b-37cc-47c4-bf3d-aa86a281f150
+function get_version(pkg::Module)
+	pkgname = string(pkg)
+	deps = Pkg.dependencies()
+	for (uuid, info) in deps
+		if info.name == pkgname
+			return info.version
+		end
+	end
+	return missing
+end
+
+# ╔═╡ 9fa9453a-4d98-4105-aac2-2996cfd07aa8
+function validate_version(pkg::Module)
+	if haskey(ENV, "JL_SKIP_228V_UPDATE_CHECK")
+		# Skip for Gradescope
+		return true
+	else
+		pkgname = string(pkg)
+		current_version = string(get_version(pkg))
+		local latest_version
+	
+		try
+			for reg in Pkg.Registry.reachable_registries()
+			    for (uuid, pkgdata) in reg.pkgs
+					if pkgdata.name == pkgname
+						path = joinpath(reg.path, pkgdata.path)
+						package_toml = TOML.parsefile(joinpath(path, "Package.toml"))
+						repo = package_toml["repo"]
+						repo = replace(repo, "git@github.com:"=>"https://github.com/")
+						github_path = replace(repo, "https://github.com/"=>"")
+						github_path = replace(github_path, ".git"=>"")
+						branch = match(r"refs/heads/(\w+)", readchomp(`git ls-remote --symref $repo HEAD`)).captures[1]
+						raw_url = "https://raw.githubusercontent.com/$github_path/refs/heads/$branch/Project.toml"
+						github_toml = TOML.parse(read(Downloads.download(raw_url), String))
+						latest_version = github_toml["version"]
+						break
+			        end
+			    end
+			end
+			return current_version == latest_version
+		catch err
+			return true
+		end
+	end
+end
+
 # ╔═╡ a6931d1e-08ad-4592-a54c-fd76cdc51294
 @bind dark_mode DarkModeIndicator()
+
+# ╔═╡ f53306f6-1072-40ae-bf65-1927e5eae088
+begin
+	global update_md = Markdown.parse("")
+	try
+		if !validate_version(StanfordAA228V)
+			global update_md = Markdown.MD(
+				almost(md"""
+				Your `StanfordAA228V` package is out-of-date. Please update it via the instructions below.
+
+				**Then restart the notebook.**
+
+				_(This warning may persist after restart, wait until the notebook finishes loading entirely)_"""),				md"""$(LocalResource(joinpath(@__DIR__, "..", "media", dark_mode ? "update-package-dark-mode.gif" : "update-package.gif")))"""
+			)
+		end
+	catch err
+		rethrow(err)
+	end
+
+Markdown.MD(update_md, md"""
+# Project 0: Falsification introduction
+_A light-weight introduction to falsification._
+
+**Task**: Simply count the number of failures for a 1D Gaussian environment.
+- Write a function `num_failures(sys, ψ; m)` that given a system and specification, returns the number of failures over `m` rollouts.
+""")
+end
 
 # ╔═╡ 0cdadb29-9fcd-4a70-9937-c24f07ce4657
 begin
@@ -484,80 +558,6 @@ end
 # ╔═╡ ef084fea-bf4d-48d9-9c84-8cc1dd98f2d7
 TableOfContents()
 
-# ╔═╡ 0039e38b-37cc-47c4-bf3d-aa86a281f150
-function get_version(pkg::Module)
-	pkgname = string(pkg)
-	deps = Pkg.dependencies()
-	for (uuid, info) in deps
-		if info.name == pkgname
-			return info.version
-		end
-	end
-	return missing
-end
-
-# ╔═╡ 9fa9453a-4d98-4105-aac2-2996cfd07aa8
-function validate_version(pkg::Module)
-	if haskey(ENV, "JL_SKIP_228V_UPDATE_CHECK")
-		# Skip for Gradescope
-		return true
-	else
-		pkgname = string(pkg)
-		current_version = string(get_version(pkg))
-		local latest_version
-	
-		try
-			for reg in Pkg.Registry.reachable_registries()
-			    for (uuid, pkgdata) in reg.pkgs
-					if pkgdata.name == pkgname
-						path = joinpath(reg.path, pkgdata.path)
-						package_toml = TOML.parsefile(joinpath(path, "Package.toml"))
-						repo = package_toml["repo"]
-						repo = replace(repo, "git@github.com:"=>"https://github.com/")
-						github_path = replace(repo, "https://github.com/"=>"")
-						github_path = replace(github_path, ".git"=>"")
-						branch = match(r"refs/heads/(\w+)", readchomp(`git ls-remote --symref $repo HEAD`)).captures[1]
-						raw_url = "https://raw.githubusercontent.com/$github_path/refs/heads/$branch/Project.toml"
-						github_toml = TOML.parse(read(Downloads.download(raw_url), String))
-						latest_version = github_toml["version"]
-						break
-			        end
-			    end
-			end
-			return current_version == latest_version
-		catch err
-			return true
-		end
-	end
-end
-
-# ╔═╡ f53306f6-1072-40ae-bf65-1927e5eae088
-begin
-	global update_md = Markdown.parse("")
-	try
-		if !validate_version(StanfordAA228V)
-			global update_md = Markdown.MD(
-				almost(md"""
-				Your `StanfordAA228V` package is out-of-date. Please update it via the instructions below.
-
-				**Then restart the notebook.**
-
-				_(This warning may persist after restart, wait until the notebook finishes loading entirely)_"""),				md"""$(LocalResource(joinpath(@__DIR__, "..", "media", dark_mode ? "update-package-dark-mode.gif" : "update-package.gif")))"""
-			)
-		end
-	catch err
-		rethrow(err)
-	end
-
-Markdown.MD(update_md, md"""
-# Project 0: Falsification introduction
-_A light-weight introduction to falsification._
-
-**Task**: Simply count the number of failures for a 1D Gaussian environment.
-- Write a function `num_failures(sys, ψ; m)` that given a system and specification, returns the number of failures over `m` rollouts.
-""")
-end
-
 # ╔═╡ c9c45286-58a4-40e6-b2a4-d828e627c6ec
 html"""
 <style>
@@ -604,7 +604,7 @@ Distributions = "~0.25.113"
 MarkdownLiteral = "~0.1.1"
 Plots = "~1.40.9"
 PlutoUI = "~0.7.60"
-StanfordAA228V = "~0.1.7"
+StanfordAA228V = "~0.1.8"
 """
 
 # ╔═╡ 00000000-0000-0000-0000-000000000002
@@ -613,7 +613,7 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.11.2"
 manifest_format = "2.0"
-project_hash = "ddd7538cd78be2432843ad96514d2aa29befd212"
+project_hash = "d1ee8fb20206f7afa5ebfe35de066d48703bdd71"
 
 [[deps.AbstractFFTs]]
 deps = ["LinearAlgebra"]
@@ -1837,9 +1837,9 @@ version = "1.0.2"
 
 [[deps.StanfordAA228V]]
 deps = ["BSON", "Distributions", "ForwardDiff", "GridInterpolations", "LinearAlgebra", "Optim", "Parameters", "Plots", "Pluto", "PlutoUI", "Random", "SignalTemporalLogic", "Statistics"]
-git-tree-sha1 = "2bca56c6a739c6c6c4cf8360350d13b6b3279aca"
+git-tree-sha1 = "24a9dbdc0650297c9f919fe38fa7d886a186936d"
 uuid = "6f6e590e-f8c2-4a21-9268-94576b9fb3b1"
-version = "0.1.7"
+version = "0.1.8"
 
 [[deps.StaticArrays]]
 deps = ["LinearAlgebra", "PrecompileTools", "Random", "StaticArraysCore"]
