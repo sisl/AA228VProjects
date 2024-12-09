@@ -507,7 +507,8 @@ function validate_version(pkg::Module)
 					path = joinpath(reg.path, pkgdata.path)
 					package_toml = TOML.parsefile(joinpath(path, "Package.toml"))
 					repo = package_toml["repo"]
-					github_path = replace(repo, "git@github.com:"=>"")
+					repo = replace(repo, "git@github.com:"=>"https://github.com/")
+					github_path = replace(repo, "https://github.com/"=>"")
 					github_path = replace(github_path, ".git"=>"")
 					branch = match(r"refs/heads/(\w+)", readchomp(`git ls-remote --symref $repo HEAD`)).captures[1]
 					raw_url = "https://raw.githubusercontent.com/$github_path/refs/heads/$branch/Project.toml"
@@ -519,7 +520,7 @@ function validate_version(pkg::Module)
 		end
 		return current_version == latest_version
 	catch err
-		return true, missing
+		return true
 	end
 end
 
@@ -596,7 +597,7 @@ Distributions = "~0.25.113"
 MarkdownLiteral = "~0.1.1"
 Plots = "~1.40.9"
 PlutoUI = "~0.7.60"
-StanfordAA228V = "~0.1.5"
+StanfordAA228V = "~0.1.7"
 """
 
 # ╔═╡ 00000000-0000-0000-0000-000000000002
@@ -605,7 +606,7 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.11.2"
 manifest_format = "2.0"
-project_hash = "8573e0815cb86a93a723c357b64a749d9e2132ce"
+project_hash = "ddd7538cd78be2432843ad96514d2aa29befd212"
 
 [[deps.AbstractFFTs]]
 deps = ["LinearAlgebra"]
@@ -1000,9 +1001,9 @@ version = "0.8.5"
 
 [[deps.Fontconfig_jll]]
 deps = ["Artifacts", "Bzip2_jll", "Expat_jll", "FreeType2_jll", "JLLWrappers", "Libdl", "Libuuid_jll", "Zlib_jll"]
-git-tree-sha1 = "db16beca600632c95fc8aca29890d83788dd8b23"
+git-tree-sha1 = "21fac3c77d7b5a9fc03b0ec503aa1a6392c34d2b"
 uuid = "a3f928ae-7b40-5064-980b-68af3947d34b"
-version = "2.13.96+0"
+version = "2.15.0+0"
 
 [[deps.Format]]
 git-tree-sha1 = "9c68794ef81b08086aeb32eeaf33531668d5f5fc"
@@ -1109,9 +1110,9 @@ version = "1.10.13"
 
 [[deps.HarfBuzz_jll]]
 deps = ["Artifacts", "Cairo_jll", "Fontconfig_jll", "FreeType2_jll", "Glib_jll", "Graphite2_jll", "JLLWrappers", "Libdl", "Libffi_jll"]
-git-tree-sha1 = "401e4f3f30f43af2c8478fc008da50096ea5240f"
+git-tree-sha1 = "55c53be97790242c29031e5cd45e8ac296dadda3"
 uuid = "2e76f6c2-a576-52d4-95c1-20adfe4de566"
-version = "8.3.1+0"
+version = "8.5.0+0"
 
 [[deps.HypergeometricFunctions]]
 deps = ["LinearAlgebra", "OpenLibm_jll", "SpecialFunctions"]
@@ -1829,9 +1830,9 @@ version = "1.0.2"
 
 [[deps.StanfordAA228V]]
 deps = ["BSON", "Distributions", "ForwardDiff", "GridInterpolations", "LinearAlgebra", "Optim", "Parameters", "Plots", "Pluto", "PlutoUI", "Random", "SignalTemporalLogic", "Statistics"]
-git-tree-sha1 = "9b65c7f1ebfd7ae20dc9f9a7fbd1c61d7aa3691c"
+git-tree-sha1 = "2bca56c6a739c6c6c4cf8360350d13b6b3279aca"
 uuid = "6f6e590e-f8c2-4a21-9268-94576b9fb3b1"
-version = "0.1.5"
+version = "0.1.7"
 
 [[deps.StaticArrays]]
 deps = ["LinearAlgebra", "PrecompileTools", "Random", "StaticArraysCore"]
