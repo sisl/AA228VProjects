@@ -50,11 +50,24 @@ end
 # ╔═╡ 14964632-98d8-4a2f-b2f6-e3f28b558803
 using StanfordAA228V
 
+# ╔═╡ 1856feca-1ca5-4612-85ef-cb10829342f9
+Markdown.parse("""
+## Textbook
+[![textbook](https://img.shields.io/badge/textbook-MIT%20Press-0072B2.svg)](https://algorithmsbook.com/validation/files/val.pdf)
+[![coverart](https://raw.githubusercontent.com/sisl/AA228VProjects/refs/heads/main/media/coverart.svg)](https://algorithmsbook.com/validation/files/val.pdf)
+You may find the _Algorithms for Validation_ textbook helpful, specifically the following chapters:
+- Chapter 4. _Falsification through Optimization_
+- Chapter 5. _Falsification through Planning_
+""")
+
 # ╔═╡ 6e8ab7c9-fb49-4d89-946d-c7d7588c199a
 md"""
 ## Julia/Pluto tips
 Useful tips you may be interested in regarding Julia and Pluto.
 """
+
+# ╔═╡ a21612a1-1092-4892-9132-629833e7c867
+
 
 # ╔═╡ ec776b30-6a30-4643-a22c-e071a365d50b
 md"""
@@ -844,113 +857,6 @@ if directory_trigger
 	sleep(1)
 end
 
-# ╔═╡ fe044059-9102-4e7f-9888-d9f03eec69ff
-html_expand("Expand for general Julia/Pluto tips.", [
-	html"<h2hide>Julia packages</h2hide>",
-	md"""
-	Feel free to use as many external Julia packages as you like. Running `using PackageName` will automatically install it in this notebook.
-
-	[List of Julia packages.](https://juliapackages.com/)""",
-	html"<h2hide>Dependent cells</h2hide>",
-	md"""
-	Unlike Jupyter notebooks, Pluto has _dependent cells_. Meaning, if one cell uses the variable `x` and another cell defines `x`, then the first cell will _re-run_ when `x` is changed. This means there is no "hidden global state".
-
-	See the [Pluto README](https://github.com/fonsp/Pluto.jl?tab=readme-ov-file) for details/examples.""",
-	html"<h2hide>New cells</h2hide>",
-	md"""
-You can create as many new cells anywhere as you like. Click the `+` icon on the right or hit `CTRL+Enter` within an existing cell to create a new one below it.
-- **Important**: Please do not modify/delete any existing cells.""",
-	html"<h2hide>Running code</h2hide>",
-	md"""
-After editing a cell, you can run it several ways:
-1. To run the current cell: `<SHIFT+ENTER>`
-1. To run the current cell and create a new one below: `<CTRL+S>` or `<CMD+S>`
-1. To run all cells with unsaved changes: `<CTRL+S>` or `<CMD+S>`
-	""",
-	html"<h2hide>Multiple lines of code in a cell</h2hide>",
-	md"""
-To put multple lines of code in a single cell in Pluto, wrap with `begin` and `end`:
-```julia
-begin
-	x = 10
-	y = x^2
-end
-```""",
-	html"<h2hide>Locally scoped cells</h2hide>",
-	md"""
-Use Julia's `let` block to create locally scoped variables:
-```julia
-ℓ = let d = get_depth(sys)
-	p = NominalTrajectoryDistribution(sys, d)
-	τ = rollout(sys, d)
-	logpdf(p, τ)
-end
-```
-The last line of code in the `let` block will be returned and assigned to the globally scoped `ℓ` variable in this case.
-
-This way, you can reuse variable names such as `τ` without affecting other cells that may also use that name in global scope.
-
-You could also just define a new function:
-```julia
-function my_test(sys)
-	d = get_depth(sys)
-	p = NominalTrajectoryDistribution(sys, d)
-	τ = rollout(sys, d)
-	return logpdf(p, τ)
-end
-
-ℓ = my_test(sys)
-```
-	""",
-	html"<h2hide>Suppress cell output</h2hide>",
-	md"""
-To suppress the Pluto output of a cell, add a semicolon `;` at the end.
-```julia
-x = 10;
-```
-or
-```julia
-begin
-	x = 10
-	y = x^2
-end;
-```
-""",
-	html"<h2hide>Underscore as digit separator</h2hide>",
-	md"""
-You can use the underscore `_` as a convenient digit separator:
-```julia
-1000000 == 1_000_000 # true
-100000 == 100_000 # true
-10000 == 10_000 # true
-1000 == 1_000 # true
-```
-[Link to Julia docs](https://docs.julialang.org/en/v1/manual/integers-and-floating-point-numbers/#:~:text=The%20underscore).
-""",
-	html"<h2hide>Unicode symbols</h2hide>",
-	md"""
-You can use Unicode—and even emojis 🙃—as variable and function names. Here are some common ones we use throughout this course:
-
-| Unicode | Code |
-|:-------:|:----:|
-| `τ` | `\tab` |
-| `ψ` | `\psi` |
-| `ℓ` | `\ell` |
-| `π` | `\pi` |
-| `σ` | `\sigma` |
-| `Σ` | `\Sigma` |
-| `θ` | `\theta` |
-| `ω` | `\omega` |
-| `²` | `\^2` |
-| `₂` | `\_2` |
-| `🍕` | `\:pizza:` |
-
-To enter them into cells, type the above "**Code**" and hit `<TAB><TAB>` (or `<TAB><ENTER>`). Feel free to use any Unicode/emojis to your hearts desire.
-
-See the Julia docs for more examples: [https://docs.julialang.org/en/v1/manual/unicode-input/](https://docs.julialang.org/en/v1/manual/unicode-input/)
-"""
-])
-
 # ╔═╡ 0456a732-2672-4108-a241-db9ae879a913
 @bind dark_mode DarkModeIndicator()
 
@@ -1058,6 +964,113 @@ try
 		LocalResource(joinpath(@__DIR__, "..", "media", "inverted_pendulum.svg"))
 	end
 catch end
+
+# ╔═╡ fe044059-9102-4e7f-9888-d9f03eec69ff
+html_expand("Expand for general Julia/Pluto tips.", [
+	html"<h2hide>Julia packages</h2hide>",
+	md"""
+	Feel free to use as many external Julia packages as you like. Running `using PackageName` will automatically install it in this notebook.
+
+	[List of Julia packages.](https://juliapackages.com/)""",
+	html"<h2hide>Dependent cells</h2hide>",
+	md"""
+	Unlike Jupyter notebooks, Pluto has _dependent cells_. Meaning, if one cell uses the variable `x` and another cell defines `x`, then the first cell will _re-run_ when `x` is changed. This means there is no "hidden global state".
+
+	See the [Pluto README](https://github.com/fonsp/Pluto.jl?tab=readme-ov-file) for details/examples.""",
+	html"<h2hide>New cells</h2hide>",
+	md"""
+You can create as many new cells anywhere as you like. Click the `+` icon on the right or hit `CTRL+Enter` within an existing cell to create a new one below it.
+- **Important**: Please do not modify/delete any existing cells.""",
+	html"<h2hide>Running code</h2hide>",
+	md"""
+After editing a cell, you can run it several ways:
+1. To run the current cell: `<SHIFT+ENTER>`
+1. To run the current cell and create a new one below: `<CTRL+S>` or `<CMD+S>`
+1. To run all cells with unsaved changes: `<CTRL+S>` or `<CMD+S>`
+	""",
+	html"<h2hide>Multiple lines of code in a cell</h2hide>",
+	md"""
+To put multple lines of code in a single cell in Pluto, wrap with `begin` and `end`:
+```julia
+begin
+	x = 10
+	y = x^2
+end
+```""",
+	html"<h2hide>Locally scoped cells</h2hide>",
+	md"""
+Use Julia's `let` block to create locally scoped variables:
+```julia
+ℓ = let d = get_depth(sys)
+	p = NominalTrajectoryDistribution(sys, d)
+	τ = rollout(sys, d)
+	logpdf(p, τ)
+end
+```
+The last line of code in the `let` block will be returned and assigned to the globally scoped `ℓ` variable in this case.
+
+This way, you can reuse variable names such as `τ` without affecting other cells that may also use that name in global scope.
+
+You could also just define a new function:
+```julia
+function my_test(sys)
+	d = get_depth(sys)
+	p = NominalTrajectoryDistribution(sys, d)
+	τ = rollout(sys, d)
+	return logpdf(p, τ)
+end
+
+ℓ = my_test(sys)
+```
+	""",
+	html"<h2hide>Suppress cell output</h2hide>",
+	md"""
+To suppress the Pluto output of a cell, add a semicolon `;` at the end.
+```julia
+x = 10;
+```
+or
+```julia
+begin
+	x = 10
+	y = x^2
+end;
+```
+""",
+	html"<h2hide>Underscore as digit separator</h2hide>",
+	md"""
+You can use the underscore `_` as a convenient digit separator:
+```julia
+1000000 == 1_000_000 # true
+100000 == 100_000 # true
+10000 == 10_000 # true
+1000 == 1_000 # true
+```
+[Link to Julia docs](https://docs.julialang.org/en/v1/manual/integers-and-floating-point-numbers/#:~:text=The%20underscore).
+""",
+	html"<h2hide>Unicode symbols</h2hide>",
+	md"""
+You can use Unicode—and even emojis 🙃—as variable and function names. Here are some common ones we use throughout this course:
+
+| Unicode | Code |
+|:-------:|:----:|
+| `τ` | `\tab` |
+| `ψ` | `\psi` |
+| `ℓ` | `\ell` |
+| `π` | `\pi` |
+| `σ` | `\sigma` |
+| `Σ` | `\Sigma` |
+| `θ` | `\theta` |
+| `ω` | `\omega` |
+| `²` | `\^2` |
+| `₂` | `\_2` |
+| `🍕` | `\:pizza:` |
+
+To enter them into cells, type the above "**Code**" and hit `<TAB><TAB>` (or `<TAB><ENTER>`). Feel free to use any Unicode/emojis to your hearts desire.
+
+See the Julia docs for more examples: [https://docs.julialang.org/en/v1/manual/unicode-input/](https://docs.julialang.org/en/v1/manual/unicode-input/)
+"""
+])
 
 # ╔═╡ 18754cc6-c089-4245-ad10-2848594e49b4
 html_expand("Expand for useful interface functions.", [
@@ -3825,9 +3838,11 @@ version = "1.4.1+1"
 # ╟─9f739929-1cd3-4935-b229-ae3aeac7e131
 # ╟─59d6307b-898d-477e-bdd4-06f8fec7bc0b
 # ╟─0c520f93-49ce-45eb-899d-a31105d856c8
+# ╟─1856feca-1ca5-4612-85ef-cb10829342f9
+# ╟─0456a732-2672-4108-a241-db9ae879a913
 # ╟─6e8ab7c9-fb49-4d89-946d-c7d7588c199a
 # ╟─fe044059-9102-4e7f-9888-d9f03eec69ff
-# ╟─0456a732-2672-4108-a241-db9ae879a913
+# ╟─a21612a1-1092-4892-9132-629833e7c867
 # ╟─ec776b30-6a30-4643-a22c-e071a365d50b
 # ╟─18754cc6-c089-4245-ad10-2848594e49b4
 # ╟─d566993e-587d-4aa3-995b-eb955dec5758
