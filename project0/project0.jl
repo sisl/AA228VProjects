@@ -41,6 +41,34 @@ end
 # ╔═╡ 8f08e006-2d70-4173-a02e-267e8486f5c8
 using StanfordAA228V
 
+# ╔═╡ f53306f6-1072-40ae-bf65-1927e5eae088
+md"""
+# Project 0: Falsification introduction
+_A light-weight introduction to falsification._
+
+**Task**: Simply count the number of failures for a 1D Gaussian environment.
+- Write a function `num_failures(sys, ψ; m)` that given a system and specification, returns the number of failures over `m` rollouts.
+"""
+
+# ╔═╡ 2eec992f-0581-4b7b-a14f-ad119c230ae2
+Markdown.MD(@mdx("### Submission"),
+Markdown.parse("""
+Once completed, you will submit **this file** (`project0.jl`) to Gradescope.
+
+The directory of the notebook is located here:"""),
+md"""
+- $(@bind directory_trigger OpenDirectory(@__DIR__))
+    - ↑ Click to open directory.""",
+md"""
+If you encounter issues, [please ask us on Ed](https://edstem.org/us/courses/69226/discussion).
+""")
+
+# ╔═╡ a3ce3d69-83f0-4ab3-b579-827d793b511e
+if directory_trigger
+	@info "Opening local directory..."
+	sleep(1)
+end
+
 # ╔═╡ 17fa8557-9656-4347-9d44-213fd3b635a6
 Markdown.parse("""
 ## System
@@ -110,11 +138,17 @@ isfailure(ψ::Specification, τ) = !evaluate(ψ, τ)
 ```
 """
 
+# ╔═╡ ea2f1380-6071-4a20-9b87-daf7d2b7ee33
+html_half_space()
+
 # ╔═╡ 86db41bf-c699-426c-a026-971b79dc0e2c
 md"""
 # 👩‍💻 **Task**: Count the number of failures
 Please fill in the following `num_failures` function.
 """
+
+# ╔═╡ ddc8031f-fd06-4189-b00d-70f930998db4
+start_code()
 
 # ╔═╡ 4e96d96e-d2c3-4780-8e4d-fbe31503574e
 md"""
@@ -132,6 +166,12 @@ function num_failures(sys, ψ; m=1000)
 	# TODO: WRITE YOUR CODE HERE
 end
 
+# ╔═╡ 651313a4-2766-49dd-8737-475ed80079e2
+end_code()
+
+# ╔═╡ c683b6a8-0c0f-4232-b914-a70f3e2b06e8
+html_half_space()
+
 # ╔═╡ 873c99d8-ebd8-4ce3-92ca-6975c713fc8b
 md"""
 ## Example usage of `num_failures`
@@ -140,6 +180,12 @@ Example usage with `m=1000` number of rollouts.
 
 # ╔═╡ a6e52a4e-6e75-4ae0-9e3a-cc82f9ad6b2b
 num_failures(sys, ψ; m=1000)
+
+# ╔═╡ bfc1779c-5ce8-47f5-be65-e4e74f2071cf
+hint(md"Can you write the `num_failures` function in one line of code? (Not required)"; title="Feeling adventurous?")
+
+# ╔═╡ eee07ddd-ee38-4a22-8807-3afcf46ad00d
+html_quarter_space()
 
 # ╔═╡ 2827a6f3-47b6-4e6f-b6ae-63271715d1f3
 Markdown.parse("""
@@ -155,11 +201,8 @@ Markdown.parse("""
 Run two tests, controlling the RNG seed for deterministic outputs.
 """)
 
-# ╔═╡ cee165f0-049f-4ea3-8f19-04e66947a397
-html"""
-<h3>Check tests</h3>
-<p>If the following test indicator is <span style='color:#759466'><b>green</b></span>, you can submit <code>project0.jl</code> (this file) to Gradescope.</p>
-"""
+# ╔═╡ 3edcc3a0-6574-4784-8698-8cec43932935
+
 
 # ╔═╡ ba6c082b-6e62-42fc-a85c-c8b7efc89b88
 # ╠═╡ show_logs = false
@@ -178,168 +221,12 @@ begin
 		@warn err
 	end
 	𝑡𝑟𝑖𝑔𝑔𝑒𝑟 = true
+	global SEED = sum(Int.(collect("AA228V"))) # Cheeky seed value :)
 	md"""
 	# Backend
 	_Helper functions and project management._
 	"""
 end
-
-# ╔═╡ 956603a8-5a5f-41b8-ba52-b0a678433342
-𝑓 = UsingThisViolatesTheHonorCode.num_failures_test; 𝑡𝑟𝑖𝑔𝑔𝑒𝑟;
-
-# ╔═╡ c151fc99-af4c-46ae-b55e-f50ba21f1f1c
-begin
-	start_code() = HTML("""
-	<div class='container'><div class='line'></div><span class='text' style='color:#B1040E'><b><code>&lt;START CODE&gt;</code></b></span><div class='line'></div></div>
-	<p> </p>
-	<!-- START_CODE -->
-	""")
-
-	end_code() = html"""
-	<!-- END CODE -->
-	<p><div class='container'><div class='line'></div><span class='text' style='color:#B1040E'><b><code>&lt;END CODE&gt;</code></b></span><div class='line'></div></div></p>
-	"""
-
-	function info(text; title="Information")
-		return Markdown.MD(Markdown.Admonition("info", title, [text]))
-	end
-
-	function hint(text; title="Hint")
-		return Markdown.MD(Markdown.Admonition("hint", title, [text]))
-	end
-
-	function almost(text=md"""
-		Please modify the `num_failures` function (currently returning `nothing`, which is the default).
-
-		(Please only submit when this is **green**.)
-		""")
-		return Markdown.MD(Markdown.Admonition("warning", "Warning!", [text]))
-	end
-
-	function keep_working()
-		text = md"""
-		The answers are not quite right.
-
-		(Please only submit when this is **green**.)
-		"""
-		return Markdown.MD(Markdown.Admonition("danger", "Keep working on it!", [text]))
-	end
-
-	function correct(text=md"""
-		All tests have passed, you're done with Project 0!
-
-		Please submit `project0.jl` (this file) to Gradescope.
-
-		**📩 Please see the [Submission](#submission) section at the top of the page.**"""; title="Tests passed!")
-		return Markdown.MD(Markdown.Admonition("correct", title, [text]))
-	end
-
-	html_space() = html"<br><br><br><br><br><br><br><br><br><br><br><br><br><br>"
-	html_half_space() = html"<br><br><br><br><br><br><br>"
-	html_quarter_space() = html"<br><br><br>"
-
-	global SEED = sum(Int.(collect("AA228V"))) # Cheeky seed value :)
-
-	Bonds = PlutoUI.BuiltinsNotebook.AbstractPlutoDingetjes.Bonds
-
-	struct DarkModeIndicator
-		default::Bool
-	end
-
-	DarkModeIndicator(; default::Bool=false) = DarkModeIndicator(default)
-
-	function Base.show(io::IO, ::MIME"text/html", link::DarkModeIndicator)
-		print(io, """
-			<span>
-			<script>
-				const span = currentScript.parentElement
-				span.value = window.matchMedia('(prefers-color-scheme: dark)').matches
-			</script>
-			</span>
-		""")
-	end
-
-	Base.get(checkbox::DarkModeIndicator) = checkbox.default
-	Bonds.initial_value(b::DarkModeIndicator) = b.default
-	Bonds.possible_values(b::DarkModeIndicator) = [false, true]
-	Bonds.validate_value(b::DarkModeIndicator, val) = val isa Bool
-
-	struct OpenDirectory
-		default::Bool
-		text
-	end
-
-	OpenDirectory(;default::Bool=false, text="Link") = OpenDirectory(default, text)
-	OpenDirectory(text="Link"; default::Bool=false) = OpenDirectory(default, text)
-
-	function Base.show(io::IO, ::MIME"text/html", link::OpenDirectory)
-		print(io, """
-			<span>
-			<code><a href='#;'>$(link.text)</a></code>
-			<script>
-
-				// Select elements relative to `currentScript`
-				const span = currentScript.parentElement
-				const link = span.querySelector("a")
-
-				link.addEventListener("click", (e) => {
-					span.value = true
-					span.dispatchEvent(new CustomEvent("input"))
-					span.value = false
-					span.dispatchEvent(new CustomEvent("input"))
-					e.preventDefault()
-				})
-
-				// Set the initial value
-				span.value = false
-
-			</script>
-			</span>""")
-	end
-
-	Base.get(checkbox::OpenDirectory) = checkbox.default
-	Bonds.initial_value(b::OpenDirectory) = b.default
-	Bonds.possible_values(b::OpenDirectory) = [false, true]
-	Bonds.validate_value(b::OpenDirectory, val) = val isa Bool
-
-	this_dir = @__DIR__
-
-	md"> _Helper functions and variables._"
-end
-
-# ╔═╡ 2eec992f-0581-4b7b-a14f-ad119c230ae2
-Markdown.MD(@mdx("### Submission"),
-Markdown.parse("""
-Once completed, you will submit **this file** (`project0.jl`) to Gradescope.
-
-The directory of the notebook is located here:"""),
-md"""
-- $(@bind directory_trigger OpenDirectory(this_dir))
-    - ↑ Click to open directory.""",
-md"""
-If you encounter issues, [please ask us on Ed](https://edstem.org/us/courses/69226/discussion).
-""")
-
-# ╔═╡ a3ce3d69-83f0-4ab3-b579-827d793b511e
-if directory_trigger
-	@info "Opening local directory..."
-	sleep(1)
-end
-
-# ╔═╡ ea2f1380-6071-4a20-9b87-daf7d2b7ee33
-html_half_space()
-
-# ╔═╡ ddc8031f-fd06-4189-b00d-70f930998db4
-start_code()
-
-# ╔═╡ 651313a4-2766-49dd-8737-475ed80079e2
-end_code()
-
-# ╔═╡ c683b6a8-0c0f-4232-b914-a70f3e2b06e8
-html_half_space()
-
-# ╔═╡ bfc1779c-5ce8-47f5-be65-e4e74f2071cf
-hint(md"Can you write the `num_failures` function in one line of code? (Not required)"; title="Feeling adventurous?")
 
 # ╔═╡ 83884eb4-6718-455c-b731-342471325326
 function run_project0_test(num_failures::Function; m=1000, seed=SEED)
@@ -391,11 +278,15 @@ else
 	md"*Update `num_failures` to get an estimated failure probability for test 2.*"
 end
 
+# ╔═╡ 956603a8-5a5f-41b8-ba52-b0a678433342
+𝑓 = UsingThisViolatesTheHonorCode.num_failures_test; 𝑡𝑟𝑖𝑔𝑔𝑒𝑟;
+
 # ╔═╡ 6302729f-b34a-4a18-921b-d194fe834208
 begin
 	# ⚠️ Note: PLEASE DO NOT MODIFY. Why are you in here anyhow :)?
 
 	if isnothing(test1_output) && isnothing(test1_output)
+		test1_passed = test2_passed = false
 		almost()
 	else
 		test1_passed = test1_output == run_project0_test(𝑓; m=test1_m, seed=SEED)
@@ -408,97 +299,46 @@ begin
 	end
 end
 
+# ╔═╡ cee165f0-049f-4ea3-8f19-04e66947a397
+HTML("""
+<h3>$(test1_passed && test2_passed ? "✔️" : "❌") Check tests</h3>
+<p>If the following test indicator is <span style='color:#759466'><b>green</b></span>, you can submit <code>project0.jl</code> (this file) to Gradescope.</p>
+""")
+
 # ╔═╡ 8461e634-8830-477c-99c8-894dea63d5ce
 begin
 	if !ismissing(directory_trigger) && directory_trigger
 		try
 			if Sys.iswindows()
-				run(`explorer $(abspath(this_dir))`)
+				run(`explorer $(abspath(@__DIR__))`)
 			elseif Sys.isapple()
-				run(`open $(abspath(this_dir))`)
+				run(`open $(abspath(@__DIR__))`)
 			elseif Sys.islinux()
-				run(`xdg-open $(abspath(this_dir))`)
+				run(`xdg-open $(abspath(@__DIR__))`)
 			end
 		catch end
 	end
 end; md"> _Helper for opening local directories._"
 
-# ╔═╡ 0039e38b-37cc-47c4-bf3d-aa86a281f150
-function get_version(pkg::Module)
-	pkgname = string(pkg)
-	deps = Pkg.dependencies()
-	for (uuid, info) in deps
-		if info.name == pkgname
-			return info.version
-		end
-	end
-	return missing
-end
-
-# ╔═╡ 9fa9453a-4d98-4105-aac2-2996cfd07aa8
-function validate_version(pkg::Module)
-	if haskey(ENV, "JL_SKIP_228V_UPDATE_CHECK")
-		# Skip for Gradescope
-		return true
-	else
-		pkgname = string(pkg)
-		current_version = string(get_version(pkg))
-		local latest_version
-	
-		try
-			for reg in Pkg.Registry.reachable_registries()
-			    for (uuid, pkgdata) in reg.pkgs
-					if pkgdata.name == pkgname
-						path = joinpath(reg.path, pkgdata.path)
-						package_toml = TOML.parsefile(joinpath(path, "Package.toml"))
-						repo = package_toml["repo"]
-						repo = replace(repo, "git@github.com:"=>"https://github.com/")
-						github_path = replace(repo, "https://github.com/"=>"")
-						github_path = replace(github_path, ".git"=>"")
-						branch = match(r"refs/heads/(\w+)", readchomp(`git ls-remote --symref $repo HEAD`)).captures[1]
-						raw_url = "https://raw.githubusercontent.com/$github_path/refs/heads/$branch/Project.toml"
-						github_toml = TOML.parse(read(Downloads.download(raw_url), String))
-						latest_version = github_toml["version"]
-						break
-			        end
-			    end
-			end
-			return current_version == latest_version
-		catch err
-			return true
-		end
-	end
-end
+# ╔═╡ ef084fea-bf4d-48d9-9c84-8cc1dd98f2d7
+Markdown.MD(TableOfContents(), md"> _Table of contents._")
 
 # ╔═╡ a6931d1e-08ad-4592-a54c-fd76cdc51294
-@bind dark_mode DarkModeIndicator()
+Markdown.MD(md"$(@bind dark_mode DarkModeIndicator())", md"> _Dark mode indicator._")
 
-# ╔═╡ f53306f6-1072-40ae-bf65-1927e5eae088
-begin
-	global update_md = Markdown.parse("")
-	try
-		if !validate_version(StanfordAA228V)
-			global update_md = Markdown.MD(
-				almost(md"""
-				Your `StanfordAA228V` package is out-of-date. Please update it via the instructions below.
+# ╔═╡ 28504aea-ee04-4b70-a067-a450d8d6374f
+try
+	if !validate_version(StanfordAA228V)
+		Markdown.MD(
+			almost(md"""
+			Your `StanfordAA228V` package is out-of-date. Please update it via the instructions below.
 
-				**Then restart the notebook.**
+			**Then restart the notebook.**
 
-				_(This warning may persist after restart, wait until the notebook finishes loading entirely)_"""),				md"""$(LocalResource(joinpath(@__DIR__, "..", "media", dark_mode ? "update-package-dark.gif" : "update-package.gif")))"""
-			)
-		end
-	catch err
-		rethrow(err)
+			_(This warning may persist after restart, wait until the notebook finishes loading entirely)_"""),				md"""$(LocalResource(joinpath(@__DIR__, "..", "media", dark_mode ? "update-package-dark.gif" : "update-package.gif")))"""
+		)
 	end
-
-Markdown.MD(update_md, md"""
-# Project 0: Falsification introduction
-_A light-weight introduction to falsification._
-
-**Task**: Simply count the number of failures for a 1D Gaussian environment.
-- Write a function `num_failures(sys, ψ; m)` that given a system and specification, returns the number of failures over `m` rollouts.
-""")
-end
+catch end
 
 # ╔═╡ 0cdadb29-9fcd-4a70-9937-c24f07ce4657
 begin
@@ -555,11 +395,8 @@ begin
 	vline!([ψ.formula.ϕ.c], color="crimson", label="Failure threshold")
 end
 
-# ╔═╡ ef084fea-bf4d-48d9-9c84-8cc1dd98f2d7
-TableOfContents()
-
 # ╔═╡ c9c45286-58a4-40e6-b2a4-d828e627c6ec
-html"""
+Markdown.MD(html"""
 <style>
 	h3 {
 		border-bottom: 1px dotted var(--rule-color);
@@ -582,7 +419,7 @@ html"""
       margin: 0 5px;
       white-space: nowrap; /* Prevents text from wrapping */
     }
-</style>"""
+</style>""", md"> _Notebook styling._")
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
@@ -604,7 +441,7 @@ Distributions = "~0.25.113"
 MarkdownLiteral = "~0.1.1"
 Plots = "~1.40.9"
 PlutoUI = "~0.7.60"
-StanfordAA228V = "~0.1.9"
+StanfordAA228V = "~0.1.12"
 """
 
 # ╔═╡ 00000000-0000-0000-0000-000000000002
@@ -613,7 +450,7 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.11.2"
 manifest_format = "2.0"
-project_hash = "bd7f620235ed89c396e2a8a02502c2725b9dff0d"
+project_hash = "eed168dfbd594533193939fa594cc54c5c7e07ec"
 
 [[deps.AbstractFFTs]]
 deps = ["LinearAlgebra"]
@@ -690,9 +527,9 @@ version = "1.11.0"
 
 [[deps.Atomix]]
 deps = ["UnsafeAtomics"]
-git-tree-sha1 = "14e254ef74e44cd6ed27fbb751d4e1f9bbf085cc"
+git-tree-sha1 = "c3b238aa28c1bebd4b5ea4988bebf27e9a01b72b"
 uuid = "a9b6321e-bd34-4604-b9c9-b65b8de01458"
-version = "1.0.0"
+version = "1.0.1"
 
     [deps.Atomix.extensions]
     AtomixCUDAExt = "CUDA"
@@ -1111,9 +948,9 @@ version = "1.0.2"
 
 [[deps.HTTP]]
 deps = ["Base64", "CodecZlib", "ConcurrentUtilities", "Dates", "ExceptionUnwrapping", "Logging", "LoggingExtras", "MbedTLS", "NetworkOptions", "OpenSSL", "PrecompileTools", "Random", "SimpleBufferStream", "Sockets", "URIs", "UUIDs"]
-git-tree-sha1 = "6c22309e9a356ac1ebc5c8a217045f9bae6f8d9a"
+git-tree-sha1 = "627fcacdb7cb51dc67f557e1598cdffe4dda386d"
 uuid = "cd3eb016-35fb-5094-929b-558a96fad6f3"
-version = "1.10.13"
+version = "1.10.14"
 
 [[deps.HarfBuzz_jll]]
 deps = ["Artifacts", "Cairo_jll", "Fontconfig_jll", "FreeType2_jll", "Glib_jll", "Graphite2_jll", "JLLWrappers", "Libdl", "Libffi_jll"]
@@ -1191,10 +1028,10 @@ uuid = "aacddb02-875f-59d6-b918-886e6ef4fbf8"
 version = "3.0.4+0"
 
 [[deps.KernelAbstractions]]
-deps = ["Adapt", "Atomix", "InteractiveUtils", "MacroTools", "PrecompileTools", "Requires", "StaticArrays", "UUIDs", "UnsafeAtomics", "UnsafeAtomicsLLVM"]
-git-tree-sha1 = "27044736be7c5727d35fc4318d7949dee33c37b4"
+deps = ["Adapt", "Atomix", "InteractiveUtils", "MacroTools", "PrecompileTools", "Requires", "StaticArrays", "UUIDs"]
+git-tree-sha1 = "b9a838cd3028785ac23822cded5126b3da394d1a"
 uuid = "63c18a36-062a-441e-b654-da1e3ab1ce7c"
-version = "0.9.30"
+version = "0.9.31"
 
     [deps.KernelAbstractions.extensions]
     EnzymeExt = "EnzymeCore"
@@ -1369,9 +1206,9 @@ version = "1.11.0"
 
 [[deps.LogExpFunctions]]
 deps = ["DocStringExtensions", "IrrationalConstants", "LinearAlgebra"]
-git-tree-sha1 = "a2d09619db4e765091ee5c6ffe8872849de0feea"
+git-tree-sha1 = "13ca9e2586b89836fd20cccf56e57e2b9ae7f38f"
 uuid = "2ab3a3ac-af41-5b50-aa03-7779005ae688"
-version = "0.3.28"
+version = "0.3.29"
 
     [deps.LogExpFunctions.extensions]
     LogExpFunctionsChainRulesCoreExt = "ChainRulesCore"
@@ -1821,9 +1658,9 @@ version = "0.1.2"
 
 [[deps.SpecialFunctions]]
 deps = ["IrrationalConstants", "LogExpFunctions", "OpenLibm_jll", "OpenSpecFun_jll"]
-git-tree-sha1 = "2f5d4697f21388cbe1ff299430dd169ef97d7e14"
+git-tree-sha1 = "64cca0c26b4f31ba18f13f6c12af7c85f478cfde"
 uuid = "276daf66-3868-5448-9aa4-cd146d93841b"
-version = "2.4.0"
+version = "2.5.0"
 weakdeps = ["ChainRulesCore"]
 
     [deps.SpecialFunctions.extensions]
@@ -1836,10 +1673,10 @@ uuid = "860ef19b-820b-49d6-a774-d7a799459cd3"
 version = "1.0.2"
 
 [[deps.StanfordAA228V]]
-deps = ["BSON", "Distributions", "ForwardDiff", "GridInterpolations", "LinearAlgebra", "Optim", "Parameters", "Plots", "Pluto", "PlutoUI", "Random", "SignalTemporalLogic", "Statistics"]
-git-tree-sha1 = "cd28ceeb3a1e89d8c1586cba3b9c377da0151733"
+deps = ["AbstractPlutoDingetjes", "BSON", "Base64", "Distributions", "ForwardDiff", "GridInterpolations", "LinearAlgebra", "Markdown", "Optim", "Parameters", "Pkg", "Plots", "Pluto", "PlutoUI", "Random", "SignalTemporalLogic", "Statistics"]
+git-tree-sha1 = "609f4828e5fca463d324a827bcf4bc26e58fdb82"
 uuid = "6f6e590e-f8c2-4a21-9268-94576b9fb3b1"
-version = "0.1.9"
+version = "0.1.12"
 
 [[deps.StaticArrays]]
 deps = ["LinearAlgebra", "PrecompileTools", "Random", "StaticArraysCore"]
@@ -1874,10 +1711,10 @@ uuid = "82ae8749-77ed-4fe6-ae5f-f523153014b0"
 version = "1.7.0"
 
 [[deps.StatsBase]]
-deps = ["DataAPI", "DataStructures", "LinearAlgebra", "LogExpFunctions", "Missings", "Printf", "Random", "SortingAlgorithms", "SparseArrays", "Statistics", "StatsAPI"]
-git-tree-sha1 = "5cf7606d6cef84b543b483848d4ae08ad9832b21"
+deps = ["AliasTables", "DataAPI", "DataStructures", "LinearAlgebra", "LogExpFunctions", "Missings", "Printf", "Random", "SortingAlgorithms", "SparseArrays", "Statistics", "StatsAPI"]
+git-tree-sha1 = "29321314c920c26684834965ec2ce0dacc9cf8e5"
 uuid = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
-version = "0.34.3"
+version = "0.34.4"
 
 [[deps.StatsFuns]]
 deps = ["HypergeometricFunctions", "IrrationalConstants", "LogExpFunctions", "Reexport", "Rmath", "SpecialFunctions"]
@@ -2009,15 +1846,13 @@ uuid = "45397f5d-5981-4c77-b2b3-fc36d6e9b728"
 version = "1.6.4"
 
 [[deps.UnsafeAtomics]]
-git-tree-sha1 = "6331ac3440856ea1988316b46045303bef658278"
+git-tree-sha1 = "b13c4edda90890e5b04ba24e20a310fbe6f249ff"
 uuid = "013be700-e6cd-48c3-b4a1-df204f14c38f"
-version = "0.2.1"
+version = "0.3.0"
+weakdeps = ["LLVM"]
 
-[[deps.UnsafeAtomicsLLVM]]
-deps = ["LLVM", "UnsafeAtomics"]
-git-tree-sha1 = "de4287a6569bcf3a8d6201d387991a8dda25c954"
-uuid = "d80eeb9a-aca5-4d75-85e5-170c8b632249"
-version = "0.2.2"
+    [deps.UnsafeAtomics.extensions]
+    UnsafeAtomicsLLVM = ["LLVM"]
 
 [[deps.Unzip]]
 git-tree-sha1 = "ca0969166a028236229f63514992fc073799bb78"
@@ -2344,6 +2179,7 @@ version = "1.4.1+1"
 """
 
 # ╔═╡ Cell order:
+# ╟─28504aea-ee04-4b70-a067-a450d8d6374f
 # ╠═8f08e006-2d70-4173-a02e-267e8486f5c8
 # ╟─f53306f6-1072-40ae-bf65-1927e5eae088
 # ╟─2eec992f-0581-4b7b-a14f-ad119c230ae2
@@ -2367,6 +2203,7 @@ version = "1.4.1+1"
 # ╟─873c99d8-ebd8-4ce3-92ca-6975c713fc8b
 # ╠═a6e52a4e-6e75-4ae0-9e3a-cc82f9ad6b2b
 # ╟─bfc1779c-5ce8-47f5-be65-e4e74f2071cf
+# ╟─eee07ddd-ee38-4a22-8807-3afcf46ad00d
 # ╟─2827a6f3-47b6-4e6f-b6ae-63271715d1f3
 # ╠═83884eb4-6718-455c-b731-342471325326
 # ╟─4a91853f-9685-47f3-998a-8e0cfce688f8
@@ -2376,17 +2213,15 @@ version = "1.4.1+1"
 # ╟─089581ec-8aff-4c56-9a65-26d394d5eec3
 # ╠═3314f402-10cc-434c-acbc-d38e59e4b846
 # ╟─d72be566-6ad7-4817-8590-a504a699a4da
+# ╟─3edcc3a0-6574-4784-8698-8cec43932935
 # ╟─cee165f0-049f-4ea3-8f19-04e66947a397
 # ╟─6302729f-b34a-4a18-921b-d194fe834208
 # ╟─956603a8-5a5f-41b8-ba52-b0a678433342
 # ╟─ba6c082b-6e62-42fc-a85c-c8b7efc89b88
 # ╟─173388ab-207a-42a6-b364-b2c1cb335f6b
-# ╟─c151fc99-af4c-46ae-b55e-f50ba21f1f1c
 # ╟─8461e634-8830-477c-99c8-894dea63d5ce
-# ╟─0039e38b-37cc-47c4-bf3d-aa86a281f150
-# ╟─9fa9453a-4d98-4105-aac2-2996cfd07aa8
-# ╟─a6931d1e-08ad-4592-a54c-fd76cdc51294
 # ╟─ef084fea-bf4d-48d9-9c84-8cc1dd98f2d7
+# ╟─a6931d1e-08ad-4592-a54c-fd76cdc51294
 # ╟─c9c45286-58a4-40e6-b2a4-d828e627c6ec
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002

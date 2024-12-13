@@ -77,22 +77,7 @@ md"""
 """
 
 # ╔═╡ 0456a732-2672-4108-a241-db9ae879a913
-@bind dark_mode DarkModeIndicator()
 
-# ╔═╡ 6b17139e-6caf-4f07-a607-e403bf1ad794
-try
-	if !validate_version(StanfordAA228V)
-		Markdown.MD(
-			almost(md"""
-			Your `StanfordAA228V` package is out-of-date. Please update it via the instructions below.
-
-			**Then restart the notebook.**
-
-			_(This warning may persist after restart, wait until the notebook finishes loading entirely)_"""),
-			md"""$(LocalResource(joinpath(@__DIR__, "..", "media", dark_mode ? "update-package-dark.gif" : "update-package.gif")))"""
-		)
-	end
-catch end
 
 # ╔═╡ 6e8ab7c9-fb49-4d89-946d-c7d7588c199a
 md"""
@@ -462,105 +447,6 @@ The specification \$\\psi\$ (written `\\psi<TAB>` in code) indicates what the sy
 i.e., "the state \$s\$ in the trajectory \$\\tau\$ should _always_ (\$\\square\$) be greater than \$$(ψ_small.formula.ϕ.c)\$, anything else is a failure."
 """)
 
-# ╔═╡ bb296b6b-b8b3-4892-aeed-a0468374bfe7
-function Plots.plot(sys::SmallSystem, ψ, τ=missing;
-					is_dark_mode=dark_mode, max_points=500, kwargs...)
-	ps = Ps(sys.env)
-
-	plot(
-		bg="transparent",
-		background_color_inside=is_dark_mode ? "black" : "white",
-		bglegend=is_dark_mode ? "black" : "white",
-		fg=is_dark_mode ? "white" : "black",
-		gridalpha=is_dark_mode ? 0.5 : 0.1,
-	)
-
-	# Create a range of x values
-	_X = range(-4, 4, length=1000)
-	_Y = pdf.(ps, _X)
-
-	# Plot the Gaussian density
-	plot!(_X, _Y,
-	     xlim=(-4, 4),
-	     ylim=(-0.001, 0.41),
-	     linecolor=is_dark_mode ? "white" : "black",
-		 fillcolor=is_dark_mode ? "darkgray" : "lightgray",
-		 fill=true,
-	     xlabel="state \$s\$",
-	     ylabel="density \$p(s)\$",
-	     size=(600, 300),
-	     label=false)
-
-	# Identify the indices where x ≤ c or x ≥ c
-	c = ψ.formula.ϕ.c
-	
-	if ψ.formula.ϕ isa StanfordAA228V.Predicate
-		idx = _X .≤ c
-	else
-		idx = _X .≥ c
-	end
-
-	# Extract the x and y values for the region to fill
-	x_fill = _X[idx]
-	y_fill = _Y[idx]
-
-	# Create the coordinates for the filled polygon
-	# Start with the x and y values where x <= -2
-	# Then add the same x values in reverse with y = 0 to close the polygon
-	polygon_x = vcat(x_fill, reverse(x_fill))
-	polygon_y = vcat(y_fill, zeros(length(y_fill)))
-
-	# Add the filled area to the plot
-	plot!(polygon_x, polygon_y,
-	      fill=true,
-	      fillcolor="crimson",
-	      linecolor="transparent", # No border for the filled area
-		  alpha=0.5,
-	      label=false)
-
-	# Draw failure threshold
-	vline!([c];
-		   color="crimson", legend=:topleft, label="Failure threshold")
-
-	if !ismissing(τ)
-		count_plotted_succeses = 0
-		count_plotted_failures = 0
-		function plot_point!(τᵢ)
-			if isfailure(ψ, τᵢ) && count_plotted_failures == 0
-				label = "Failure state"
-				count_plotted_failures += 1
-			elseif !isfailure(ψ, τᵢ) && count_plotted_succeses == 0
-				label = "Succes state"
-				count_plotted_succeses += 1
-			else
-				label = false
-			end
-			color = isfailure(ψ, τᵢ) ? "black" : "#009E73"
-			τₓ = τᵢ[1].s[1]
-			scatter!([τₓ], [pdf(ps, τₓ)], color=color, msc="white", m=:circle, label=label)
-		end
-
-		if τ isa Vector{<:Vector}
-			# Multiple rollouts
-			success_points = 0
-			for τᵢ in τ
-				is_fail = isfailure(ψ, τᵢ)
-				if is_fail
-					plot_point!(τᵢ)
-				elseif success_points ≤ max_points
-					success_points += 1
-					plot_point!(τᵢ)
-				end
-			end
-		elseif τ isa Vector
-			# Single rollout
-			plot_point!(τ)
-		end
-	end
-
-	return plot!()
-end; md"`plot(sys::SmallSystem, ψ, τ)`"
-
 # ╔═╡ 166bd412-d433-4dc9-b874-7359108c0a8b
 Markdown.parse("""
 A failure is unlikely given that the probability of failure is:
@@ -669,15 +555,6 @@ The medium system is a swinging inverted pendulum.
 
 """
 
-# ╔═╡ daada216-11d4-4f8b-807c-d347130a3928
-try
-	if dark_mode
-		LocalResource(joinpath(@__DIR__, "..", "media", "inverted_pendulum_dark.svg"))
-	else
-		LocalResource(joinpath(@__DIR__, "..", "media", "inverted_pendulum.svg"))
-	end
-catch end
-
 # ╔═╡ d18c2105-c2af-4dda-8388-617aa816a567
 Markdown.parse("""
 ## Medium system
@@ -715,57 +592,6 @@ md"""
 ## Medium example rollouts
 Example rollouts of the pendulum system and their plot below.
 """
-
-# ╔═╡ 521b0ca1-8129-439f-8266-bbdc0da23337
-function Plots.plot(sys::MediumSystem, ψ, τ=missing;
-                    is_dark_mode=dark_mode,
-					title="Inverted Pendulum",
-					max_lines=100, size=(680,350), kwargs...)
-	plot(
-		size=size,
-		grid=false,
-		bg="transparent",
-		background_color_inside=is_dark_mode ? "#1A1A1A" : "white",
-		fg=is_dark_mode ? "white" : "black",
-	)
-
-	plot!(rectangle(2, 1, 0, π/4), opacity=0.5, color="#F5615C", label=false)
-	plot!(rectangle(2, 1, 0, -π/4-1), opacity=0.5, color="#F5615C", label=false)
-	xlabel!("Time (s)")
-	ylabel!("𝜃 (rad)")
-	title!(title)
-	xlims!(0, 2)
-	ylims!(-1.2, 1.2)
-	set_aspect_ratio!()
-
-	function plot_pendulum_traj!(τ; lw=2, α=1, color="#009E73")
-		X = range(0, step=sys.env.dt, length=length(τ))
-		plot!(X, [step.s[1] for step in τ]; lw, color, α, label=false)
-	end
-
-	if τ isa Vector{<:Vector}
-		# Multiple trajectories
-		τ_successes = filter(τᵢ->!isfailure(ψ, τᵢ), τ)
-		τ_failures = filter(τᵢ->isfailure(ψ, τᵢ), τ)
-		for (i,τᵢ) in enumerate(τ_successes)
-			if i > max_lines
-				break
-			else
-				plot_pendulum_traj!(τᵢ; lw=1, α=0.25, color="#009E73")
-			end
-		end
-
-		for τᵢ in τ_failures
-			plot_pendulum_traj!(τᵢ; lw=2, α=1, color="#F5615C")
-		end
-	elseif τ isa Vector
-		# Single trajectory
-		get_color(ψ, τ) = isfailure(ψ, τ) ? "#F5615C" : "#009E73"
-		plot_pendulum_traj!(τ; lw=2, color=get_color(ψ, τ))
-	end
-
-	return plot!()
-end; md"`plot(sys::MediumSystem, ψ, τ)`"
 
 # ╔═╡ f005da72-d7b5-4f01-8882-ed4e2bdcf4bd
 n_baseline_medium = 41_000
@@ -1126,6 +952,477 @@ i.e., "the absolute valued relative altitude $h$ (first element of the state $s$
 # ╔═╡ 258e14c4-9a2d-4515-9a8f-8cd96f31a6ff
 ψ_large = LTLSpecification(@formula □(41:41, s->abs(s[1]) > 50));
 
+# ╔═╡ 3328d818-391a-440a-8f1b-f2b7f3e00958
+n_baseline_large = 410_000
+
+# ╔═╡ 35434537-9b9c-4528-b58c-420d01813598
+baseline_details(sys_large; n_baseline=n_baseline_large, descr="CAS")
+
+# ╔═╡ 06b14338-ea3b-45c8-bf6c-28b82db2ea70
+baseline_large_results = run_baseline(sys_large, ψ_large; n=n_baseline_large);
+
+# ╔═╡ 204feed7-cde8-40a8-b6b5-051a1c768fd9
+Markdown.parse("""
+\$\$\\begin{gather}
+\\ell_\\text{baseline} = $(round(baseline_large_results.ℓ; digits=3))\\tag{failure log-likelihood} \\\\
+n_\\text{steps} = $(format(baseline_large_results.n; latex=true)) \\tag{number of \\texttt{step} calls \$d\\times m\$}
+\\end{gather}\$\$
+""")
+
+# ╔═╡ e3d6fdf1-3a9e-446b-8482-49d6f64b652e
+html_quarter_space()
+
+# ╔═╡ 23fd490a-74d2-44b4-8a12-ea1460d95f85
+Markdown.parse("""
+## ⟶ **Task (Large)**: Most-likely failure
+Please fill in the following `most_likely_failure` function.
+""")
+
+# ╔═╡ 18a70925-3c2a-4317-8bbc-c2a096ec56d0
+start_code()
+
+# ╔═╡ 45c79345-89da-498c-9a98-2ad55a0a6114
+Markdown.parse("""
+	most_likely_failure(sys::LargeSystem, ψ; n)::Vector{NamedTuple}
+
+A function that takes in a system `sys` (collision avoidance system for the _large_ setting) and a specification `ψ` and **returns the trajectory that led to the most-likely failure**.
+
+- `n` = number of `step` calls allotted (\$n = $(format(max_steps(sys_large); latex=true))\$ for `$(system_name(sys_large))`)
+
+**Note**: `ψ` is written as `\\psi<TAB>`
+""")
+
+# ╔═╡ 3471a623-16af-481a-8f66-5bd1e7890188
+@large function most_likely_failure(sys::LargeSystem, ψ; n=max_steps(sys))
+	# TODO: WRITE YOUR CODE HERE
+end
+
+# ╔═╡ 4c5210d6-598f-4167-a6ee-93bceda7223b
+end_code()
+
+# ╔═╡ 2ba2d3a2-3f6c-4d5f-8c45-8d00947f6e05
+html_quarter_space()
+
+# ╔═╡ ea2d7eb7-d576-415c-ac4c-fea7f90de637
+md"""
+# 📊 Large Test
+We'll automatically test your `most_likely_failure(::LargeSystem, ψ)` function below.
+"""
+
+# ╔═╡ 7fe1c3d7-469c-47d9-9d46-e5b8b263edb9
+Markdown.MD(
+	md"""
+$(@bind rerun_large LargeCheckBox(text="⟵ Click to re-run the <code>LargeSystem</code> evaluation."))""",
+	Markdown.parse("""
+	↑ This will re-run **`most_likely_failure(::LargeSystem, ψ)`** and re-save **`$(get_filename(sys_large))`**
+
+	_Uncheck this to load results from the file._
+	""")
+)
+
+# ╔═╡ f6eb6d1a-a9a0-4234-8699-269a92f666c0
+begin
+	τ_large, log_large, pass_large = rerun(sys_large, ψ_large;
+										   f=most_likely_failure_large,
+										   run=rerun_large)
+	log_large
+end
+
+# ╔═╡ 7c473630-6555-4ada-85f3-0d40aefe6370
+Markdown.parse("""
+## $(pass_large ? "✔️" : "✖️") Graded large test ($(pass_large ? "$(Project1.points_large)/$(Project1.points_large)" : "0/$(Project1.points_large)") points)
+""")
+
+# ╔═╡ 74aeca7b-0658-427f-8c02-d093a0d725ee
+html_half_space()
+
+# ╔═╡ dbd088d1-f4c9-4e6a-b280-960b06da76e4
+Markdown.MD(Markdown.parse("# $(all([pass_small, pass_medium, pass_large]) ? "✅" : "❌") Final Check"),
+@mdx("""If the following test indicator is <span style='color:#759466'><b>green</b></span>, you can submit to Gradescope."""))
+
+# ╔═╡ 1bb92755-65e3-457e-84cd-252eae5e4d7e
+if all([pass_small, pass_medium, pass_large])
+	correct(Markdown.MD(md"""
+All tests have passed, **_you're done with Project 1!_**""",
+@mdx("""
+|  System  |  Passed?  |  Points  |
+| :------: | :-------: | :------: |
+| Small | $(pass_small ? HTML("<span style='color:#759466'><b>Passed!</b></span>") : HTML("<span style='color:#B83A4B'><b>Failed.</b></span>")) | $(pass_small ? "$(Project1.points_small)/$(Project1.points_small)" : "0/$(Project1.points_small)") |
+| Medium | $(pass_medium ? HTML("<span style='color:#759466'><b>Passed!</b></span>") : HTML("<span style='color:#B83A4B'><b>Failed.</b></span>")) | $(pass_medium ? "$(Project1.points_medium)/$(Project1.points_medium)" : "0/$(Project1.points_medium)") |
+| Large | $(pass_large ? HTML("<span style='color:#759466'><b>Passed!</b></span>") : HTML("<span style='color:#B83A4B'><b>Failed.</b></span>")) | $(pass_large ? "$(Project1.points_large)/$(Project1.points_large)" : "0/$(Project1.points_large)") |
+"""),
+md"""
+**📩 Please see the [Submission](#submission) section at the top of the page.**
+"""))
+else
+	almost(Markdown.MD(md"**_Some tests have failed:_**", @mdx("""
+|  System  |  Passed?  | Points |
+| :------: | :-------: | :----: |
+| Small | $(pass_small ? HTML("<span style='color:#759466'><b>Passed!</b></span>") : HTML("<span style='color:#B83A4B'><b>Failed.</b></span>")) | $(pass_small ? "$(Project1.points_small)/$(Project1.points_small)" : "0/$(Project1.points_small)") |
+| Medium | $(pass_medium ? HTML("<span style='color:#759466'><b>Passed!</b></span>") : HTML("<span style='color:#B83A4B'><b>Failed.</b></span>")) | $(pass_medium ? "$(Project1.points_medium)/$(Project1.points_medium)" : "0/$(Project1.points_medium)") |
+| Large | $(pass_large ? HTML("<span style='color:#759466'><b>Passed!</b></span>") : HTML("<span style='color:#B83A4B'><b>Failed.</b></span>")) | $(pass_large ? "$(Project1.points_large)/$(Project1.points_large)" : "0/$(Project1.points_large)") |
+"""),
+md"""
+_Please fix the above failing tests before submission._
+
+_You may partially submit individual `.val` files to Gradescope, you have unlimited Gradescope submissions until the deadline. But please make sure to submit all **three** `.val` files once complete._"""))
+end
+
+# ╔═╡ 6d5c805b-330c-4b04-a51c-15e674352b1b
+html_quarter_space()
+
+# ╔═╡ 860ec509-3a86-4842-9471-6b1a0b8f366d
+md"""
+## Comparing likelihoods
+Since the likelihoods across the three problems vary widely in range, we compute the log-likelihoods of your trajectories and take the difference of logs between the _most-likely trajectory_ (i.e., the mean trajectory $\tau_\text{mean}$). The most-likely trajectory is simply the trajectory rolled-out with the mean initial state and mean disturbances.
+
+The score for problem $k$ is then computed as:
+
+$$\begin{gather}
+\text{score}_k = \log \left( \frac{p(\tau)}{p(\tau_\text{mean})} \right) = \log p(\tau) - \log p(\tau_\text{mean})
+\end{gather}$$
+
+_The maximum possible score is $0$ (but is impossible as the mean trajectories are not failures for these systems)._
+"""
+
+# ╔═╡ 54741d81-39e0-4a47-b84d-c41c8eb7611b
+function score(sys::System, τ)
+	ps = NominalTrajectoryDistribution(sys, get_depth(sys))
+	τ_mean = mean_rollout(sys, ps)
+	ℓ_mean = logpdf(ps, τ_mean)
+	ℓ = logpdf(ps, τ)
+	return ℓ - ℓ_mean
+end
+
+# ╔═╡ 6559cf16-a474-4533-a2c7-ccbc02480a76
+md"""
+Since the small system runs several tests, we take the average score over the tests:
+
+$$\begin{gather}
+\text{score}_\text{small} = \mathbb{E}_i \left[ \log\left( \frac{p(\tau_i)}{p(\tau_\text{mean})} \right) \right]
+\end{gather}$$
+
+To balance out the difficulty, we use weights $\mathbf{w} = [1,2,3]$ (normalized to sum to one):
+
+$$\bar{w_i} = \frac{w_i}{\sum_j w_j}$$
+"""
+
+# ╔═╡ cfdba748-45d5-4eaa-97b3-fdc9fe7e4333
+𝐰 = [1,2,3]
+
+# ╔═╡ 6beda870-0cb0-40f5-9531-fa3e2f7bb020
+md"""
+The final score on the leaderboard is then a weighted sum:
+
+$$\begin{gather}
+\mathbf{s} = \big[\text{score}_\text{small},\, \text{score}_\text{medium},\, \text{score}_\text{large} \big] \\
+\text{score} = \mathbf{w}^\top\mathbf{s}
+\end{gather}$$
+"""
+
+# ╔═╡ 5c3d24f6-0106-444c-b7df-89bba8c01b37
+function leaderboard_scores(systems::Vector{<:System}, τs; 𝐰=ones(length(τs)))
+	score_small = mean(score(systems[1], τ) for τ in τs[1])
+	score_medium = score(systems[2], τs[2])
+	score_large = score(systems[3], τs[3])
+	𝐬 = [score_small, score_medium, score_large]
+	𝐰 = 𝐰 ./ sum(𝐰)
+	return 𝐰'𝐬
+end
+
+# ╔═╡ 4edc5933-9457-4c7c-8456-a26974e0587e
+html_half_space()
+
+# ╔═╡ 95e3d42f-b33f-4294-81c5-f34a300dc9b4
+# This needs to be in the cell above.
+begin
+	𝑡𝑟𝑖𝑔𝑔𝑒𝑟
+	html"""
+	<script>
+	let cell = currentScript.closest('pluto-cell')
+	let id = cell.getAttribute('id')
+	let cells_below = document.querySelectorAll(`pluto-cell[id='${id}'] ~ pluto-cell`)
+	let cell_below_ids = [cells_below[0]].map((el) => el.getAttribute('id'))
+	cell._internal_pluto_actions.set_and_run_multiple(cell_below_ids)
+	</script>
+	"""
+end
+
+# ╔═╡ 247f4c17-bee1-4315-aff9-017407ef9219
+begin
+	if !ismissing(directory_trigger) && directory_trigger
+		try
+			if Sys.iswindows()
+				run(`explorer $(abspath(@__DIR__))`)
+			elseif Sys.isapple()
+				run(`open $(abspath(@__DIR__))`)
+			elseif Sys.islinux()
+				run(`xdg-open $(abspath(@__DIR__))`)
+			end
+		catch end
+	end
+
+	md"> _Helper for opening local directories._"
+end
+
+# ╔═╡ db7d4de5-9166-4e56-b5bc-1356e43286a9
+begin
+	function log_likelihood(sys::System, τ)
+		ps = NominalTrajectoryDistribution(sys, get_depth(sys))
+		ℓ = logpdf(ps, τ)
+		return ℓ
+	end
+
+	rd(x::String) = x
+	rd(x::Number) = round(x; sigdigits=6)
+
+	md"> _Leaderboard helper functions._"
+end
+
+# ╔═╡ d9ab8278-eb76-4a36-aa0e-4ec74704f5e0
+begin
+	global user_score = -Inf	
+	try
+		global user_score = 
+			leaderboard_scores(
+				[sys_small, sys_medium, sys_large],
+				[τs_small, τ_medium, τ_large]; 𝐰=𝐰)
+	catch end
+
+	global 𝔼_logpdf_small = -Inf
+	try
+		global 𝔼_logpdf_small = mean(log_likelihood(sys_small, τ) for τ in τs_small)
+	catch end
+
+	global logpdf_medium = -Inf
+	try
+		global logpdf_medium = log_likelihood(sys_medium, τ_medium)
+	catch end
+
+	global logpdf_large = -Inf
+	try
+		global logpdf_large = log_likelihood(sys_large, τ_large)
+	catch end
+
+	Markdown.parse("""
+# Leaderboard
+If the above tests pass, then you will receive full credit for your submission on Gradescope under the **`"Project 1 (.val files)"`** assignment.
+
+_However_, we have a leaderboard so that students can participate in a friendly competition to find the most-likely failures for each problem.
+	
+## Leaderboard entry
+Your leaderboard entry on Gradescope should look something like this:
+
+| Rank | Submission Name | Score | 𝔼[log 𝑝(small)] | log 𝑝(medium) | log 𝑝(large) |
+| :--: | :-------------: | :---: | :-----------: | :------------: | :-----------: |
+| — | $(guess_username()) | $(rd(user_score)) | $(rd(𝔼_logpdf_small)) | $(rd(logpdf_medium)) | $(rd(logpdf_large)) |
+""")
+end
+
+# ╔═╡ 5a1ed20d-788b-4655-bdd8-069545f48929
+begin
+	function extract(env::SimpleGaussian, input)
+		s = input[1]             # Objective is simply over the initial state
+		𝐱 = [Disturbance(0,0,0)] # No disturbances for the SimpleGaussian
+		return s, 𝐱
+	end
+
+	function extract(env::InvertedPendulum, x)
+		s = x[1:2]
+		𝐱 = [Disturbance(0, 0, x[i:i+1]) for i in 3:2:length(x)]
+		return s, 𝐱
+	end
+
+	function extract(env::CollisionAvoidance, x)
+		s = [x[1], x[2], 0, 40] # [h, ḣ, a_prev, t_col]
+		𝐱 = [Disturbance(0, x[i], 0) for i in 3:length(x)]
+		return s, 𝐱
+	end
+
+	initial_guess(sys::SmallSystem) = [0.0]
+	initial_guess(sys::MediumSystem) = zeros(84)
+	initial_guess(sys::LargeSystem) = [rand(Normal(0,100)), zeros(42)...]
+
+	md"> *Helper `extract` and `initial_guess` functions.*"
+end
+
+# ╔═╡ 6c8b3077-876e-42fd-aa47-f3fa7c37f4dd
+Markdown.MD(md"$(@bind dark_mode DarkModeIndicator())", md"> _Dark mode indicator._")
+
+# ╔═╡ 6b17139e-6caf-4f07-a607-e403bf1ad794
+try
+	if !validate_version(StanfordAA228V)
+		Markdown.MD(
+			almost(md"""
+			Your `StanfordAA228V` package is out-of-date. Please update it via the instructions below.
+
+			**Then restart the notebook.**
+
+			_(This warning may persist after restart, wait until the notebook finishes loading entirely)_"""),
+			md"""$(LocalResource(joinpath(@__DIR__, "..", "media", dark_mode ? "update-package-dark.gif" : "update-package.gif")))"""
+		)
+	end
+catch end
+
+# ╔═╡ bb296b6b-b8b3-4892-aeed-a0468374bfe7
+function Plots.plot(sys::SmallSystem, ψ, τ=missing;
+					is_dark_mode=dark_mode, max_points=500, kwargs...)
+	ps = Ps(sys.env)
+
+	plot(
+		bg="transparent",
+		background_color_inside=is_dark_mode ? "black" : "white",
+		bglegend=is_dark_mode ? "black" : "white",
+		fg=is_dark_mode ? "white" : "black",
+		gridalpha=is_dark_mode ? 0.5 : 0.1,
+	)
+
+	# Create a range of x values
+	_X = range(-4, 4, length=1000)
+	_Y = pdf.(ps, _X)
+
+	# Plot the Gaussian density
+	plot!(_X, _Y,
+	     xlim=(-4, 4),
+	     ylim=(-0.001, 0.41),
+	     linecolor=is_dark_mode ? "white" : "black",
+		 fillcolor=is_dark_mode ? "darkgray" : "lightgray",
+		 fill=true,
+	     xlabel="state \$s\$",
+	     ylabel="density \$p(s)\$",
+	     size=(600, 300),
+	     label=false)
+
+	# Identify the indices where x ≤ c or x ≥ c
+	c = ψ.formula.ϕ.c
+	
+	if ψ.formula.ϕ isa StanfordAA228V.Predicate
+		idx = _X .≤ c
+	else
+		idx = _X .≥ c
+	end
+
+	# Extract the x and y values for the region to fill
+	x_fill = _X[idx]
+	y_fill = _Y[idx]
+
+	# Create the coordinates for the filled polygon
+	# Start with the x and y values where x <= -2
+	# Then add the same x values in reverse with y = 0 to close the polygon
+	polygon_x = vcat(x_fill, reverse(x_fill))
+	polygon_y = vcat(y_fill, zeros(length(y_fill)))
+
+	# Add the filled area to the plot
+	plot!(polygon_x, polygon_y,
+	      fill=true,
+	      fillcolor="crimson",
+	      linecolor="transparent", # No border for the filled area
+		  alpha=0.5,
+	      label=false)
+
+	# Draw failure threshold
+	vline!([c];
+		   color="crimson", legend=:topleft, label="Failure threshold")
+
+	if !ismissing(τ)
+		count_plotted_succeses = 0
+		count_plotted_failures = 0
+		function plot_point!(τᵢ)
+			if isfailure(ψ, τᵢ) && count_plotted_failures == 0
+				label = "Failure state"
+				count_plotted_failures += 1
+			elseif !isfailure(ψ, τᵢ) && count_plotted_succeses == 0
+				label = "Succes state"
+				count_plotted_succeses += 1
+			else
+				label = false
+			end
+			color = isfailure(ψ, τᵢ) ? "black" : "#009E73"
+			τₓ = τᵢ[1].s[1]
+			scatter!([τₓ], [pdf(ps, τₓ)], color=color, msc="white", m=:circle, label=label)
+		end
+
+		if τ isa Vector{<:Vector}
+			# Multiple rollouts
+			success_points = 0
+			for τᵢ in τ
+				is_fail = isfailure(ψ, τᵢ)
+				if is_fail
+					plot_point!(τᵢ)
+				elseif success_points ≤ max_points
+					success_points += 1
+					plot_point!(τᵢ)
+				end
+			end
+		elseif τ isa Vector
+			# Single rollout
+			plot_point!(τ)
+		end
+	end
+
+	return plot!()
+end; md"`plot(sys::SmallSystem, ψ, τ)`"
+
+# ╔═╡ daada216-11d4-4f8b-807c-d347130a3928
+try
+	if dark_mode
+		LocalResource(joinpath(@__DIR__, "..", "media", "inverted_pendulum_dark.svg"))
+	else
+		LocalResource(joinpath(@__DIR__, "..", "media", "inverted_pendulum.svg"))
+	end
+catch end
+
+# ╔═╡ 521b0ca1-8129-439f-8266-bbdc0da23337
+function Plots.plot(sys::MediumSystem, ψ, τ=missing;
+                    is_dark_mode=dark_mode,
+					title="Inverted Pendulum",
+					max_lines=100, size=(680,350), kwargs...)
+	plot(
+		size=size,
+		grid=false,
+		bg="transparent",
+		background_color_inside=is_dark_mode ? "#1A1A1A" : "white",
+		fg=is_dark_mode ? "white" : "black",
+	)
+
+	plot!(rectangle(2, 1, 0, π/4), opacity=0.5, color="#F5615C", label=false)
+	plot!(rectangle(2, 1, 0, -π/4-1), opacity=0.5, color="#F5615C", label=false)
+	xlabel!("Time (s)")
+	ylabel!("𝜃 (rad)")
+	title!(title)
+	xlims!(0, 2)
+	ylims!(-1.2, 1.2)
+	set_aspect_ratio!()
+
+	function plot_pendulum_traj!(τ; lw=2, α=1, color="#009E73")
+		X = range(0, step=sys.env.dt, length=length(τ))
+		plot!(X, [step.s[1] for step in τ]; lw, color, α, label=false)
+	end
+
+	if τ isa Vector{<:Vector}
+		# Multiple trajectories
+		τ_successes = filter(τᵢ->!isfailure(ψ, τᵢ), τ)
+		τ_failures = filter(τᵢ->isfailure(ψ, τᵢ), τ)
+		for (i,τᵢ) in enumerate(τ_successes)
+			if i > max_lines
+				break
+			else
+				plot_pendulum_traj!(τᵢ; lw=1, α=0.25, color="#009E73")
+			end
+		end
+
+		for τᵢ in τ_failures
+			plot_pendulum_traj!(τᵢ; lw=2, α=1, color="#F5615C")
+		end
+	elseif τ isa Vector
+		# Single trajectory
+		get_color(ψ, τ) = isfailure(ψ, τ) ? "#F5615C" : "#009E73"
+		plot_pendulum_traj!(τ; lw=2, color=get_color(ψ, τ))
+	end
+
+	return plot!()
+end; md"`plot(sys::MediumSystem, ψ, τ)`"
+
 # ╔═╡ 15bd7864-bba0-467e-a329-d93d9de79265
 function Plots.plot(sys::LargeSystem, ψ, τ=missing;
 					is_dark_mode=dark_mode,
@@ -1310,207 +1607,11 @@ begin
 	)
 end
 
-# ╔═╡ 3328d818-391a-440a-8f1b-f2b7f3e00958
-n_baseline_large = 410_000
-
-# ╔═╡ 35434537-9b9c-4528-b58c-420d01813598
-baseline_details(sys_large; n_baseline=n_baseline_large, descr="CAS")
-
-# ╔═╡ 06b14338-ea3b-45c8-bf6c-28b82db2ea70
-baseline_large_results = run_baseline(sys_large, ψ_large; n=n_baseline_large);
-
 # ╔═╡ 797cbe41-a5f3-4179-9143-9ef6e6888a4d
 plot(sys_large, ψ_large, baseline_large_results.τs)
 
-# ╔═╡ 204feed7-cde8-40a8-b6b5-051a1c768fd9
-Markdown.parse("""
-\$\$\\begin{gather}
-\\ell_\\text{baseline} = $(round(baseline_large_results.ℓ; digits=3))\\tag{failure log-likelihood} \\\\
-n_\\text{steps} = $(format(baseline_large_results.n; latex=true)) \\tag{number of \\texttt{step} calls \$d\\times m\$}
-\\end{gather}\$\$
-""")
-
 # ╔═╡ 4ae85f59-4e94-48aa-8ccb-91311466c51f
 plot(sys_large, ψ_large, baseline_large_results.τ)
-
-# ╔═╡ e3d6fdf1-3a9e-446b-8482-49d6f64b652e
-html_quarter_space()
-
-# ╔═╡ 23fd490a-74d2-44b4-8a12-ea1460d95f85
-Markdown.parse("""
-## ⟶ **Task (Large)**: Most-likely failure
-Please fill in the following `most_likely_failure` function.
-""")
-
-# ╔═╡ 18a70925-3c2a-4317-8bbc-c2a096ec56d0
-start_code()
-
-# ╔═╡ 45c79345-89da-498c-9a98-2ad55a0a6114
-Markdown.parse("""
-	most_likely_failure(sys::LargeSystem, ψ; n)::Vector{NamedTuple}
-
-A function that takes in a system `sys` (collision avoidance system for the _large_ setting) and a specification `ψ` and **returns the trajectory that led to the most-likely failure**.
-
-- `n` = number of `step` calls allotted (\$n = $(format(max_steps(sys_large); latex=true))\$ for `$(system_name(sys_large))`)
-
-**Note**: `ψ` is written as `\\psi<TAB>`
-""")
-
-# ╔═╡ 3471a623-16af-481a-8f66-5bd1e7890188
-@large function most_likely_failure(sys::LargeSystem, ψ; n=max_steps(sys))
-	# TODO: WRITE YOUR CODE HERE
-end
-
-# ╔═╡ 4c5210d6-598f-4167-a6ee-93bceda7223b
-end_code()
-
-# ╔═╡ 2ba2d3a2-3f6c-4d5f-8c45-8d00947f6e05
-html_quarter_space()
-
-# ╔═╡ ea2d7eb7-d576-415c-ac4c-fea7f90de637
-md"""
-# 📊 Large Test
-We'll automatically test your `most_likely_failure(::LargeSystem, ψ)` function below.
-"""
-
-# ╔═╡ 7fe1c3d7-469c-47d9-9d46-e5b8b263edb9
-Markdown.MD(
-	md"""
-$(@bind rerun_large LargeCheckBox(text="⟵ Click to re-run the <code>LargeSystem</code> evaluation."))""",
-	Markdown.parse("""
-	↑ This will re-run **`most_likely_failure(::LargeSystem, ψ)`** and re-save **`$(get_filename(sys_large))`**
-
-	_Uncheck this to load results from the file._
-	""")
-)
-
-# ╔═╡ f6eb6d1a-a9a0-4234-8699-269a92f666c0
-begin
-	τ_large, log_large, pass_large = rerun(sys_large, ψ_large;
-										   f=most_likely_failure_large,
-										   run=rerun_large)
-	log_large
-end
-
-# ╔═╡ 7c473630-6555-4ada-85f3-0d40aefe6370
-Markdown.parse("""
-## $(pass_large ? "✔️" : "✖️") Graded large test ($(pass_large ? "$(Project1.points_large)/$(Project1.points_large)" : "0/$(Project1.points_large)") points)
-""")
-
-# ╔═╡ 74aeca7b-0658-427f-8c02-d093a0d725ee
-html_half_space()
-
-# ╔═╡ dbd088d1-f4c9-4e6a-b280-960b06da76e4
-Markdown.MD(Markdown.parse("# $(all([pass_small, pass_medium, pass_large]) ? "✅" : "❌") Final Check"),
-@mdx("""If the following test indicator is <span style='color:#759466'><b>green</b></span>, you can submit to Gradescope."""))
-
-# ╔═╡ 1bb92755-65e3-457e-84cd-252eae5e4d7e
-if all([pass_small, pass_medium, pass_large])
-	correct(Markdown.MD(md"""
-All tests have passed, **_you're done with Project 1!_**""",
-@mdx("""
-|  System  |  Passed?  |  Points  |
-| :------: | :-------: | :------: |
-| Small | $(pass_small ? HTML("<span style='color:#759466'><b>Passed!</b></span>") : HTML("<span style='color:#B83A4B'><b>Failed.</b></span>")) | $(pass_small ? "$(Project1.points_small)/$(Project1.points_small)" : "0/$(Project1.points_small)") |
-| Medium | $(pass_medium ? HTML("<span style='color:#759466'><b>Passed!</b></span>") : HTML("<span style='color:#B83A4B'><b>Failed.</b></span>")) | $(pass_medium ? "$(Project1.points_medium)/$(Project1.points_medium)" : "0/$(Project1.points_medium)") |
-| Large | $(pass_large ? HTML("<span style='color:#759466'><b>Passed!</b></span>") : HTML("<span style='color:#B83A4B'><b>Failed.</b></span>")) | $(pass_large ? "$(Project1.points_large)/$(Project1.points_large)" : "0/$(Project1.points_large)") |
-"""),
-md"""
-**📩 Please see the [Submission](#submission) section at the top of the page.**
-"""))
-else
-	almost(Markdown.MD(md"**_Some tests have failed:_**", @mdx("""
-|  System  |  Passed?  | Points |
-| :------: | :-------: | :----: |
-| Small | $(pass_small ? HTML("<span style='color:#759466'><b>Passed!</b></span>") : HTML("<span style='color:#B83A4B'><b>Failed.</b></span>")) | $(pass_small ? "$(Project1.points_small)/$(Project1.points_small)" : "0/$(Project1.points_small)") |
-| Medium | $(pass_medium ? HTML("<span style='color:#759466'><b>Passed!</b></span>") : HTML("<span style='color:#B83A4B'><b>Failed.</b></span>")) | $(pass_medium ? "$(Project1.points_medium)/$(Project1.points_medium)" : "0/$(Project1.points_medium)") |
-| Large | $(pass_large ? HTML("<span style='color:#759466'><b>Passed!</b></span>") : HTML("<span style='color:#B83A4B'><b>Failed.</b></span>")) | $(pass_large ? "$(Project1.points_large)/$(Project1.points_large)" : "0/$(Project1.points_large)") |
-"""),
-md"""
-_Please fix the above failing tests before submission._
-
-_You may partially submit individual `.val` files to Gradescope, you have unlimited Gradescope submissions until the deadline. But please make sure to submit all **three** `.val` files once complete._"""))
-end
-
-# ╔═╡ 6d5c805b-330c-4b04-a51c-15e674352b1b
-html_quarter_space()
-
-# ╔═╡ 860ec509-3a86-4842-9471-6b1a0b8f366d
-md"""
-## Comparing likelihoods
-Since the likelihoods across the three problems vary widely in range, we compute the log-likelihoods of your trajectories and take the difference of logs between the _most-likely trajectory_ (i.e., the mean trajectory $\tau_\text{mean}$). The most-likely trajectory is simply the trajectory rolled-out with the mean initial state and mean disturbances.
-
-The score for problem $k$ is then computed as:
-
-$$\begin{gather}
-\text{score}_k = \log \left( \frac{p(\tau)}{p(\tau_\text{mean})} \right) = \log p(\tau) - \log p(\tau_\text{mean})
-\end{gather}$$
-
-_The maximum possible score is $0$ (but is impossible as the mean trajectories are not failures for these systems)._
-"""
-
-# ╔═╡ 54741d81-39e0-4a47-b84d-c41c8eb7611b
-function score(sys::System, τ)
-	ps = NominalTrajectoryDistribution(sys, get_depth(sys))
-	τ_mean = mean_rollout(sys, ps)
-	ℓ_mean = logpdf(ps, τ_mean)
-	ℓ = logpdf(ps, τ)
-	return ℓ - ℓ_mean
-end
-
-# ╔═╡ 6559cf16-a474-4533-a2c7-ccbc02480a76
-md"""
-Since the small system runs several tests, we take the average score over the tests:
-
-$$\begin{gather}
-\text{score}_\text{small} = \mathbb{E}_i \left[ \log\left( \frac{p(\tau_i)}{p(\tau_\text{mean})} \right) \right]
-\end{gather}$$
-
-To balance out the difficulty, we use weights $\mathbf{w} = [1,2,3]$ (normalized to sum to one):
-
-$$\bar{w_i} = \frac{w_i}{\sum_j w_j}$$
-"""
-
-# ╔═╡ cfdba748-45d5-4eaa-97b3-fdc9fe7e4333
-𝐰 = [1,2,3]
-
-# ╔═╡ 6beda870-0cb0-40f5-9531-fa3e2f7bb020
-md"""
-The final score on the leaderboard is then a weighted sum:
-
-$$\begin{gather}
-\mathbf{s} = \big[\text{score}_\text{small},\, \text{score}_\text{medium},\, \text{score}_\text{large} \big] \\
-\text{score} = \mathbf{w}^\top\mathbf{s}
-\end{gather}$$
-"""
-
-# ╔═╡ 5c3d24f6-0106-444c-b7df-89bba8c01b37
-function leaderboard_scores(systems::Vector{<:System}, τs; 𝐰=ones(length(τs)))
-	score_small = mean(score(systems[1], τ) for τ in τs[1])
-	score_medium = score(systems[2], τs[2])
-	score_large = score(systems[3], τs[3])
-	𝐬 = [score_small, score_medium, score_large]
-	𝐰 = 𝐰 ./ sum(𝐰)
-	return 𝐰'𝐬
-end
-
-# ╔═╡ 4edc5933-9457-4c7c-8456-a26974e0587e
-html_half_space()
-
-# ╔═╡ 95e3d42f-b33f-4294-81c5-f34a300dc9b4
-# This needs to be in the cell above.
-begin
-	𝑡𝑟𝑖𝑔𝑔𝑒𝑟
-	html"""
-	<script>
-	let cell = currentScript.closest('pluto-cell')
-	let id = cell.getAttribute('id')
-	let cells_below = document.querySelectorAll(`pluto-cell[id='${id}'] ~ pluto-cell`)
-	let cell_below_ids = [cells_below[0]].map((el) => el.getAttribute('id'))
-	cell._internal_pluto_actions.set_and_run_multiple(cell_below_ids)
-	</script>
-	"""
-end
 
 # ╔═╡ 5563f0da-7552-4879-a38a-ba1748d39d52
 begin
@@ -1569,104 +1670,6 @@ end
 # ╔═╡ e189b31e-7e24-4c32-989f-3e600a44d4bc
 try LocalResource(joinpath(@__DIR__, "..", "media", cas_gif_name)) catch end
 
-# ╔═╡ 247f4c17-bee1-4315-aff9-017407ef9219
-begin
-	if !ismissing(directory_trigger) && directory_trigger
-		try
-			if Sys.iswindows()
-				run(`explorer $(abspath(@__DIR__))`)
-			elseif Sys.isapple()
-				run(`open $(abspath(@__DIR__))`)
-			elseif Sys.islinux()
-				run(`xdg-open $(abspath(@__DIR__))`)
-			end
-		catch end
-	end
-
-	md"> _Helper for opening local directories._"
-end
-
-# ╔═╡ db7d4de5-9166-4e56-b5bc-1356e43286a9
-begin
-	function log_likelihood(sys::System, τ)
-		ps = NominalTrajectoryDistribution(sys, get_depth(sys))
-		ℓ = logpdf(ps, τ)
-		return ℓ
-	end
-
-	rd(x::String) = x
-	rd(x::Number) = round(x; sigdigits=6)
-
-	md"> _Leaderboard helper functions._"
-end
-
-# ╔═╡ d9ab8278-eb76-4a36-aa0e-4ec74704f5e0
-begin
-	global user_score = -Inf	
-	try
-		global user_score = 
-			leaderboard_scores(
-				[sys_small, sys_medium, sys_large],
-				[τs_small, τ_medium, τ_large]; 𝐰=𝐰)
-	catch end
-
-	global 𝔼_logpdf_small = -Inf
-	try
-		global 𝔼_logpdf_small = mean(log_likelihood(sys_small, τ) for τ in τs_small)
-	catch end
-
-	global logpdf_medium = -Inf
-	try
-		global logpdf_medium = log_likelihood(sys_medium, τ_medium)
-	catch end
-
-	global logpdf_large = -Inf
-	try
-		global logpdf_large = log_likelihood(sys_large, τ_large)
-	catch end
-
-	Markdown.parse("""
-# Leaderboard
-If the above tests pass, then you will receive full credit for your submission on Gradescope under the **`"Project 1 (.val files)"`** assignment.
-
-_However_, we have a leaderboard so that students can participate in a friendly competition to find the most-likely failures for each problem.
-	
-## Leaderboard entry
-Your leaderboard entry on Gradescope should look something like this:
-
-| Rank | Submission Name | Score | 𝔼[log 𝑝(small)] | log 𝑝(medium) | log 𝑝(large) |
-| :--: | :-------------: | :---: | :-----------: | :------------: | :-----------: |
-| — | $(guess_username()) | $(rd(user_score)) | $(rd(𝔼_logpdf_small)) | $(rd(logpdf_medium)) | $(rd(logpdf_large)) |
-""")
-end
-
-# ╔═╡ 5a1ed20d-788b-4655-bdd8-069545f48929
-begin
-	function extract(env::SimpleGaussian, input)
-		s = input[1]             # Objective is simply over the initial state
-		𝐱 = [Disturbance(0,0,0)] # No disturbances for the SimpleGaussian
-		return s, 𝐱
-	end
-
-	function extract(env::InvertedPendulum, x)
-		s = x[1:2]
-		𝐱 = [Disturbance(0, 0, x[i:i+1]) for i in 3:2:length(x)]
-		return s, 𝐱
-	end
-
-	function extract(env::CollisionAvoidance, x)
-		s = [x[1], x[2], 0, 40] # [h, ḣ, a_prev, t_col]
-		𝐱 = [Disturbance(0, x[i], 0) for i in 3:length(x)]
-		return s, 𝐱
-	end
-
-	initial_guess(sys::SmallSystem) = [0.0]
-	initial_guess(sys::MediumSystem) = zeros(84)
-	initial_guess(sys::LargeSystem) = [rand(Normal(0,100)), zeros(42)...]
-
-	md"> *Helper `extract` and `initial_guess` functions.*"
-end
-
 # ╔═╡ 9865ed62-b4fd-4e49-9259-3e5997c589f3
 Markdown.MD(button_style(rerun_rand_small), md"> _Button styling._")
 
@@ -1707,7 +1710,7 @@ Optim = "~1.10.0"
 Parameters = "~0.12.3"
 Plots = "~1.40.9"
 PlutoUI = "~0.7.60"
-StanfordAA228V = "~0.1.11"
+StanfordAA228V = "~0.1.12"
 """
 
 # ╔═╡ 00000000-0000-0000-0000-000000000002
@@ -1716,7 +1719,7 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.11.2"
 manifest_format = "2.0"
-project_hash = "e9e1724ee0357c5ca9a73929492521324a507a49"
+project_hash = "dcc23ea0c287ef260037b3cfc82765e0b72cadd4"
 
 [[deps.AbstractFFTs]]
 deps = ["LinearAlgebra"]
@@ -2939,10 +2942,10 @@ uuid = "860ef19b-820b-49d6-a774-d7a799459cd3"
 version = "1.0.2"
 
 [[deps.StanfordAA228V]]
-deps = ["AbstractPlutoDingetjes", "BSON", "Base64", "Distributions", "ForwardDiff", "GridInterpolations", "LinearAlgebra", "Markdown", "Optim", "Parameters", "Plots", "Pluto", "PlutoUI", "Random", "SignalTemporalLogic", "Statistics"]
-git-tree-sha1 = "05a4bf78e64e83fe548f566e188d5bb6deeb318b"
+deps = ["AbstractPlutoDingetjes", "BSON", "Base64", "Distributions", "ForwardDiff", "GridInterpolations", "LinearAlgebra", "Markdown", "Optim", "Parameters", "Pkg", "Plots", "Pluto", "PlutoUI", "Random", "SignalTemporalLogic", "Statistics"]
+git-tree-sha1 = "609f4828e5fca463d324a827bcf4bc26e58fdb82"
 uuid = "6f6e590e-f8c2-4a21-9268-94576b9fb3b1"
-version = "0.1.11"
+version = "0.1.12"
 
 [[deps.StaticArrays]]
 deps = ["LinearAlgebra", "PrecompileTools", "Random", "StaticArraysCore"]
@@ -3594,6 +3597,7 @@ version = "1.4.1+1"
 # ╟─247f4c17-bee1-4315-aff9-017407ef9219
 # ╟─db7d4de5-9166-4e56-b5bc-1356e43286a9
 # ╟─5a1ed20d-788b-4655-bdd8-069545f48929
+# ╟─6c8b3077-876e-42fd-aa47-f3fa7c37f4dd
 # ╟─9865ed62-b4fd-4e49-9259-3e5997c589f3
 # ╟─97042a5e-9691-493f-802e-2262f2da4627
 # ╟─ef084fea-bf4d-48d9-9c84-8cc1dd98f2d7
