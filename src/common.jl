@@ -11,36 +11,42 @@ system_size(sys::LargeSystem) = "Large"
 system_name(sys::System) = "$(system_size(sys))System"
 
 
-function submission_details(bind_directory_trigger; details=md"**TODO: FILL OUT**")
+function submission_details(bind_directory_trigger, Project)
 	Markdown.MD(HTML("<h2 id='submission'>Submission</h2>"),
 	Markdown.parse("""
 	You will submit **three** results files (`.val`) to the **`"Project $project_num (.val files)"`** Gradescope assignment and **include the PDF** in your write up in the **"`Project $project_num (write up)`"** Gradescope assignment (see below).
+	"""),
+	Markdown.parse("""
+	1. **Gradescope assignment `"Project $project_num (.val files)"`** (total $(Project.points_small + Project.points_medium + Project.points_large) points):
+	    1. `$(get_filename(sys_small))` ($(Project.points_small) points)
+	    1. `$(get_filename(sys_medium))` ($(Project.points_medium) points)
+	    1. `$(get_filename(sys_large))` ($(Project.points_large) points)
+	1. **Gradescope assignment `"Project $project_num (write up)"`** (total $(Project.points_writeup_descr + Project.points_writeup_code) points):
+	    - Description of algorithms ($(Project.points_writeup_descr) points)
+	    - PDF of Pluto notebook ($(Project.points_writeup_code) points)
 
-	The `.val` files will contain $details (and will be automatically saved for you).
-	1. `$(get_filename(sys_small))`
-	1. `$(get_filename(sys_medium))`
-	1. `$(get_filename(sys_large))`
-	The files will be saved in the same directory as this notebook:"""),
+
+	_The_ `.val` _files will be automatically saved for you in the same directory as this notebook:_
+	"""),
 	md"""
 	- $(bind_directory_trigger)
 	    - ↑ Click to open directory.
 	""",
 	Markdown.parse("""
-	**Note**: You don't have to submit the `project$project_num.jl` file.
+	**Note**: You do _not_ have to submit the `project$project_num.jl` file.
+
+	### Algorithm write up
+	Include a PDF write up describing the algorithms you used to solve the three problems. Include the notebook PDF. This should not be more than 1 to 2 pages (excluding the PDF of the notebook code).
+
+	**You'll submit this in a separate Gradescope assignment named `"Project $project_num (Write Up)"`.**
 
 	### Export to PDF
-	After you're finished, please export this notebook to PDF.
+	After you're finished coding, please export this notebook to PDF.
 	- Click the `[↑]` icon in the top right and click "PDF", then "Print to PDF".
 
 	Include the **`project$project_num.pdf`** in your write-up:
 	-  \$\\LaTeX\$ Overleaf template: [`$overleaf_link`]($overleaf_link)
-
-	### Algorithm write up
-	Include a PDF write up describing the algorithm(s) you used to solve the three problems. Include the notebook PDF and any additional details you'd like regarding what you tried and what worked best.
-
-	**You'll submit this in a separate Gradescope assignment named `"Project $project_num (Write Up)"`.**
-
-	**See the \$\\LaTeX\$ Overleaf template above.**
+	    - **Note**: You do _not_ have to use the template or \$\\LaTeX\$.
 
 	If you encounter issues, [please ask us on Ed](https://edstem.org/us/courses/69226/discussion).
 	"""))
@@ -174,6 +180,13 @@ function notebook_style()
             border-radius: 5px;
             cursor: pointer;
             font-family: Alegreya Sans, Trebuchet MS, sans-serif;
+        }
+
+        .highlight {
+            background-color: #f0f8ff;
+            padding: 10px;
+            margin: 30px;
+            border: 2px solid #add8e6;
         }
     </style>
 
