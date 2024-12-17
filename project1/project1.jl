@@ -17,16 +17,15 @@ macro bind(def, element)
 end
 
 # ╔═╡ 14964632-98d8-4a2f-b2f6-e3f28b558803
+# ╠═╡ show_logs = false
 using StanfordAA228V
 
 # ╔═╡ 173388ab-207a-42a6-b364-b2c1cb335f6b
 # ╠═╡ show_logs = false
 begin
-	ENV["JULIA_PKG_USE_CLI_GIT"] = true
-
-	import StanfordAA228V: Always, Predicate, FlippedPredicate, ρ
 	import MarkdownLiteral: @mdx
 
+	using ProgressLogging
 	using Downloads
 	using TOML
 	using Test
@@ -44,21 +43,25 @@ begin
 
 	default(fontfamily="Computer Modern", framestyle=:box) # LaTeX-style plotting
 
-	𝑡𝑟𝑖𝑔𝑔𝑒𝑟 = true
-
-	md"> _Package management._"
+	md"> _Additional package management._"
 end
 
 # ╔═╡ c28a548e-93b3-4a38-ba7e-81b2f0d856b9
-HTML("<h1 style='display: flex; justify-content: center; color: var(--cursor-color);'>⚠️— Important —⚠️</h1><span style='display: flex; justify-content: center; font-size: 15pt; color: var(--cursor-color);'><b>THIS NOTEBOOK IS CURRENTLY UNDER CONSTRUCTION</b></span>")
+html"<h1 style='display: flex; justify-content: center; color: var(--cursor-color); font-variant: small-caps;'>⚠️— Important —⚠️</h1><span style='display: flex; justify-content: center; font-size: 15pt; color: var(--cursor-color);'><b>THIS NOTEBOOK IS CURRENTLY UNDER CONSTRUCTION</b></span>"
 
 # ╔═╡ 117d0059-ce1a-497e-8667-a0c2ef20c632
 md"""
 # Project 1: Finding the most-likely failure
+_Please wait until the entire notebook is finished loading before proceeding (you may get temporary errors)._
 """
 
 # ╔═╡ f8612f4e-8519-4ee3-ac09-80b7c126b238
 highlight(md"""_See the three **"⟶ Task"** sections below for where to fill out the algorithms._""")
+
+# ╔═╡ da5b4000-0bce-4fc2-be85-dada21264ca3
+textbook_details([
+	"Chapter 4. _Falsification through Optimization_",
+	"Chapter 5. _Falsification through Planning_"])
 
 # ╔═╡ 0456a732-2672-4108-a241-db9ae879a913
 
@@ -383,17 +386,6 @@ This is common in Julia where you need to use the funciton name qualified with t
 # ╔═╡ a46702a3-4a8c-4749-bd00-52f8cce5b8ee
 html_half_space()
 
-# ╔═╡ fd8c851a-3a42-41c5-b0fd-a12085543c9b
-md"""
-# 1️⃣ **Small**: 1D Gaussian
-The small system is a simple 1D Gaussian system.
-- There are no dynamics (rollout depth $d=1$).
-- There are no disturbances.
-- The (initial and only) state $s$ is sampled from $\mathcal{N}(0,1)$.
-
-> **Reminder**: One rollout has a fixed length of $d=1$ (use `get_depth`).
-"""
-
 # ╔═╡ 17fa8557-9656-4347-9d44-213fd3b635a6
 Markdown.parse("""
 ## Small system
@@ -403,11 +395,20 @@ The system is comprised of an `agent`, environment (`env`), and `sensor`.
 # ╔═╡ 22feee3d-4627-4358-9937-3c780b7e8bcb
 sys_small = System(NoAgent(), SimpleGaussian(), IdealSensor());
 
+# ╔═╡ fd8c851a-3a42-41c5-b0fd-a12085543c9b
+Markdown.MD(
+	md"""
+	# 1️⃣ **Small**: 1D Gaussian
+	The small system is a simple 1D Gaussian system.
+	- There are no dynamics (rollout depth $d=1$).
+	- There are no disturbances.
+	- The (initial and only) state $s$ is sampled from $\mathcal{N}(0,1)$.
+	""",
+	depth_highlight(sys_small)
+)
+
 # ╔═╡ 6f3e24de-094c-49dc-b892-6721b3cc54ed
 SmallSystem::Type = typeof(sys_small) # Type used for multiple dispatch
-
-# ╔═╡ 3a5ec5bb-9caf-4b67-9157-ad754a310caa
-get_depth(sys::SmallSystem) = 1
 
 # ╔═╡ 45f7c3a5-5763-43db-aba8-41ef8db39a53
 md"""
@@ -433,9 +434,10 @@ i.e., "the state \$s\$ in the trajectory \$\\tau\$ should _always_ (\$\\square\$
 
 # ╔═╡ 166bd412-d433-4dc9-b874-7359108c0a8b
 Markdown.parse("""
-A failure is unlikely given that the probability of failure is:
+A failure is highly unlikely given that the probability of failure is:
 
-\$\$P(s > $(ψ_small.formula.ϕ.c)) \\approx $(round(cdf(ps_small, ψ_small.formula.ϕ.c), sigdigits=4))\$\$
+\$\$P(\\neg\\psi(\\tau)) = P(s < $(ψ_small.formula.ϕ.c)) \\approx $(round(cdf(ps_small, ψ_small.formula.ϕ.c), sigdigits=4))\$\$
+where \$\\neg\\psi(\\tau)\$ indicates that the specification was violated and \$P\$ is the _cumulative distribution function_ (`cdf` in Julia).
 """)
 
 # ╔═╡ 9132a200-f63b-444b-9830-b03cf075021b
@@ -513,19 +515,6 @@ _You can also click the slider then use the arrow keys for finer control._
 # ╔═╡ fda151a1-5069-44a8-baa1-d7903bc89797
 html_space()
 
-# ╔═╡ 8c78529c-1e00-472c-bb76-d984b37235ab
-md"""
-# 2️⃣ **Medium**: Inverted Pendulum
-The medium system is a swinging inverted pendulum.
-- It uses a proportional controller to keep it upright.
-- The state is comprised of the angle $\theta$ and angular velocity $\omega$ making $s = [\theta, \omega]$
-- Actions are left/right adjustments in the range $[-2, 2]$
-- Disturbances $x$ are treated as addative noise: $x \sim \mathcal{N}(\mathbf{0}, 0.1^2I)$
-
-> **Reminder**: One rollout has a fixed length of $d=41$ (use `get_depth`).
-
-"""
-
 # ╔═╡ d18c2105-c2af-4dda-8388-617aa816a567
 Markdown.parse("""
 ## Medium system
@@ -539,11 +528,21 @@ sys_medium = System(
 	AdditiveNoiseSensor(MvNormal(zeros(2), 0.1^2*I))
 );
 
+# ╔═╡ 8c78529c-1e00-472c-bb76-d984b37235ab
+Markdown.MD(
+	md"""
+	# 2️⃣ **Medium**: Inverted Pendulum
+	The medium system is a swinging inverted pendulum.
+	- It uses a proportional controller to keep it upright.
+	- The state is comprised of the angle $\theta$ and angular velocity $\omega$ making $s = [\theta, \omega]$
+	- Actions are left/right adjustments in the range $[-2, 2]$
+	- Disturbances $x$ are treated as addative noise: $x \sim \mathcal{N}(\mathbf{0}, 0.1^2I)$
+	""",
+	depth_highlight(sys_medium)
+)
+
 # ╔═╡ c4c0328d-8cb3-41d5-9740-0197cbf760c2
 MediumSystem::Type = typeof(sys_medium) # Type used for multiple dispatch
-
-# ╔═╡ dabb7db9-5e17-47d8-be55-9848ec3f114a
-get_depth(sys::MediumSystem) = 41
 
 # ╔═╡ b1e9bd40-a401-4630-9a1f-d61b276e72f7
 md"""
@@ -624,18 +623,6 @@ We'll automatically test your `most_likely_failure(::MediumSystem, ψ)` function
 # ╔═╡ 60ab8107-db65-4fb6-aeea-d4978aed77bd
 html_space()
 
-# ╔═╡ aa0c4ffc-d7f0-484e-a1e2-7f6f92a3a53d
-md"""
-# 3️⃣ **Large**: Aircraft Collision Avoidance
-The large system is an aircraft collision avoidance system (CAS).
-- It uses an interpolated lookup-table policy.
-- The state is comprised of the relative altitude (m) $h$, the relative vertical rate $\dot{h}$ (m/s), the previous action $a_\text{prev}$, and the time to closest point of approach $t_\text{col}$ (sec): $s = [h, \dot{h}, a_\text{prev}, t_\text{col}]$
-- Actions are $a \in [-5, 0, 5]$ vertical rate changes.
-- Disturbances $x$ are applied to $\dot{h}$ as environment noise: $x \sim \mathcal{N}(0, 1.5)$
-
-> **Reminder**: One rollout has a fixed length of $d=41$ ($t_\text{col}$ from $40-0$ sec.), use `get_depth`.
-"""
-
 # ╔═╡ 7d054465-9f80-4dfb-9b5f-76c3977de7cd
 Markdown.parse("""
 ## Large system
@@ -656,30 +643,10 @@ end
 
 # ╔═╡ 9f739929-1cd3-4935-b229-ae3aeac7e131
 begin
-	# Project specifics
-	project_num = Project1.project_num
-	overleaf_link = Project1.overleaf_link
-	
+	ThisProject = Project1
 	max_steps(sys::SmallSystem)  = 20
 	max_steps(sys::MediumSystem) = 1_000
 	max_steps(sys::LargeSystem)  = 10_000
-
-	# Load common functions
-	try
-		include(joinpath(@__DIR__, "..", "src", "common.jl"))
-	catch err
-		include(joinpath(@__DIR__, "common.jl"))
-	end
-
-	# Imports (triggers):
-	get_filename = get_filename
-	env_name = env_name
-	system_name = system_name
-	submission_details = submission_details
-	textbook_details = textbook_details
-	baseline_details = baseline_details
-	notebook_style = notebook_style
-	button_style = button_style
 end;
 
 # ╔═╡ 60f72d30-ab80-11ef-3c20-270dbcdf0cc4
@@ -694,20 +661,6 @@ Your job is to write the following function that returns the failure trajectory 
 most_likely_failure(sys, ψ; n)::Vector{NamedTuple}
 ```
 """)
-
-# ╔═╡ be8c37e8-45db-4198-b0b9-d287e73fb818
-submission_details(@bind(directory_trigger, OpenDirectory(@__DIR__)), Project1)
-
-# ╔═╡ 0c520f93-49ce-45eb-899d-a31105d856c8
-if directory_trigger
-	@info "Opening local directory..."
-	sleep(1)
-end
-
-# ╔═╡ da5b4000-0bce-4fc2-be85-dada21264ca3
-textbook_details([
-	"Chapter 4. _Falsification through Optimization_",
-	"Chapter 5. _Falsification through Planning_"])
 
 # ╔═╡ d566993e-587d-4aa3-995b-eb955dec5758
 html_expand("Expand for baseline implementation using <code>DirectFalsification</code>.", [
@@ -732,69 +685,6 @@ alg = DirectFalsification(1, $(max_steps(sys_small)))
 ```
 **Note**: _But we want to the `NominalTrajectoryDistribution` to keep the algorithm general for the medium/large problems that **do** have disturbances._
 """)])
-
-# ╔═╡ 42456abf-4930-4b01-afd1-fce3b4881e28
-baseline_details(sys_small; n_baseline=n_baseline_small, descr="simple Gaussian")
-
-# ╔═╡ f6589984-e24d-4aee-b7e7-db159ae7fea6
-Markdown.parse("""
-	most_likely_failure(sys::SmallSystem, ψ; n)::Vector{NamedTuple}
-
-A function that takes in a system `sys` (1D Gaussian for the _small_ setting) and a specification `ψ` and **returns the trajectory that led to the most-likely failure**.
-
-- `n` = number of `step` calls allotted (\$n = $(max_steps(sys_small))\$ for `$(system_name(sys_small))`)
-
-**Note**: `ψ` is written as `\\psi<TAB>`
-""")
-
-# ╔═╡ fc2d34da-258c-4460-a0a4-c70b072f91ca
-@small function most_likely_failure(sys::SmallSystem, ψ; n=max_steps(sys))
-	# TODO: WRITE YOUR CODE HERE
-end
-
-# ╔═╡ 307afd9c-6dac-4a6d-89d7-4d8cabfe3fe5
-Markdown.MD(
-	md"""
-$(@bind rerun_small LargeCheckBox(text="⟵ Click to re-run the <code>SmallSystem</code> evaluation."))""",
-	Markdown.parse("""
-	↑ This will re-run **`most_likely_failure(::SmallSystem, ψ)`** and re-save **`$(get_filename(sys_small))`**
-
-	_Uncheck this to load results from the file._
-	""")
-)
-
-# ╔═╡ 772cf17e-0fdb-470e-9f12-9480af811edd
-baseline_details(sys_medium; n_baseline=n_baseline_medium, descr="pendulum")
-
-# ╔═╡ 9657f5ff-f21c-43c5-838d-402a2a723d5e
-Markdown.parse("""
-	most_likely_failure(sys::MediumSystem, ψ; n)::Vector{NamedTuple}
-
-A function that takes in a system `sys` (inverted pendulum for the _medium_ setting) and a specification `ψ` and **returns the trajectory that led to the most-likely failure**.
-
-- `n` = number of `step` calls allotted (\$n = $(format(max_steps(sys_medium); latex=true))\$ for `$(system_name(sys_medium))`)
-
-**Note**: `ψ` is written as `\\psi<TAB>`
-""")
-
-# ╔═╡ cb7b9b9f-59da-4851-ab13-c451c26117df
-@medium function most_likely_failure(sys::MediumSystem, ψ; n=max_steps(sys))
-	# TODO: WRITE YOUR CODE HERE
-end
-
-# ╔═╡ 38f26afd-ffa5-48d6-90cc-e3ec189c2bf1
-Markdown.MD(
-	md"""
-$(@bind rerun_medium LargeCheckBox(text="⟵ Click to re-run the <code>MediumSystem</code> evaluation."))""",
-	Markdown.parse("""
-	↑ This will re-run **`most_likely_failure(::MediumSystem, ψ)`** and re-save **`$(get_filename(sys_medium))`**
-
-	_Uncheck this to load results from the file._
-	""")
-)
-
-# ╔═╡ c861400f-8b54-4fc7-ad10-37339a825b9d
-get_depth(sys::LargeSystem) = 41
 
 # ╔═╡ c2ae204e-dbcc-453a-81f5-791ba4be39db
 @tracked function most_likely_failure_baseline(sys, ψ; n=max_steps(sys), full=false)
@@ -844,6 +734,68 @@ n_\\text{steps} &= $(format(baseline_medium_results.n; latex=true)) \\tag{number
 \\end{align}\$\$
 """)
 
+# ╔═╡ 42456abf-4930-4b01-afd1-fce3b4881e28
+baseline_details(sys_small; n_baseline=n_baseline_small, descr="simple Gaussian", max_steps)
+
+# ╔═╡ fc2d34da-258c-4460-a0a4-c70b072f91ca
+@small function most_likely_failure(sys::SmallSystem, ψ; n=max_steps(sys))
+	# TODO: WRITE YOUR CODE HERE
+end
+
+# ╔═╡ 307afd9c-6dac-4a6d-89d7-4d8cabfe3fe5
+Markdown.MD(
+	md"""
+$(@bind rerun_small LargeCheckBox(text="⟵ Click to re-run the <code>SmallSystem</code> evaluation."))""",
+	Markdown.parse("""
+	↑ This will re-run **`most_likely_failure(::SmallSystem, ψ)`** and re-save **`$(get_filename(sys_small, ThisProject))`**
+
+	_Uncheck this to load results from the file._
+	""")
+)
+
+# ╔═╡ 772cf17e-0fdb-470e-9f12-9480af811edd
+baseline_details(sys_medium; n_baseline=n_baseline_medium, descr="pendulum", max_steps)
+
+# ╔═╡ cb7b9b9f-59da-4851-ab13-c451c26117df
+@medium function most_likely_failure(sys::MediumSystem, ψ; n=max_steps(sys))
+	# TODO: WRITE YOUR CODE HERE
+end
+
+# ╔═╡ 38f26afd-ffa5-48d6-90cc-e3ec189c2bf1
+Markdown.MD(
+	md"""
+$(@bind rerun_medium LargeCheckBox(text="⟵ Click to re-run the <code>MediumSystem</code> evaluation."))""",
+	Markdown.parse("""
+	↑ This will re-run **`most_likely_failure(::MediumSystem, ψ)`** and re-save **`$(get_filename(sys_medium, ThisProject))`**
+
+	_Uncheck this to load results from the file._
+	""")
+)
+
+# ╔═╡ be8c37e8-45db-4198-b0b9-d287e73fb818
+submission_details(@bind(directory_trigger, OpenDirectory(@__DIR__)), ThisProject,
+	[SmallSystem, MediumSystem, LargeSystem])
+
+# ╔═╡ 0c520f93-49ce-45eb-899d-a31105d856c8
+if directory_trigger
+	@info "Opening local directory..."
+	sleep(1)
+end
+
+# ╔═╡ aa0c4ffc-d7f0-484e-a1e2-7f6f92a3a53d
+Markdown.MD(
+	Markdown.parse("""
+	# 3️⃣ **Large**: Aircraft Collision Avoidance
+	The large system is an aircraft collision avoidance system (CAS).
+	- It uses an interpolated lookup-table policy.
+	- The state is comprised of the relative altitude (m) \$h\$, the relative vertical rate \$\\dot{h}\$ (m/s), the previous action \$a_\\text{prev}\$, and the time to closest point of approach \$t_\\text{col}\$ (sec): \$s = [h, \\dot{h}, a_\\text{prev}, t_\\text{col}]\$
+	- Actions are \$a \\in [-5, 0, 5]\$ vertical rate changes.
+	- Disturbances \$x\$ are applied to \$\\dot{h}\$ as environment noise: \$x \\sim \\mathcal{N}(0, 1.5)\$
+	- Finite horizon (i.e., rollout depth) of \$d=$(get_depth(sys_large))\$ for \$t_\\text{col}\$ from \$40-0\$ seconds.
+	"""),
+	depth_highlight(sys_large)
+)
+
 # ╔═╡ d23f0299-981c-43b9-88f3-fb6e07927498
 md"""
 ## Large environment
@@ -872,7 +824,7 @@ i.e., "the absolute valued relative altitude $h$ (first element of the state $s$
 n_baseline_large = 410_000
 
 # ╔═╡ 35434537-9b9c-4528-b58c-420d01813598
-baseline_details(sys_large; n_baseline=n_baseline_large, descr="CAS")
+baseline_details(sys_large; n_baseline=n_baseline_large, descr="CAS", max_steps)
 
 # ╔═╡ 06b14338-ea3b-45c8-bf6c-28b82db2ea70
 baseline_large_results = run_baseline(sys_large, ψ_large; n=n_baseline_large);
@@ -897,17 +849,6 @@ Please fill in the following `most_likely_failure` function.
 # ╔═╡ 18a70925-3c2a-4317-8bbc-c2a096ec56d0
 start_code()
 
-# ╔═╡ 45c79345-89da-498c-9a98-2ad55a0a6114
-Markdown.parse("""
-	most_likely_failure(sys::LargeSystem, ψ; n)::Vector{NamedTuple}
-
-A function that takes in a system `sys` (collision avoidance system for the _large_ setting) and a specification `ψ` and **returns the trajectory that led to the most-likely failure**.
-
-- `n` = number of `step` calls allotted (\$n = $(format(max_steps(sys_large); latex=true))\$ for `$(system_name(sys_large))`)
-
-**Note**: `ψ` is written as `\\psi<TAB>`
-""")
-
 # ╔═╡ 3471a623-16af-481a-8f66-5bd1e7890188
 @large function most_likely_failure(sys::LargeSystem, ψ; n=max_steps(sys))
 	# TODO: WRITE YOUR CODE HERE
@@ -930,7 +871,7 @@ Markdown.MD(
 	md"""
 $(@bind rerun_large LargeCheckBox(text="⟵ Click to re-run the <code>LargeSystem</code> evaluation."))""",
 	Markdown.parse("""
-	↑ This will re-run **`most_likely_failure(::LargeSystem, ψ)`** and re-save **`$(get_filename(sys_large))`**
+	↑ This will re-run **`most_likely_failure(::LargeSystem, ψ)`** and re-save **`$(get_filename(sys_large, ThisProject))`**
 
 	_Uncheck this to load results from the file._
 	""")
@@ -1004,142 +945,32 @@ end
 # ╔═╡ 4edc5933-9457-4c7c-8456-a26974e0587e
 html_half_space()
 
-# ╔═╡ 95e3d42f-b33f-4294-81c5-f34a300dc9b4
-# This needs to be in the cell above.
+# ╔═╡ 50f1c7a3-9219-40ce-a060-77beb243b7af
 begin
-	𝑡𝑟𝑖𝑔𝑔𝑒𝑟
-	project_num
-	html"""
-	<script>
-	let cell = currentScript.closest('pluto-cell')
-	let id = cell.getAttribute('id')
-	let cells_below = document.querySelectorAll(`pluto-cell[id='${id}'] ~ pluto-cell`)
-	let cell_below_ids = [cells_below[0]].map((el) => el.getAttribute('id'))
-	cell._internal_pluto_actions.set_and_run_multiple(cell_below_ids)
-	</script>
-	"""
+	function task_description(sys, details)
+		return Markdown.parse(
+		"""
+			most_likely_failure(sys::$(system_name(sys)), ψ; n)::Vector{NamedTuple}
+		
+		A function that takes in a system `sys` ($details) and a specification `ψ` and **returns the trajectory that led to the most-likely failure**.
+		
+		- `n` = number of `step` calls allotted (\$n = $(format(max_steps(sys); latex=true))\$ for `$(system_name(sys))`)
+		
+		**Note**: `ψ` is written as `\\psi<TAB>`
+		""")
+	end
+
+	md"> _Project 1 specific functions._"
 end
 
-# ╔═╡ ba6c082b-6e62-42fc-a85c-c8b7efc89b88
-# ╠═╡ show_logs = false
-begin
-	global UsingThisViolatesTheHonorCode = @load Project1.backend
-	create_specification = UsingThisViolatesTheHonorCode.create_specification
-	ψ2latex = UsingThisViolatesTheHonorCode.ψ2latex
-	rerun = UsingThisViolatesTheHonorCode.rerun
-	rerun_multiple = UsingThisViolatesTheHonorCode.rerun_multiple
+# ╔═╡ f6589984-e24d-4aee-b7e7-db159ae7fea6
+task_description(sys_small, "1D Gaussian for the _small_ setting")
 
-	md"""
-	# Backend
-	_Helper functions and project management. Please do not edit._
-	"""
-end
+# ╔═╡ 9657f5ff-f21c-43c5-838d-402a2a723d5e
+task_description(sys_medium, "inverted pendulum for the _medium_ setting")
 
-# ╔═╡ beaec161-ad89-4f83-9066-f420a1d04d39
-rerun(sys_small, ψ_small;
-	  save=false, f=most_likely_failure_small,
-      latextras=ψ2latex(sys_small, ψ_small))[2]
-
-# ╔═╡ c524297f-2bf3-4dd2-b7b4-fc5ce9a81738
-begin
-	ψ_small_different = LTLSpecification(@formula □(s->s < 2))
-	latextras_different = ψ2latex(sys_small, ψ_small_different)
-	rerun(sys_small, ψ_small_different;
-	      f=most_likely_failure_small, save=false, latextras=latextras_different)[2]
-end
-
-# ╔═╡ 61173ec6-c7d6-44fa-8c47-5f7295dd49cf
-begin
-	rerun_rand_small # trigger
-	ψ_small_rand = create_specification()
-	latextras_rand = ψ2latex(sys_small, ψ_small_rand)
-	rerun(sys_small, ψ_small_rand;
-	      f=most_likely_failure_small, save=false, latextras=latextras_rand)[2]
-end
-
-# ╔═╡ 57d321cd-2029-4e49-8b56-9c5c48721ac4
-ψ_small_slider = create_specification(c);
-
-# ╔═╡ d647ac21-738b-43e7-bbbd-582b6294560e
-Markdown.parse("""
-## Slider to control threshold
-If your `most_likely_failure` function for the small system is fast enough, you can explore how it performs when controlling the failure threshold \$c\$ (we flip the comparison operator when \$c > 0\$):
-
-\$\$$(ψ2latex(sys_small, ψ_small_slider))\$\$
-""")
-
-# ╔═╡ d0a3770a-2c48-42db-9a71-6b7f695f22d8
-begin
-	τs_small, log_small, pass_small = rerun_multiple(sys_small;
-		                                             f=most_likely_failure_small,
-												     run=rerun_small)
-	log_small
-end
-
-# ╔═╡ f286f3b2-3bac-4384-9b40-522e974a14ee
-Markdown.MD(HTML("<h2 id='graded-test'>$(pass_small ? "✔️" : "✖️") Graded small test ($(pass_small ? "$(Project1.points_small)/$(Project1.points_small)" : "0/$(Project1.points_small)") points)</h2>"),
-	md"""
-✳️ **If the following tests pass, then you're finished with the small problem.**
-
-We'll test multiple failure thresholds in the specification $\psi$. Make sure the above 'randon test' works well across different failure thresholds to ensure this will pass.""")
-
-# ╔═╡ b417e370-efae-40e8-9247-5daf14fcc749
-begin
-	τ_medium, log_medium, pass_medium = rerun(sys_medium, ψ_medium;
-											  f=most_likely_failure_medium,
-											  run=rerun_medium)
-	log_medium
-end
-
-# ╔═╡ 23999cd9-543b-47dc-a0b2-e133ba95891e
-Markdown.parse("""
-## $(pass_medium ? "✔️" : "✖️") Graded medium test ($(pass_medium ? "$(Project1.points_medium)/$(Project1.points_medium)" : "0/$(Project1.points_medium)") points)
-""")
-
-# ╔═╡ f6eb6d1a-a9a0-4234-8699-269a92f666c0
-begin
-	τ_large, log_large, pass_large = rerun(sys_large, ψ_large;
-										   f=most_likely_failure_large,
-										   run=rerun_large)
-	log_large
-end
-
-# ╔═╡ 7c473630-6555-4ada-85f3-0d40aefe6370
-Markdown.parse("""
-## $(pass_large ? "✔️" : "✖️") Graded large test ($(pass_large ? "$(Project1.points_large)/$(Project1.points_large)" : "0/$(Project1.points_large)") points)
-""")
-
-# ╔═╡ dbd088d1-f4c9-4e6a-b280-960b06da76e4
-Markdown.MD(Markdown.parse("# $(all([pass_small, pass_medium, pass_large]) ? "✅" : "❌") Final Check"),
-@mdx("""If the following test indicator is <span style='color:#759466'><b>green</b></span>, you can submit to Gradescope."""))
-
-# ╔═╡ 1bb92755-65e3-457e-84cd-252eae5e4d7e
-if all([pass_small, pass_medium, pass_large])
-	correct(Markdown.MD(md"""
-All tests have passed, **_you're done with Project 1!_**""",
-@mdx("""
-|  System  |  Passed?  |  Points  |
-| :------: | :-------: | :------: |
-| Small | $(pass_small ? HTML("<span style='color:#759466'><b>Passed!</b></span>") : HTML("<span style='color:#B83A4B'><b>Failed.</b></span>")) | $(pass_small ? "$(Project1.points_small)/$(Project1.points_small)" : "0/$(Project1.points_small)") |
-| Medium | $(pass_medium ? HTML("<span style='color:#759466'><b>Passed!</b></span>") : HTML("<span style='color:#B83A4B'><b>Failed.</b></span>")) | $(pass_medium ? "$(Project1.points_medium)/$(Project1.points_medium)" : "0/$(Project1.points_medium)") |
-| Large | $(pass_large ? HTML("<span style='color:#759466'><b>Passed!</b></span>") : HTML("<span style='color:#B83A4B'><b>Failed.</b></span>")) | $(pass_large ? "$(Project1.points_large)/$(Project1.points_large)" : "0/$(Project1.points_large)") |
-"""),
-md"""
-**📩 Please see the [Submission](#submission) section at the top of the page.**
-"""))
-else
-	almost(Markdown.MD(md"**_Some tests have failed:_**", @mdx("""
-|  System  |  Passed?  | Points |
-| :------: | :-------: | :----: |
-| Small | $(pass_small ? HTML("<span style='color:#759466'><b>Passed!</b></span>") : HTML("<span style='color:#B83A4B'><b>Failed.</b></span>")) | $(pass_small ? "$(Project1.points_small)/$(Project1.points_small)" : "0/$(Project1.points_small)") |
-| Medium | $(pass_medium ? HTML("<span style='color:#759466'><b>Passed!</b></span>") : HTML("<span style='color:#B83A4B'><b>Failed.</b></span>")) | $(pass_medium ? "$(Project1.points_medium)/$(Project1.points_medium)" : "0/$(Project1.points_medium)") |
-| Large | $(pass_large ? HTML("<span style='color:#759466'><b>Passed!</b></span>") : HTML("<span style='color:#B83A4B'><b>Failed.</b></span>")) | $(pass_large ? "$(Project1.points_large)/$(Project1.points_large)" : "0/$(Project1.points_large)") |
-"""),
-md"""
-_Please fix the above failing tests before submission._
-
-_You may partially submit individual `.val` files to Gradescope, you have unlimited Gradescope submissions until the deadline. But please make sure to submit all **three** `.val` files once complete._"""))
-end
+# ╔═╡ 45c79345-89da-498c-9a98-2ad55a0a6114
+task_description(sys_large, "collision avoidance system for the _large_ setting")
 
 # ╔═╡ 247f4c17-bee1-4315-aff9-017407ef9219
 begin
@@ -1172,46 +1003,6 @@ begin
 	md"> _Leaderboard helper functions._"
 end
 
-# ╔═╡ d9ab8278-eb76-4a36-aa0e-4ec74704f5e0
-begin
-	global user_score = -Inf	
-	try
-		global user_score = 
-			leaderboard_scores(
-				[sys_small, sys_medium, sys_large],
-				[τs_small, τ_medium, τ_large]; 𝐰=𝐰)
-	catch end
-
-	global 𝔼_logpdf_small = -Inf
-	try
-		global 𝔼_logpdf_small = mean(log_likelihood(sys_small, τ) for τ in τs_small)
-	catch end
-
-	global logpdf_medium = -Inf
-	try
-		global logpdf_medium = log_likelihood(sys_medium, τ_medium)
-	catch end
-
-	global logpdf_large = -Inf
-	try
-		global logpdf_large = log_likelihood(sys_large, τ_large)
-	catch end
-
-	Markdown.parse("""
-# Leaderboard
-If the above tests pass, then you will receive full credit for your submission on Gradescope under the **`"Project 1 (.val files)"`** assignment.
-
-_However_, we have a leaderboard so that students can participate in a friendly competition to find the most-likely failures for each problem.
-	
-## Leaderboard entry
-Your leaderboard entry on Gradescope should look something like this:
-
-| Rank | Submission Name | Score | 𝔼[log 𝑝(small)] | log 𝑝(medium) | log 𝑝(large) |
-| :--: | :-------------: | :---: | :-----------: | :------------: | :-----------: |
-| — | $(guess_username()) | $(rd(user_score)) | $(rd(𝔼_logpdf_small)) | $(rd(logpdf_medium)) | $(rd(logpdf_large)) |
-""")
-end
-
 # ╔═╡ 5a1ed20d-788b-4655-bdd8-069545f48929
 begin
 	function extract(env::SimpleGaussian, input)
@@ -1240,7 +1031,10 @@ begin
 end
 
 # ╔═╡ 6c8b3077-876e-42fd-aa47-f3fa7c37f4dd
-Markdown.MD(md"$(@bind dark_mode DarkModeIndicator())", md"> _Dark mode indicator._")
+Markdown.MD(
+	# md"$(dark_mode = true)",
+	md"$(@bind dark_mode DarkModeIndicator())",
+	md"> _Dark mode indicator._")
 
 # ╔═╡ 6b17139e-6caf-4f07-a607-e403bf1ad794
 try
@@ -1256,6 +1050,28 @@ try
 		)
 	end
 catch end
+
+# ╔═╡ daada216-11d4-4f8b-807c-d347130a3928
+try
+	if dark_mode
+		LocalResource(joinpath(@__DIR__, "..", "media", "inverted_pendulum_dark.svg"))
+	else
+		LocalResource(joinpath(@__DIR__, "..", "media", "inverted_pendulum.svg"))
+	end
+catch end
+
+# ╔═╡ 5aef09eb-ddc5-4b99-abf2-568621b871d5
+# ╠═╡ show_logs = false
+begin
+	DarkModeHandler.setdarkmode!(dark_mode)
+
+	import StanfordAA228V:
+		Always, Predicate, FlippedPredicate, ρ,
+		plot, plot!, plot_cdf, plot_pendulum, plot_cas_lookahead # dark_mode triggers
+
+	pkg_trigger = true
+	md"> _AA228V/CS238V package management._"
+end
 
 # ╔═╡ bb296b6b-b8b3-4892-aeed-a0468374bfe7
 function Plots.plot(sys::SmallSystem, ψ, τ=missing;
@@ -1356,228 +1172,23 @@ function Plots.plot(sys::SmallSystem, ψ, τ=missing;
 	return plot!()
 end; md"`plot(sys::SmallSystem, ψ, τ)`"
 
-# ╔═╡ daada216-11d4-4f8b-807c-d347130a3928
-try
-	if dark_mode
-		LocalResource(joinpath(@__DIR__, "..", "media", "inverted_pendulum_dark.svg"))
-	else
-		LocalResource(joinpath(@__DIR__, "..", "media", "inverted_pendulum.svg"))
-	end
-catch end
-
-# ╔═╡ 521b0ca1-8129-439f-8266-bbdc0da23337
-function Plots.plot(sys::MediumSystem, ψ, τ=missing;
-                    is_dark_mode=dark_mode,
-					title="Inverted Pendulum",
-					max_lines=100, size=(680,350), kwargs...)
-	plot(
-		size=size,
-		grid=false,
-		bg="transparent",
-		background_color_inside=is_dark_mode ? "#1A1A1A" : "white",
-		fg=is_dark_mode ? "white" : "black",
-	)
-
-	plot!(rectangle(2, 1, 0, π/4), opacity=0.5, color="#F5615C", label=false)
-	plot!(rectangle(2, 1, 0, -π/4-1), opacity=0.5, color="#F5615C", label=false)
-	xlabel!("Time (s)")
-	ylabel!("𝜃 (rad)")
-	title!(title)
-	xlims!(0, 2)
-	ylims!(-1.2, 1.2)
-	set_aspect_ratio!()
-
-	function plot_pendulum_traj!(τ; lw=2, α=1, color="#009E73")
-		X = range(0, step=sys.env.dt, length=length(τ))
-		plot!(X, [step.s[1] for step in τ]; lw, color, α, label=false)
-	end
-
-	if τ isa Vector{<:Vector}
-		# Multiple trajectories
-		τ_successes = filter(τᵢ->!isfailure(ψ, τᵢ), τ)
-		τ_failures = filter(τᵢ->isfailure(ψ, τᵢ), τ)
-		for (i,τᵢ) in enumerate(τ_successes)
-			if i > max_lines
-				break
-			else
-				plot_pendulum_traj!(τᵢ; lw=1, α=0.25, color="#009E73")
-			end
-		end
-
-		for τᵢ in τ_failures
-			plot_pendulum_traj!(τᵢ; lw=2, α=1, color="#F5615C")
-		end
-	elseif τ isa Vector
-		# Single trajectory
-		get_color(ψ, τ) = isfailure(ψ, τ) ? "#F5615C" : "#009E73"
-		plot_pendulum_traj!(τ; lw=2, color=get_color(ψ, τ))
-	end
-
-	return plot!()
-end; md"`plot(sys::MediumSystem, ψ, τ)`"
-
-# ╔═╡ 15bd7864-bba0-467e-a329-d93d9de79265
-function Plots.plot(sys::LargeSystem, ψ, τ=missing;
-					is_dark_mode=dark_mode,
-					t=missing, max_lines=100,
-					size=(680,350), title="", kwargs...)
-	plot(;
-		size,
-		grid=false,
-		bg="transparent",
-		background_color_inside=is_dark_mode ? "#1A1A1A" : "white",
-		fg=is_dark_mode ? "white" : "black",
-		xflip=true,
-		kwargs...
-	)
-
-	primary_color = is_dark_mode ? "white" : "black"
-
-	xlims!(0, 40)
-	ylims!(-400, 400)
-	set_aspect_ratio!()
-	ratio = get_aspect_ratio()
-	xlabel!("\$t_\\mathrm{col}\$ (s)")
-	ylabel!("\$h\$ (m)")
-	title!(title)
-
-	# Collision region
-	plot!(rectangle(1, 100, 0, -50), opacity=0.5, color="#F5615C", label=false)
-
-	# Intruder
-	shape_scale = 0.03
-	intruder_shape = scaled(Shape(mirror_horizontal(aircraft_vertices)), shape_scale)
-	marker = (intruder_shape, 1, "black")
-	scatter!([1.5], [0]; color=primary_color, msc=primary_color, marker=marker, ms=4, label=false)
-		
-	function plot_cas_traj!(τ; lw=2, α=1, color="#009E73")
-		t′ = ismissing(t) ? 41 : t
-		X = reverse(range(41-t′, 40, length=t′))
-		H = [step.s[1] for step in τ[1:t′]]
-		plot!(X, H; lw, color, α, label=false)
-		if !ismissing(t)
-			if t ≤ 0
-				error("Time should be t > 0")
-			else
-				# Important: undo xflip (41-x) and apply aspect ratio to the y values
-				if t == 1
-					# Look ahead +1 to get proper angle for t=1
-					t′′ = t′+t+1
-					X′ = reverse(range(41-t′′, 40, length=t′′))
-					H′ = [step.s[1] for step in τ[1:t′′]]
-					p1 = (41-X′[t′′-1], H′[t′′-1]*ratio)
-					p2 = (41-X′[t′′], H′[t′′]*ratio)
-				else
-					p1 = (41-X[t-1], H[t-1]*ratio)
-					p2 = (41-X[t], H[t]*ratio)
-				end
-				θ = rotation_from_points(p1, p2)
-				shape = scaled(rotation(Shape(aircraft_vertices), θ), shape_scale)
-				marker = (shape, 1, "black")
-				scatter!([X[end]], [H[end]]; color=primary_color, msc=primary_color, α, marker=marker, ms=4, label=false)
-			end
-		end
-	end
-
-	if τ isa Vector{<:Vector}
-		# Multiple trajectories
-		τ_successes = filter(τᵢ->!isfailure(ψ, τᵢ), τ)
-		τ_failures = filter(τᵢ->isfailure(ψ, τᵢ), τ)
-		for (i,τᵢ) in enumerate(τ_successes)
-			if i > max_lines
-				break
-			else
-				plot_cas_traj!(τᵢ; lw=1, α=0.25, color="#009E73")
-			end
-		end
-
-		for τᵢ in τ_failures
-			plot_cas_traj!(τᵢ; lw=2, α=1, color="#F5615C")
-		end
-	elseif τ isa Vector
-		# Single trajectory
-		get_color(ψ, τ) = isfailure(ψ, τ) ? "#F5615C" : "#009E73"
-		plot_cas_traj!(τ; lw=2, color=get_color(ψ, τ))
-	end
-
-	return plot!()
-end; md"`plot(sys::LargeSystem, ψ, τ)`"
-
 # ╔═╡ e86d260f-c93d-4561-a9f1-44e4c7af827e
-plot(sys_small, ψ_small)
+wrapdiv(plot(sys_small, ψ_small); options="class='centered'")
 
 # ╔═╡ d4d057d7-cc9d-4949-9e3f-44a8aa67d725
 begin
-	plot(sys_small, ψ_small, baseline_small_results.τ)
-	title!("Baseline most-likely failure found")
+	wrapdiv(begin
+		plot(sys_small, ψ_small, baseline_small_results.τ)
+		title!("Baseline most-likely failure found")
+	end; options="class='centered'")
 end
 
 # ╔═╡ fe7f4a79-1a63-4272-a776-358a309c8550
 begin
-	plot(sys_small, ψ_small, baseline_small_results.τs)
-	title!("States from baseline")
-end
-
-# ╔═╡ 57c5a6f0-2527-4988-9bf0-140495ba9b7e
-begin
-	try
-		τ_small_slider = most_likely_failure_small(sys_small, ψ_small_slider)
-		ℓ_small_slider = logpdf(NominalTrajectoryDistribution(sys_small), τ_small_slider)
-		Markdown.MD(Markdown.parse("""
-		\$\$\\begin{align}
-		\\exp(\\ell_\\text{baseline}) &= $(round(ℓ_small_slider, sigdigits=3))\\tag{failure likelihood} \\\\
-		n_\\text{steps} &= $(stepcount()) \\tag{number of \\texttt{step} calls}
-		\\end{align}\$\$"""),
-		md"$(plot(sys_small, ψ_small_slider, τ_small_slider))")
-	catch
-		md"*(Slider plot will show when issues are fixed with `most_likely_failure(sys::SmallSystem, ψ)` above)*"
-	end
-end
-
-# ╔═╡ 6efa8f39-4ce7-4f89-a62e-8cd6ea1b4a52
-function plot_pendulum(θ; c=π/4, is_dark_mode=dark_mode, title="", kwargs...)
-	plot(;
-		grid=false,
-		axis=false,
-		bg="transparent",
-		background_color_inside="transparent",
-		fgcolor=is_dark_mode ? "white" : "black",
-		title=title,
-		kwargs...
-	)
-	l = 3 # Pendulum length
-	buffer = 1.05 # Axis limit buffer
-	lt = 1.1l # Failure threshold length
-
-	xlims!(-l*buffer, l*buffer)
-	ylims!(-l*buffer, l*buffer)
-	set_aspect_ratio!()
-
-	# Background circle
-	plot!(circle([0,0], l), seriestype=:shape, color="#b9e2d5", lc="transparent", label=false)
-
-	# Failure regions
-	plot!(halfcircle([0,0], l, c), seriestype=:shape, color="#fbdfdc", lc="transparent", label=false)
-
-	plot!(halfcircle([0,0], l, -c), seriestype=:shape, color="#fbdfdc", lc="transparent", label=false)
-
-	# Outline
-	plot!(circle([0,0], l), seriestype=:shape, color="transparent", lc="transparent", label=false)
-
-	# Failure thresholds
-	plot!([0, lt*sin(c)], [0, lt*cos(c)], color="#F5615C", ls=:dash, lw=2, label=false)
-
-	plot!([0, lt*sin(-c)], [0, lt*cos(-c)], color="#F5615C", ls=:dash, lw=2, label=false)
-
-	# Pendulum
-	topx = l * sind(θ)
-	topy = l * cosd(θ)
-
-	pend_color = θ < -rad2deg(c) || θ > rad2deg(c) ? "#F5615C" : "black"
-	plot!([0, topx], [0, topy], lw=3, color=pend_color, label=false)
-	
-	# Center point
-	scatter!([0], [0], marker=:circle, ms=5, color="black", label=false)
+	wrapdiv(begin
+		plot(sys_small, ψ_small, baseline_small_results.τs)
+		title!("States from baseline")
+	end; options="class='centered'")
 end
 
 # ╔═╡ 44c8fbe0-21e7-482b-84a9-c3d32a4737dd
@@ -1605,6 +1216,203 @@ plot(sys_large, ψ_large, baseline_large_results.τs)
 
 # ╔═╡ 4ae85f59-4e94-48aa-8ccb-91311466c51f
 plot(sys_large, ψ_large, baseline_large_results.τ)
+
+# ╔═╡ 95e3d42f-b33f-4294-81c5-f34a300dc9b4
+# This needs to be in the cell above.
+begin
+	pkg_trigger
+	html"""
+	<script>
+	let cell = currentScript.closest('pluto-cell')
+	let id = cell.getAttribute('id')
+	let cells_below = document.querySelectorAll(`pluto-cell[id='${id}'] ~ pluto-cell`)
+	let cell_below_ids = [cells_below[0]].map((el) => el.getAttribute('id'))
+	cell._internal_pluto_actions.set_and_run_multiple(cell_below_ids)
+	</script>
+	"""
+end
+
+# ╔═╡ ba6c082b-6e62-42fc-a85c-c8b7efc89b88
+# ╠═╡ show_logs = false
+begin
+	pkg_trigger
+
+	global UsingThisViolatesTheHonorCode = @load ThisProject.backend
+	create_specification = UsingThisViolatesTheHonorCode.create_specification
+	ψ2latex = UsingThisViolatesTheHonorCode.ψ2latex
+	rerun = UsingThisViolatesTheHonorCode.rerun
+	rerun_multiple = UsingThisViolatesTheHonorCode.rerun_multiple
+
+	md"""
+	# Backend
+	_Helper functions and project management. Please do not edit._
+	"""
+end
+
+# ╔═╡ beaec161-ad89-4f83-9066-f420a1d04d39
+rerun(sys_small, ψ_small;
+	  save=false, f=most_likely_failure_small,
+	  project=ThisProject, latextras=ψ2latex(sys_small, ψ_small))[2]
+
+# ╔═╡ c524297f-2bf3-4dd2-b7b4-fc5ce9a81738
+begin
+	ψ_small_different = LTLSpecification(@formula □(s->s < 2))
+	latextras_different = ψ2latex(sys_small, ψ_small_different)
+	rerun(sys_small, ψ_small_different;
+	      f=most_likely_failure_small, save=false,
+		  project=ThisProject, latextras=latextras_different)[2]
+end
+
+# ╔═╡ 61173ec6-c7d6-44fa-8c47-5f7295dd49cf
+begin
+	rerun_rand_small # trigger
+	ψ_small_rand = create_specification()
+	latextras_rand = ψ2latex(sys_small, ψ_small_rand)
+	rerun(sys_small, ψ_small_rand;
+	      f=most_likely_failure_small, save=false,
+		  project=ThisProject, latextras=latextras_rand)[2]
+end
+
+# ╔═╡ 57d321cd-2029-4e49-8b56-9c5c48721ac4
+ψ_small_slider = create_specification(c);
+
+# ╔═╡ d647ac21-738b-43e7-bbbd-582b6294560e
+Markdown.parse("""
+## Slider to control threshold
+If your `most_likely_failure` function for the small system is fast enough, you can explore how it performs when controlling the failure threshold \$c\$ (we flip the comparison operator when \$c > 0\$):
+
+\$\$$(ψ2latex(sys_small, ψ_small_slider))\$\$
+""")
+
+# ╔═╡ 57c5a6f0-2527-4988-9bf0-140495ba9b7e
+begin
+	try
+		τ_small_slider = most_likely_failure_small(sys_small, ψ_small_slider)
+		ℓ_small_slider = logpdf(NominalTrajectoryDistribution(sys_small), τ_small_slider)
+		Markdown.MD(Markdown.parse("""
+		\$\$\\begin{align}
+		\\exp(\\ell_\\text{baseline}) &= $(round(ℓ_small_slider, sigdigits=3))\\tag{failure likelihood} \\\\
+		n_\\text{steps} &= $(stepcount()) \\tag{number of \\texttt{step} calls}
+		\\end{align}\$\$"""),
+		md"$(plot(sys_small, ψ_small_slider, τ_small_slider))")
+	catch
+		md"*(Slider plot will show when issues are fixed with `most_likely_failure(sys::SmallSystem, ψ)` above)*"
+	end
+end
+
+# ╔═╡ d0a3770a-2c48-42db-9a71-6b7f695f22d8
+begin
+	τs_small, log_small, pass_small = rerun_multiple(sys_small;
+		                                             f=most_likely_failure_small,
+												     run=rerun_small, 
+												     project=ThisProject)
+	log_small
+end
+
+# ╔═╡ f286f3b2-3bac-4384-9b40-522e974a14ee
+Markdown.MD(HTML("<h2 id='graded-test'>$(pass_small ? "✔️" : "✖️") Graded small test ($(pass_small ? "$(ThisProject.points_small)/$(ThisProject.points_small)" : "0/$(ThisProject.points_small)") points)</h2>"),
+	md"""
+✳️ **If the following tests pass, then you're finished with the small problem.**
+
+We'll test multiple failure thresholds in the specification $\psi$. Make sure the above 'randon test' works well across different failure thresholds to ensure this will pass.""")
+
+# ╔═╡ b417e370-efae-40e8-9247-5daf14fcc749
+begin
+	τ_medium, log_medium, pass_medium = rerun(sys_medium, ψ_medium;
+											  f=most_likely_failure_medium,
+											  run=rerun_medium, project=ThisProject)
+	log_medium
+end
+
+# ╔═╡ 23999cd9-543b-47dc-a0b2-e133ba95891e
+Markdown.parse("""
+## $(pass_medium ? "✔️" : "✖️") Graded medium test ($(pass_medium ? "$(ThisProject.points_medium)/$(ThisProject.points_medium)" : "0/$(ThisProject.points_medium)") points)
+""")
+
+# ╔═╡ f6eb6d1a-a9a0-4234-8699-269a92f666c0
+begin
+	τ_large, log_large, pass_large = rerun(sys_large, ψ_large;
+										   f=most_likely_failure_large,
+										   run=rerun_large, project=ThisProject)
+	log_large
+end
+
+# ╔═╡ 7c473630-6555-4ada-85f3-0d40aefe6370
+Markdown.parse("""
+## $(pass_large ? "✔️" : "✖️") Graded large test ($(pass_large ? "$(ThisProject.points_large)/$(ThisProject.points_large)" : "0/$(ThisProject.points_large)") points)
+""")
+
+# ╔═╡ dbd088d1-f4c9-4e6a-b280-960b06da76e4
+Markdown.MD(Markdown.parse("# $(all([pass_small, pass_medium, pass_large]) ? "✅" : "❌") Final Check"),
+@mdx("""If the following test indicator is <span style='color:#759466'><b>green</b></span>, you can submit to Gradescope."""))
+
+# ╔═╡ 1bb92755-65e3-457e-84cd-252eae5e4d7e
+if all([pass_small, pass_medium, pass_large])
+	correct(Markdown.MD(md"""
+All tests have passed, **_you're done with Project 1!_**""",
+@mdx("""
+|  System  |  Passed?  |  Points  |
+| :------: | :-------: | :------: |
+| Small | $(pass_small ? HTML("<span style='color:#759466'><b>Passed!</b></span>") : HTML("<span style='color:#B83A4B'><b>Failed.</b></span>")) | $(pass_small ? "$(ThisProject.points_small)/$(ThisProject.points_small)" : "0/$(ThisProject.points_small)") |
+| Medium | $(pass_medium ? HTML("<span style='color:#759466'><b>Passed!</b></span>") : HTML("<span style='color:#B83A4B'><b>Failed.</b></span>")) | $(pass_medium ? "$(ThisProject.points_medium)/$(ThisProject.points_medium)" : "0/$(ThisProject.points_medium)") |
+| Large | $(pass_large ? HTML("<span style='color:#759466'><b>Passed!</b></span>") : HTML("<span style='color:#B83A4B'><b>Failed.</b></span>")) | $(pass_large ? "$(ThisProject.points_large)/$(ThisProject.points_large)" : "0/$(ThisProject.points_large)") |
+"""),
+md"""
+**📩 Please see the [Submission](#submission) section at the top of the page.**
+"""))
+else
+	almost(Markdown.MD(md"**_Some tests have failed:_**", @mdx("""
+|  System  |  Passed?  | Points |
+| :------: | :-------: | :----: |
+| Small | $(pass_small ? HTML("<span style='color:#759466'><b>Passed!</b></span>") : HTML("<span style='color:#B83A4B'><b>Failed.</b></span>")) | $(pass_small ? "$(ThisProject.points_small)/$(ThisProject.points_small)" : "0/$(ThisProject.points_small)") |
+| Medium | $(pass_medium ? HTML("<span style='color:#759466'><b>Passed!</b></span>") : HTML("<span style='color:#B83A4B'><b>Failed.</b></span>")) | $(pass_medium ? "$(ThisProject.points_medium)/$(ThisProject.points_medium)" : "0/$(ThisProject.points_medium)") |
+| Large | $(pass_large ? HTML("<span style='color:#759466'><b>Passed!</b></span>") : HTML("<span style='color:#B83A4B'><b>Failed.</b></span>")) | $(pass_large ? "$(ThisProject.points_large)/$(ThisProject.points_large)" : "0/$(ThisProject.points_large)") |
+"""),
+md"""
+_Please fix the above failing tests before submission._
+
+_You may partially submit individual `.val` files to Gradescope, you have unlimited Gradescope submissions until the deadline. But please make sure to submit all **three** `.val` files once complete._"""))
+end
+
+# ╔═╡ d9ab8278-eb76-4a36-aa0e-4ec74704f5e0
+begin
+	global user_score = -Inf	
+	try
+		global user_score = 
+			leaderboard_scores(
+				[sys_small, sys_medium, sys_large],
+				[τs_small, τ_medium, τ_large]; 𝐰=𝐰)
+	catch end
+
+	global 𝔼_logpdf_small = -Inf
+	try
+		global 𝔼_logpdf_small = mean(log_likelihood(sys_small, τ) for τ in τs_small)
+	catch end
+
+	global logpdf_medium = -Inf
+	try
+		global logpdf_medium = log_likelihood(sys_medium, τ_medium)
+	catch end
+
+	global logpdf_large = -Inf
+	try
+		global logpdf_large = log_likelihood(sys_large, τ_large)
+	catch end
+
+	Markdown.parse("""
+# Leaderboard
+If the above tests pass, then you will receive full credit for your submission on Gradescope under the **`"Project 1 (.val files)"`** assignment.
+
+_However_, we have a leaderboard so that students can participate in a friendly competition to find the most-likely failures for each problem.
+	
+## Leaderboard entry
+Your leaderboard entry on Gradescope should look something like this:
+
+| Rank | Submission Name | Score | 𝔼[log 𝑝(small)] | log 𝑝(medium) | log 𝑝(large) |
+| :--: | :-------------: | :---: | :-----------: | :------------: | :-----------: |
+| — | $(guess_username()) | $(rd(user_score)) | $(rd(𝔼_logpdf_small)) | $(rd(logpdf_medium)) | $(rd(logpdf_large)) |
+""")
+end
 
 # ╔═╡ 5563f0da-7552-4879-a38a-ba1748d39d52
 begin
@@ -1663,11 +1471,11 @@ end
 # ╔═╡ e189b31e-7e24-4c32-989f-3e600a44d4bc
 try LocalResource(joinpath(@__DIR__, "..", "media", cas_gif_name)) catch end
 
-# ╔═╡ 9865ed62-b4fd-4e49-9259-3e5997c589f3
-Markdown.MD(button_style(rerun_rand_small), md"> _Button styling._")
-
 # ╔═╡ 97042a5e-9691-493f-802e-2262f2da4627
 Markdown.MD(notebook_style(), md"> _Notebook styling._")
+
+# ╔═╡ 9865ed62-b4fd-4e49-9259-3e5997c589f3
+Markdown.MD(button_style(rerun_rand_small), md"> _Button styling._")
 
 # ╔═╡ ef084fea-bf4d-48d9-9c84-8cc1dd98f2d7
 Markdown.MD(TableOfContents(), md"> _Table of contents._")
@@ -1687,6 +1495,7 @@ Optim = "429524aa-4258-5aef-a3af-852621145aeb"
 Parameters = "d96e819e-fc66-5662-9728-84c9c7592b0a"
 Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
 PlutoUI = "7f904dfe-b85e-4ff6-b463-dae2292396a8"
+ProgressLogging = "33c8b6b6-d38a-422a-b730-caa89a2f386c"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 StanfordAA228V = "6f6e590e-f8c2-4a21-9268-94576b9fb3b1"
 TOML = "fa267f1f-6049-4f14-aa54-33bafae1ed76"
@@ -1694,7 +1503,7 @@ Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [compat]
 BSON = "~0.3.9"
-Distributions = "~0.25.113"
+Distributions = "~0.25.114"
 ForwardDiff = "~0.10.38"
 GridInterpolations = "~1.2.1"
 MarkdownLiteral = "~0.1.1"
@@ -1702,7 +1511,8 @@ Optim = "~1.10.0"
 Parameters = "~0.12.3"
 Plots = "~1.40.9"
 PlutoUI = "~0.7.60"
-StanfordAA228V = "~0.1.13"
+ProgressLogging = "~0.1.4"
+StanfordAA228V = "~0.1.14"
 """
 
 # ╔═╡ 00000000-0000-0000-0000-000000000002
@@ -1711,7 +1521,7 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.11.2"
 manifest_format = "2.0"
-project_hash = "9f5d5de72d3eeafa8d57833b2e6994cba9a03bac"
+project_hash = "421616601f236f4efba7016cc8020c682332f3e1"
 
 [[deps.AbstractFFTs]]
 deps = ["LinearAlgebra"]
@@ -1999,9 +1809,9 @@ version = "1.11.0"
 
 [[deps.Distributions]]
 deps = ["AliasTables", "FillArrays", "LinearAlgebra", "PDMats", "Printf", "QuadGK", "Random", "SpecialFunctions", "Statistics", "StatsAPI", "StatsBase", "StatsFuns"]
-git-tree-sha1 = "3101c32aab536e7a27b1763c0797dba151b899ad"
+git-tree-sha1 = "9d9e93d19c912ee6f0f3543af0d8839079dbd0d7"
 uuid = "31c24e10-a181-5473-b8eb-7969acd0382f"
-version = "0.25.113"
+version = "0.25.114"
 
     [deps.Distributions.extensions]
     DistributionsChainRulesCoreExt = "ChainRulesCore"
@@ -2755,6 +2565,12 @@ deps = ["Unicode"]
 uuid = "de0858da-6303-5e67-8744-51eddeeeb8d7"
 version = "1.11.0"
 
+[[deps.ProgressLogging]]
+deps = ["Logging", "SHA", "UUIDs"]
+git-tree-sha1 = "80d919dee55b9c50e8d9e2da5eeafff3fe58b539"
+uuid = "33c8b6b6-d38a-422a-b730-caa89a2f386c"
+version = "0.1.4"
+
 [[deps.PtrArrays]]
 git-tree-sha1 = "77a42d78b6a92df47ab37e177b2deac405e1c88f"
 uuid = "43287f4e-b6f4-7ad1-bb20-aadabca52c3d"
@@ -2934,10 +2750,10 @@ uuid = "860ef19b-820b-49d6-a774-d7a799459cd3"
 version = "1.0.2"
 
 [[deps.StanfordAA228V]]
-deps = ["AbstractPlutoDingetjes", "BSON", "Base64", "Distributions", "ForwardDiff", "GridInterpolations", "LinearAlgebra", "Markdown", "Optim", "Parameters", "Pkg", "Plots", "Pluto", "PlutoUI", "Random", "SignalTemporalLogic", "Statistics"]
-git-tree-sha1 = "538e263771971550373da2adc0e970ef84c558c2"
+deps = ["AbstractPlutoDingetjes", "BSON", "Base64", "Distributions", "ForwardDiff", "GridInterpolations", "LinearAlgebra", "Markdown", "Optim", "Parameters", "Pkg", "Plots", "Pluto", "PlutoUI", "ProgressLogging", "Random", "SignalTemporalLogic", "Statistics"]
+git-tree-sha1 = "6a15826ac41dbaa918ebd8a43c00ad23e1554c1c"
 uuid = "6f6e590e-f8c2-4a21-9268-94576b9fb3b1"
-version = "0.1.13"
+version = "0.1.14"
 
 [[deps.StaticArrays]]
 deps = ["LinearAlgebra", "PrecompileTools", "Random", "StaticArraysCore"]
@@ -3467,7 +3283,6 @@ version = "1.4.1+1"
 # ╟─bc2f62f5-1330-46cd-bb81-411baa483488
 # ╟─a46702a3-4a8c-4749-bd00-52f8cce5b8ee
 # ╟─fd8c851a-3a42-41c5-b0fd-a12085543c9b
-# ╠═3a5ec5bb-9caf-4b67-9157-ad754a310caa
 # ╟─17fa8557-9656-4347-9d44-213fd3b635a6
 # ╠═22feee3d-4627-4358-9937-3c780b7e8bcb
 # ╠═6f3e24de-094c-49dc-b892-6721b3cc54ed
@@ -3476,7 +3291,7 @@ version = "1.4.1+1"
 # ╟─370a15eb-df4b-493a-af77-00914b4616ea
 # ╠═ab4c6807-5b4e-4688-b794-159e26a1599b
 # ╟─bb296b6b-b8b3-4892-aeed-a0468374bfe7
-# ╠═e86d260f-c93d-4561-a9f1-44e4c7af827e
+# ╟─e86d260f-c93d-4561-a9f1-44e4c7af827e
 # ╟─166bd412-d433-4dc9-b874-7359108c0a8b
 # ╟─9132a200-f63b-444b-9830-b03cf075021b
 # ╠═c2ae204e-dbcc-453a-81f5-791ba4be39db
@@ -3513,17 +3328,14 @@ version = "1.4.1+1"
 # ╟─d0a3770a-2c48-42db-9a71-6b7f695f22d8
 # ╟─fda151a1-5069-44a8-baa1-d7903bc89797
 # ╟─8c78529c-1e00-472c-bb76-d984b37235ab
-# ╠═dabb7db9-5e17-47d8-be55-9848ec3f114a
 # ╟─daada216-11d4-4f8b-807c-d347130a3928
 # ╟─d18c2105-c2af-4dda-8388-617aa816a567
 # ╠═77637b5e-e3ce-4ecd-90fc-95611af18002
 # ╠═c4c0328d-8cb3-41d5-9740-0197cbf760c2
 # ╟─b1e9bd40-a401-4630-9a1f-d61b276e72f7
 # ╠═fe272c1b-421c-49de-a513-80c7bcefdd9b
-# ╟─6efa8f39-4ce7-4f89-a62e-8cd6ea1b4a52
 # ╟─4ea18122-b681-4de1-89e3-5fb7ce2f7a0b
 # ╟─a16cf110-4afa-4792-9d3f-f13b24349886
-# ╟─521b0ca1-8129-439f-8266-bbdc0da23337
 # ╠═44c8fbe0-21e7-482b-84a9-c3d32a4737dd
 # ╟─772cf17e-0fdb-470e-9f12-9480af811edd
 # ╠═f005da72-d7b5-4f01-8882-ed4e2bdcf4bd
@@ -3544,7 +3356,6 @@ version = "1.4.1+1"
 # ╟─b417e370-efae-40e8-9247-5daf14fcc749
 # ╟─60ab8107-db65-4fb6-aeea-d4978aed77bd
 # ╟─aa0c4ffc-d7f0-484e-a1e2-7f6f92a3a53d
-# ╠═c861400f-8b54-4fc7-ad10-37339a825b9d
 # ╟─e189b31e-7e24-4c32-989f-3e600a44d4bc
 # ╟─7d054465-9f80-4dfb-9b5f-76c3977de7cd
 # ╠═1ec68a39-8de9-4fd3-be8a-26cf7706d1d6
@@ -3552,7 +3363,6 @@ version = "1.4.1+1"
 # ╠═641b92a3-8ff2-4aed-8482-9fa686803b68
 # ╟─be426908-3fee-4ecd-b054-2497ce9a2e50
 # ╠═258e14c4-9a2d-4515-9a8f-8cd96f31a6ff
-# ╟─15bd7864-bba0-467e-a329-d93d9de79265
 # ╠═797cbe41-a5f3-4179-9143-9ef6e6888a4d
 # ╟─35434537-9b9c-4528-b58c-420d01813598
 # ╠═3328d818-391a-440a-8f1b-f2b7f3e00958
@@ -3584,15 +3394,17 @@ version = "1.4.1+1"
 # ╟─4edc5933-9457-4c7c-8456-a26974e0587e
 # ╟─95e3d42f-b33f-4294-81c5-f34a300dc9b4
 # ╟─ba6c082b-6e62-42fc-a85c-c8b7efc89b88
+# ╟─5aef09eb-ddc5-4b99-abf2-568621b871d5
 # ╟─173388ab-207a-42a6-b364-b2c1cb335f6b
+# ╟─50f1c7a3-9219-40ce-a060-77beb243b7af
 # ╟─5563f0da-7552-4879-a38a-ba1748d39d52
 # ╟─98cbe931-d362-4039-97ba-41e0049619a3
 # ╟─247f4c17-bee1-4315-aff9-017407ef9219
 # ╟─db7d4de5-9166-4e56-b5bc-1356e43286a9
 # ╟─5a1ed20d-788b-4655-bdd8-069545f48929
 # ╟─6c8b3077-876e-42fd-aa47-f3fa7c37f4dd
-# ╟─9865ed62-b4fd-4e49-9259-3e5997c589f3
 # ╟─97042a5e-9691-493f-802e-2262f2da4627
+# ╟─9865ed62-b4fd-4e49-9259-3e5997c589f3
 # ╟─ef084fea-bf4d-48d9-9c84-8cc1dd98f2d7
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
