@@ -361,21 +361,21 @@ where likelihoods may be much larger than one (e.g., as in the inverted pendulum
 """
 
 # ╔═╡ 9d051b1b-dcf4-418c-988c-37561a10f485
-md" $c=$ $(@bind c Slider(-4:0.1:4, show_value=true, default=-2))"
+md" $γ=$ $(@bind γ Slider(-4:0.1:4, show_value=true, default=-1))"
 
 # ╔═╡ a67ea28d-3927-40f9-a049-b9faeb0cfa58
-ψ_cdf = LTLSpecification(@eval @formula □(s->s > $c));
+ψ_cdf = LTLSpecification(@eval @formula □(s->s > $γ));
 
 # ╔═╡ bb4b252d-fc49-49d9-a31b-5092d73dc244
 Markdown.parse("""
-The specification \$\\psi(\\tau) = \\square(s > c)\$ for the chosen \$c\$ is \$\\psi(\\tau) = \\square(s > $(ψ_cdf.formula.ϕ.c))\$ where:
+The specification \$\\psi(\\tau) = \\square(s > γ)\$ for the chosen \$γ\$ is \$\\psi(\\tau) = \\square(s > $(ψ_cdf.formula.ϕ.c))\$ where:
 """)
 
 # ╔═╡ 9ea24b88-03b3-434f-a703-af197f754dcd
 Markdown.parse("""
 \$\$\\begin{align}
 p(s) &\\approx $(round(pdf(ps_small, ψ_cdf.formula.ϕ.c), sigdigits=4)) \\tag{probability density} \\\\
-P(s < c) &\\approx $(round(cdf(ps_small, ψ_cdf.formula.ϕ.c), sigdigits=4)) \\tag{cumulative probability}
+P(s < γ) &\\approx $(round(cdf(ps_small, ψ_cdf.formula.ϕ.c), sigdigits=4)) \\tag{cumulative probability}
 \\end{align}\$\$
 """)
 
@@ -399,8 +399,9 @@ _(Note for simple Gaussian problems, we can just use the `cdf` to evaluate this 
 
 
 # ╔═╡ 42456abf-4930-4b01-afd1-fce3b4881e28
-md"""
-## Baseline: Monte Carlo estimate
+Markdown.MD(
+	HTML("<h2 id='baseline'>Baseline: Monte Carlo estimate</h2>"),
+	md"""
 The Monte Carlo baseline algorithm will sample $m$ trajectories of depth $d$ from the nominal trajectory distribution and count how many trajectories were a failure.
 
 The frequentist estimate of the failure probability is then computed simply as:
@@ -412,7 +413,7 @@ $$\begin{equation}
 where $\neg\psi(\tau_i)$ checks if trajectory $\tau_i$ is a failure, `isfailure(τᵢ)`, and $\mathbb{1}$ is the indicator function (but conveniently, Julia treats `true` as `1` and `false` as `0`).
 
 _This is equivalent to `DirectEstimation` (algorithm 7.1)._
-"""
+""")
 
 # ╔═╡ cc11217f-e070-4d20-8ebe-18e7eb977487
 highlight(md"""**Note**: You can access the number of `step` calls via `stepcount()`""")
@@ -787,7 +788,7 @@ $$\begin{gather}
 \text{score} = \mathbf{w}^\top\mathbf{s}
 \end{gather}$$
 
-_The minimum possible score is $0$, **where lower is better.**_
+_The minimum possible score is $0$, **where smaller values are better.**_
 """
 
 # ╔═╡ 5c3d24f6-0106-444c-b7df-89bba8c01b37
@@ -795,6 +796,16 @@ function leaderboard_scores(𝐬, 𝐰=ones(length(τs)))
 	𝐰 = 𝐰 ./ sum(𝐰)
 	return 𝐰'𝐬
 end
+
+# ╔═╡ 16220c31-ce7d-4cd4-b66a-72527a7623b9
+Markdown.parse("""
+## True failure probabilities
+To generate the "true" failure probablities for the _medium_ and _large_ problems, we ran large-scale Monte Carlo simulations (using `estimate_probability_baseline` from the [Baseline](#baseline) section).
+- **Medium**: Ran using \$n = $(format(41*25_000_000; latex=true))\$ steps, i.e., \$m = $(format(25_000_000; latex=true))\$ rollouts.
+- **Large**: Ran using \$n = $(format(41*75_000_000; latex=true))\$ steps, i.e., \$m = $(format(75_000_000; latex=true))\$ rollouts.
+
+_This was run on an Ubuntu server with about `530 GB` of RAM over `127` cores._
+""")
 
 # ╔═╡ 4edc5933-9457-4c7c-8456-a26974e0587e
 html_half_space()
@@ -838,13 +849,13 @@ Markdown.parse("""
 The aggregate estimated failure probability using the Monte Carlo baseline is:
 
 \$\$\\begin{equation}
-\\hat{P}_\\text{fail} \\approx $(baseline_μₛ) \\pm $(round(baseline_σₛ; sigdigits=4))
+\\hat{P}_\\text{fail}^{(\\text{baseline})} \\approx $(baseline_μₛ) \\pm $(round(baseline_σₛ; sigdigits=4))
 \\end{equation}\$\$
 
 where the _true_ probability of failure of the simple Gaussian system is:
 
 \$\$\\begin{equation}
-P_\\text{fail} = $(cdf(ps_small, ψ_small.formula.ϕ.c))
+P_\\text{fail}^{(\\text{truth})} = $(cdf(ps_small, ψ_small.formula.ϕ.c))
 \\end{equation}\$\$
 
 _Note that we will test over different RNG seeds than those defaulted above._
@@ -864,7 +875,7 @@ begin
 	The aggregate estimated failure probability using the Monte Carlo baseline is:
 	
 	\$\$\\begin{equation}
-	\\hat{P}_\\text{fail} \\approx $(baseline_μₘ) \\pm $(round(baseline_σₘ; sigdigits=4))
+	\\hat{P}_\\text{fail}^{(\\text{baseline})} \\approx $(baseline_μₘ) \\pm $(round(baseline_σₘ; sigdigits=4))
 	\\end{equation}\$\$
 	
 	_Note that we will test over different RNG seeds than those defaulted above._
@@ -881,7 +892,7 @@ begin
 	The aggregate estimated failure probability using the Monte Carlo baseline is:
 	
 	\$\$\\begin{equation}
-	\\hat{P}_\\text{fail} \\approx $(baseline_μₗ) \\pm $(baseline_σₗ)
+	\\hat{P}_\\text{fail}^{(\\text{baseline})} \\approx $(baseline_μₗ) \\pm $(baseline_σₗ)
 	\\end{equation}\$\$
 
 	Notice the high standard deviation! This is because failures are extremely rare for the CAS problem.
@@ -991,10 +1002,12 @@ begin
 	DarkModeHandler.setdarkmode!(dark_mode)
 
 	import StanfordAA228V:
-		Always, Predicate, FlippedPredicate, ρ,
+		Always, Predicate, FlippedPredicate,
 		plot, plot!, plot_cdf, plot_pendulum,
 		plot_cas_lookahead, plot_pfail_histogram
 		# import plotting for dark_mode triggers
+
+	import StanfordAA228V.SignalTemporalLogic: ρ
 
 	pkg_trigger = true
 	md"> _AA228V/CS238V package management._"
@@ -1297,7 +1310,7 @@ If the above tests pass, then you will receive full credit for your submission o
 _However_, we have a leaderboard so that students can participate in a friendly competition to find the best estimate of the failure probability for each problem.
 	
 ## Leaderboard entry
-Your leaderboard entry on Gradescope should look something like this:
+Your leaderboard entry on Gradescope should look something like this (smaller is better):
 
 | Rank | Submission Name | Score | 𝔼[err(small)] | err(medium) | err(large) |
 | :--: | :-------------: | :---: | :-----------: | :------------: | :-----------: |
@@ -1310,19 +1323,22 @@ begin
 	pendulum_gif_name = dark_mode ? "pendulum-dark.gif" : "pendulum.gif"
 
 	if false
-		pendulum_anim = @animate for t in 1:get_depth(sys_medium)
-			θ_medium_failure = rad2deg(baseline_medium_results.τ[t].s[1])
-			θ_medium_success = rad2deg(baseline_medium_results.τs[2][t].s[1])
-			plot(
-				plot_pendulum(θ_medium_failure; title="Failure"),
-				plot_pendulum(θ_medium_success; title="Success"),
-				layout=(1,2),
-				size=(700,300),
-				dpi=400,
-			)
-		end
+		let
+			results = run_baseline_mlf(sys_medium, ψ_medium; n=41_000)
+			pendulum_anim = @animate for t in 1:get_depth(sys_medium)
+				θ_medium_failure = rad2deg(results.τ[t].s[1])
+				θ_medium_success = rad2deg(results.τs[2][t].s[1])
+				plot(
+					plot_pendulum(θ_medium_failure; title="Failure"),
+					plot_pendulum(θ_medium_success; title="Success"),
+					layout=(1,2),
+					size=(700,300),
+					dpi=400,
+				)
+			end
 
-		gif(pendulum_anim, joinpath(@__DIR__, "..", "media", pendulum_gif_name); fps=15, show_msg=false)
+			gif(pendulum_anim, joinpath(@__DIR__, "..", "media", pendulum_gif_name); fps=15, show_msg=false)
+		end
 	end
 
 	md"> _Inverted pendulum animated GIF._"
@@ -1402,7 +1418,7 @@ Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [compat]
 BSON = "~0.3.9"
-Distributions = "~0.25.114"
+Distributions = "~0.25.115"
 ForwardDiff = "~0.10.38"
 GridInterpolations = "~1.2.1"
 MarkdownLiteral = "~0.1.1"
@@ -1411,7 +1427,7 @@ Parameters = "~0.12.3"
 Plots = "~1.40.9"
 PlutoUI = "~0.7.60"
 ProgressLogging = "~0.1.4"
-StanfordAA228V = "~0.1.14"
+StanfordAA228V = "~0.1.16"
 """
 
 # ╔═╡ 00000000-0000-0000-0000-000000000002
@@ -1420,7 +1436,7 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.11.2"
 manifest_format = "2.0"
-project_hash = "421616601f236f4efba7016cc8020c682332f3e1"
+project_hash = "8dea9a5862078eb6b3a517e41ac14d0341de2e51"
 
 [[deps.AbstractFFTs]]
 deps = ["LinearAlgebra"]
@@ -1520,6 +1536,12 @@ version = "0.3.9"
 uuid = "2a0f44e3-6c83-55bd-87e4-b1978d98bd5f"
 version = "1.11.0"
 
+[[deps.BenchmarkTools]]
+deps = ["JSON", "Logging", "Printf", "Profile", "Statistics", "UUIDs"]
+git-tree-sha1 = "f1dff6729bc61f4d49e140da1af55dcd1ac97b2f"
+uuid = "6e4b80f9-dd63-53aa-95a3-0cdb28fa8baf"
+version = "1.5.0"
+
 [[deps.BitFlags]]
 git-tree-sha1 = "0691e34b3bb8be9307330f88d1a3c3f25466c24d"
 uuid = "d1d4a3ce-64b1-5f1a-9ba4-7e7e69966f35"
@@ -1535,6 +1557,18 @@ version = "1.0.8+2"
 git-tree-sha1 = "389ad5c84de1ae7cf0e28e381131c98ea87d54fc"
 uuid = "fa961155-64e5-5f13-b03f-caf6b980ea82"
 version = "0.5.0"
+
+[[deps.CRlibm]]
+deps = ["CRlibm_jll"]
+git-tree-sha1 = "32abd86e3c2025db5172aa182b982debed519834"
+uuid = "96374032-68de-5a5b-8d9e-752f78720389"
+version = "1.0.1"
+
+[[deps.CRlibm_jll]]
+deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
+git-tree-sha1 = "e329286945d0cfc04456972ea732551869af1cfc"
+uuid = "4e9b3aee-d8a1-5a3d-ad8b-7d824db253f0"
+version = "1.0.1+0"
 
 [[deps.Cairo_jll]]
 deps = ["Artifacts", "Bzip2_jll", "CompilerSupportLibraries_jll", "Fontconfig_jll", "FreeType2_jll", "Glib_jll", "JLLWrappers", "LZO_jll", "Libdl", "Pixman_jll", "Xorg_libXext_jll", "Xorg_libXrender_jll", "Zlib_jll", "libpng_jll"]
@@ -1557,6 +1591,12 @@ weakdeps = ["SparseArrays"]
 
     [deps.ChainRulesCore.extensions]
     ChainRulesCoreSparseArraysExt = "SparseArrays"
+
+[[deps.CodecBzip2]]
+deps = ["Bzip2_jll", "TranscodingStreams"]
+git-tree-sha1 = "e7c529cc31bb85b97631b922fa2e6baf246f5905"
+uuid = "523fee87-0ab8-5b00-afb7-3ecf72e48cfd"
+version = "0.8.4"
 
 [[deps.CodecZlib]]
 deps = ["TranscodingStreams", "Zlib_jll"]
@@ -1708,9 +1748,9 @@ version = "1.11.0"
 
 [[deps.Distributions]]
 deps = ["AliasTables", "FillArrays", "LinearAlgebra", "PDMats", "Printf", "QuadGK", "Random", "SpecialFunctions", "Statistics", "StatsAPI", "StatsBase", "StatsFuns"]
-git-tree-sha1 = "9d9e93d19c912ee6f0f3543af0d8839079dbd0d7"
+git-tree-sha1 = "4b138e4643b577ccf355377c2bc70fa975af25de"
 uuid = "31c24e10-a181-5473-b8eb-7969acd0382f"
-version = "0.25.114"
+version = "0.25.115"
 
     [deps.Distributions.extensions]
     DistributionsChainRulesCoreExt = "ChainRulesCore"
@@ -1733,11 +1773,21 @@ deps = ["ArgTools", "FileWatching", "LibCURL", "NetworkOptions"]
 uuid = "f43a241f-c20a-4ad4-852c-f6b1247861c6"
 version = "1.6.0"
 
+[[deps.EnumX]]
+git-tree-sha1 = "bdb1942cd4c45e3c678fd11569d5cccd80976237"
+uuid = "4e289a0a-7415-4d19-859d-a7e5c4648b56"
+version = "1.0.4"
+
 [[deps.EpollShim_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl"]
 git-tree-sha1 = "8a4be429317c42cfae6a7fc03c31bad1970c310d"
 uuid = "2702e6a9-849d-5ed8-8c21-79e8b8f9ee43"
 version = "0.0.20230411+1"
+
+[[deps.ErrorfreeArithmetic]]
+git-tree-sha1 = "d6863c556f1142a061532e79f611aa46be201686"
+uuid = "90fa49ef-747e-5e6f-a989-263ba693cf1a"
+version = "0.5.2"
 
 [[deps.ExceptionUnwrapping]]
 deps = ["Test"]
@@ -1750,6 +1800,11 @@ deps = ["Artifacts", "JLLWrappers", "Libdl"]
 git-tree-sha1 = "e51db81749b0777b2147fbe7b783ee79045b8e99"
 uuid = "2e619515-83b5-522b-bb60-26c02a35a201"
 version = "2.6.4+1"
+
+[[deps.ExprTools]]
+git-tree-sha1 = "27415f162e6028e81c72b82ef756bf321213b6ec"
+uuid = "e2ba6199-217a-4e67-a87a-7c52f15ade04"
+version = "0.1.10"
 
 [[deps.ExpressionExplorer]]
 git-tree-sha1 = "7005f1493c18afb2fa3bdf06e02b16a9fde5d16d"
@@ -1772,6 +1827,12 @@ deps = ["Artifacts", "Bzip2_jll", "FreeType2_jll", "FriBidi_jll", "JLLWrappers",
 git-tree-sha1 = "466d45dc38e15794ec7d5d63ec03d776a9aff36e"
 uuid = "b22a6f82-2f65-5046-a5b2-351ab43fb4e5"
 version = "4.4.4+1"
+
+[[deps.FastRounding]]
+deps = ["ErrorfreeArithmetic", "LinearAlgebra"]
+git-tree-sha1 = "6344aa18f654196be82e62816935225b3b9abe44"
+uuid = "fa42c844-2597-5d31-933b-ebd51ab2693f"
+version = "0.3.1"
 
 [[deps.FileWatching]]
 uuid = "7b1f6079-737a-58dc-b8bc-7a2ca5c1b5ee"
@@ -1842,9 +1903,9 @@ version = "2.13.3+1"
 
 [[deps.FriBidi_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl"]
-git-tree-sha1 = "1ed150b39aebcc805c26b93a8d0122c940f64ce2"
+git-tree-sha1 = "846f7026a9decf3679419122b49f8a1fdb48d2d5"
 uuid = "559328eb-81f9-559d-9380-de523a88c83c"
-version = "1.0.14+0"
+version = "1.0.16+0"
 
 [[deps.Future]]
 deps = ["Random"]
@@ -1862,6 +1923,23 @@ deps = ["Artifacts", "JLLWrappers", "Libdl", "Libglvnd_jll", "Xorg_libXcursor_jl
 git-tree-sha1 = "532f9126ad901533af1d4f5c198867227a7bb077"
 uuid = "0656b61e-2033-5cc2-a64a-77c0f6c09b89"
 version = "3.4.0+1"
+
+[[deps.GLPK]]
+deps = ["GLPK_jll", "MathOptInterface"]
+git-tree-sha1 = "1d706bd23e5d2d407bfd369499ee6f96afb0c3ad"
+uuid = "60bf3e95-4087-53dc-ae20-288a0d20c6a6"
+version = "1.2.1"
+
+[[deps.GLPK_jll]]
+deps = ["Artifacts", "GMP_jll", "JLLWrappers", "Libdl", "Pkg"]
+git-tree-sha1 = "6aa6294ba949ccfc380463bf50ff988b46de5bc7"
+uuid = "e8aa6df9-e6ca-548a-97ff-1f85fc5b8b98"
+version = "5.0.1+1"
+
+[[deps.GMP_jll]]
+deps = ["Artifacts", "Libdl"]
+uuid = "781609d7-10c4-51f6-84f2-b8444358ff6d"
+version = "6.3.0+0"
 
 [[deps.GPUArrays]]
 deps = ["Adapt", "GPUArraysCore", "KernelAbstractions", "LLVM", "LinearAlgebra", "Printf", "Random", "Reexport", "Serialization", "Statistics"]
@@ -1963,6 +2041,12 @@ deps = ["Markdown"]
 uuid = "b77e0a4c-d291-57a0-90e8-8db25a27a240"
 version = "1.11.0"
 
+[[deps.IntervalArithmetic]]
+deps = ["CRlibm", "EnumX", "FastRounding", "LinearAlgebra", "Markdown", "Random", "RecipesBase", "RoundingEmulator", "SetRounding", "StaticArrays"]
+git-tree-sha1 = "f59e639916283c1d2e106d2b00910b50f4dab76c"
+uuid = "d1acc4aa-44c8-5952-acd4-ba5d80a2a253"
+version = "0.21.2"
+
 [[deps.IrrationalConstants]]
 git-tree-sha1 = "630b497eafcc20001bba38a4651b327dcfc491d2"
 uuid = "92d709cd-6900-40b7-9082-c6be49f344b6"
@@ -1996,6 +2080,18 @@ deps = ["Artifacts", "JLLWrappers", "Libdl"]
 git-tree-sha1 = "25ee0be4d43d0269027024d75a24c24d6c6e590c"
 uuid = "aacddb02-875f-59d6-b918-886e6ef4fbf8"
 version = "3.0.4+0"
+
+[[deps.JuMP]]
+deps = ["LinearAlgebra", "MacroTools", "MathOptInterface", "MutableArithmetics", "OrderedCollections", "PrecompileTools", "Printf", "SparseArrays"]
+git-tree-sha1 = "866dd0bf0474f0d5527c2765c71889762ba90a27"
+uuid = "4076af6c-e467-56ae-b986-b466b2749572"
+version = "1.23.5"
+
+    [deps.JuMP.extensions]
+    JuMPDimensionalDataExt = "DimensionalData"
+
+    [deps.JuMP.weakdeps]
+    DimensionalData = "0703355e-b756-11e9-17c0-8b28908087d0"
 
 [[deps.KernelAbstractions]]
 deps = ["Adapt", "Atomix", "InteractiveUtils", "MacroTools", "PrecompileTools", "Requires", "StaticArrays", "UUIDs"]
@@ -2086,6 +2182,12 @@ deps = ["Artifacts", "Pkg"]
 uuid = "4af54fe1-eca0-43a8-85a7-787d91b784e3"
 version = "1.11.0"
 
+[[deps.LazySets]]
+deps = ["Distributed", "GLPK", "IntervalArithmetic", "JuMP", "LinearAlgebra", "Random", "ReachabilityBase", "RecipesBase", "Reexport", "Requires", "SharedArrays", "SparseArrays", "StaticArraysCore"]
+git-tree-sha1 = "ae9b6a027c694b9e0bab91fc25d0b2808f1bf755"
+uuid = "b4f0291d-fe17-52bc-9479-3d1a343d9043"
+version = "3.0.0"
+
 [[deps.LibCURL]]
 deps = ["LibCURL_jll", "MozillaCACerts_jll"]
 uuid = "b27032c2-a3e7-50c8-80cd-2d36dbcbfd21"
@@ -2117,9 +2219,9 @@ version = "1.11.0"
 
 [[deps.Libffi_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
-git-tree-sha1 = "0b4a5d71f3e5200a7dff793393e09dfc2d874290"
+git-tree-sha1 = "27ecae93dd25ee0909666e6835051dd684cc035e"
 uuid = "e9f186c6-92d2-5b65-8a66-fee21dc1b490"
-version = "3.2.2+1"
+version = "3.2.2+2"
 
 [[deps.Libgcrypt_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Libgpg_error_jll"]
@@ -2228,6 +2330,12 @@ git-tree-sha1 = "0d3fa2dd374934b62ee16a4721fe68c418b92899"
 uuid = "736d6165-7244-6769-4267-6b50796e6954"
 version = "0.1.1"
 
+[[deps.MathOptInterface]]
+deps = ["BenchmarkTools", "CodecBzip2", "CodecZlib", "DataStructures", "ForwardDiff", "JSON", "LinearAlgebra", "MutableArithmetics", "NaNMath", "OrderedCollections", "PrecompileTools", "Printf", "SparseArrays", "SpecialFunctions", "Test", "Unicode"]
+git-tree-sha1 = "e065ca5234f53fd6f920efaee4940627ad991fb4"
+uuid = "b8f27783-ece8-5eb3-8dc8-9495eed66fee"
+version = "1.34.0"
+
 [[deps.MbedTLS]]
 deps = ["Dates", "MbedTLS_jll", "MozillaCACerts_jll", "NetworkOptions", "Random", "Sockets"]
 git-tree-sha1 = "c067a280ddc25f196b5e7df3877c6b226d390aaf"
@@ -2263,6 +2371,12 @@ deps = ["Serialization"]
 git-tree-sha1 = "f5db02ae992c260e4826fe78c942954b48e1d9c2"
 uuid = "99f44e22-a591-53d1-9472-aa23ef4bd671"
 version = "1.2.1"
+
+[[deps.MutableArithmetics]]
+deps = ["LinearAlgebra", "SparseArrays", "Test"]
+git-tree-sha1 = "a2710df6b0931f987530f59427441b21245d8f5e"
+uuid = "d8a4904e-b15c-11e9-3269-09a3773c0cb0"
+version = "1.6.0"
 
 [[deps.NLSolversBase]]
 deps = ["DiffResults", "Distributed", "FiniteDiff", "ForwardDiff"]
@@ -2319,12 +2433,10 @@ deps = ["Compat", "FillArrays", "ForwardDiff", "LineSearches", "LinearAlgebra", 
 git-tree-sha1 = "ab7edad78cdef22099f43c54ef77ac63c2c9cc64"
 uuid = "429524aa-4258-5aef-a3af-852621145aeb"
 version = "1.10.0"
+weakdeps = ["MathOptInterface"]
 
     [deps.Optim.extensions]
     OptimMOIExt = "MathOptInterface"
-
-    [deps.Optim.weakdeps]
-    MathOptInterface = "b8f27783-ece8-5eb3-8dc8-9495eed66fee"
 
 [[deps.Opus_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl"]
@@ -2464,6 +2576,10 @@ deps = ["Unicode"]
 uuid = "de0858da-6303-5e67-8744-51eddeeeb8d7"
 version = "1.11.0"
 
+[[deps.Profile]]
+uuid = "9abbd945-dff8-562f-b5e8-e1ebf5ef1b79"
+version = "1.11.0"
+
 [[deps.ProgressLogging]]
 deps = ["Logging", "SHA", "UUIDs"]
 git-tree-sha1 = "80d919dee55b9c50e8d9e2da5eeafff3fe58b539"
@@ -2521,6 +2637,12 @@ deps = ["SHA"]
 uuid = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 version = "1.11.0"
 
+[[deps.ReachabilityBase]]
+deps = ["ExprTools", "InteractiveUtils", "LinearAlgebra", "Random", "Requires", "SparseArrays"]
+git-tree-sha1 = "083aefbdb5310b51379bea1c4e5fb53897668c69"
+uuid = "379f33d0-9447-4353-bd03-d664070e549f"
+version = "0.3.2"
+
 [[deps.RealDot]]
 deps = ["LinearAlgebra"]
 git-tree-sha1 = "9f0a1b71baaf7650f4fa8a1d168c7fb6ee41f0c9"
@@ -2574,6 +2696,11 @@ git-tree-sha1 = "58cdd8fb2201a6267e1db87ff148dd6c1dbd8ad8"
 uuid = "f50d1b31-88e8-58de-be2c-1cc44531875f"
 version = "0.5.1+0"
 
+[[deps.RoundingEmulator]]
+git-tree-sha1 = "40b9edad2e5287e05bd413a38f61a8ff55b9557b"
+uuid = "5eaf0fd0-dfba-4ccb-bf02-d820a40db705"
+version = "0.2.1"
+
 [[deps.SHA]]
 uuid = "ea8e919c-243c-51af-8825-aaa63cd721ce"
 version = "0.7.0"
@@ -2588,11 +2715,21 @@ version = "1.2.1"
 uuid = "9e88b42a-f829-5b0c-bbe9-9e923198166b"
 version = "1.11.0"
 
+[[deps.SetRounding]]
+git-tree-sha1 = "d7a25e439d07a17b7cdf97eecee504c50fedf5f6"
+uuid = "3cc68bcd-71a2-5612-b932-767ffbe40ab0"
+version = "0.2.1"
+
 [[deps.Setfield]]
 deps = ["ConstructionBase", "Future", "MacroTools", "StaticArraysCore"]
 git-tree-sha1 = "e2cc6d8c88613c05e1defb55170bf5ff211fbeac"
 uuid = "efcf1570-3423-57d1-acb7-fd33fddbac46"
 version = "1.1.1"
+
+[[deps.SharedArrays]]
+deps = ["Distributed", "Mmap", "Random", "Serialization"]
+uuid = "1a1011a3-84de-559e-8e89-a11a2f7dc383"
+version = "1.11.0"
 
 [[deps.Showoff]]
 deps = ["Dates", "Grisu"]
@@ -2649,10 +2786,10 @@ uuid = "860ef19b-820b-49d6-a774-d7a799459cd3"
 version = "1.0.2"
 
 [[deps.StanfordAA228V]]
-deps = ["AbstractPlutoDingetjes", "BSON", "Base64", "Distributions", "ForwardDiff", "GridInterpolations", "LinearAlgebra", "Markdown", "Optim", "Parameters", "Pkg", "Plots", "Pluto", "PlutoUI", "ProgressLogging", "Random", "SignalTemporalLogic", "Statistics"]
-git-tree-sha1 = "6a15826ac41dbaa918ebd8a43c00ad23e1554c1c"
+deps = ["AbstractPlutoDingetjes", "BSON", "Base64", "Distributions", "ForwardDiff", "GridInterpolations", "LazySets", "LinearAlgebra", "Markdown", "Optim", "Parameters", "Pkg", "Plots", "Pluto", "PlutoUI", "ProgressLogging", "Random", "SignalTemporalLogic", "Statistics"]
+git-tree-sha1 = "b240b8a46d44d24d98cd0eab1f692c1259a1af31"
 uuid = "6f6e590e-f8c2-4a21-9268-94576b9fb3b1"
-version = "0.1.14"
+version = "0.1.16"
 
 [[deps.StaticArrays]]
 deps = ["LinearAlgebra", "PrecompileTools", "Random", "StaticArraysCore"]
@@ -2843,9 +2980,9 @@ version = "1.3.243+0"
 
 [[deps.Wayland_jll]]
 deps = ["Artifacts", "EpollShim_jll", "Expat_jll", "JLLWrappers", "Libdl", "Libffi_jll", "Pkg", "XML2_jll"]
-git-tree-sha1 = "7558e29847e99bc3f04d6569e82d0f5c54460703"
+git-tree-sha1 = "85c7811eddec9e7f22615371c3cc81a504c508ee"
 uuid = "a2964d1f-97da-50d4-b82a-358c7fce9d89"
-version = "1.21.0+1"
+version = "1.21.0+2"
 
 [[deps.Wayland_protocols_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
@@ -2896,10 +3033,10 @@ uuid = "0c0b7dd1-d40b-584c-a123-a41640f87eec"
 version = "1.0.11+1"
 
 [[deps.Xorg_libXcursor_jll]]
-deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg", "Xorg_libXfixes_jll", "Xorg_libXrender_jll"]
-git-tree-sha1 = "12e0eb3bc634fa2080c1c37fccf56f7c22989afd"
+deps = ["Artifacts", "JLLWrappers", "Libdl", "Xorg_libXfixes_jll", "Xorg_libXrender_jll"]
+git-tree-sha1 = "807c226eaf3651e7b2c468f687ac788291f9a89b"
 uuid = "935fb764-8cf2-53bf-bb30-45bb1f8bf724"
-version = "1.2.0+4"
+version = "1.2.3+0"
 
 [[deps.Xorg_libXdmcp_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl"]
@@ -2914,16 +3051,16 @@ uuid = "1082639a-0dae-5f34-9b06-72781eeb8cb3"
 version = "1.3.6+1"
 
 [[deps.Xorg_libXfixes_jll]]
-deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg", "Xorg_libX11_jll"]
-git-tree-sha1 = "0e0dc7431e7a0587559f9294aeec269471c991a4"
+deps = ["Artifacts", "JLLWrappers", "Libdl", "Xorg_libX11_jll"]
+git-tree-sha1 = "6fcc21d5aea1a0b7cce6cab3e62246abd1949b86"
 uuid = "d091e8ba-531a-589c-9de9-94069b037ed8"
-version = "5.0.3+4"
+version = "6.0.0+0"
 
 [[deps.Xorg_libXi_jll]]
-deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg", "Xorg_libXext_jll", "Xorg_libXfixes_jll"]
-git-tree-sha1 = "89b52bc2160aadc84d707093930ef0bffa641246"
+deps = ["Artifacts", "JLLWrappers", "Libdl", "Xorg_libXext_jll", "Xorg_libXfixes_jll"]
+git-tree-sha1 = "984b313b049c89739075b8e2a94407076de17449"
 uuid = "a51aa0fd-4e3c-5386-b890-e753decda492"
-version = "1.7.10+4"
+version = "1.8.2+0"
 
 [[deps.Xorg_libXinerama_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Xorg_libXext_jll"]
@@ -3289,6 +3426,7 @@ version = "1.4.1+1"
 # ╠═cfdba748-45d5-4eaa-97b3-fdc9fe7e4333
 # ╟─6beda870-0cb0-40f5-9531-fa3e2f7bb020
 # ╠═5c3d24f6-0106-444c-b7df-89bba8c01b37
+# ╟─16220c31-ce7d-4cd4-b66a-72527a7623b9
 # ╟─4edc5933-9457-4c7c-8456-a26974e0587e
 # ╟─95e3d42f-b33f-4294-81c5-f34a300dc9b4
 # ╟─ba6c082b-6e62-42fc-a85c-c8b7efc89b88
