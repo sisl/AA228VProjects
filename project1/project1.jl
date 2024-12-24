@@ -26,15 +26,13 @@ begin
 	import MarkdownLiteral: @mdx
 
 	using ProgressLogging
-	using Downloads
-	using TOML
 	using Test
 	using Base64
 	using PlutoUI
 	using Distributions
 	using Random
 	using Plots
-	using ForwardDiff
+	using ReverseDiff
 	using Optim
 	using Parameters
 	using BSON
@@ -233,12 +231,12 @@ html_expand("Expand if using optimization-based falsification.", [
 	md"""
 Robustness can be a useful metric to find failures. If the robustness is $\le 0$, this indicates a failure.
 
-- To take a gradient of _robustness_ w.r.t. a trajectory `τ`, you can use `ForwardDiff` like so:
+- To take a gradient of _robustness_ w.r.t. a trajectory `τ`, you can use `ReverseDiff` like so (where we already load the `ReverseDiff` package for you):
 ```julia
 function robustness_gradient(sys, ψ, τ)
 	𝐬 = [step.s for step in τ]
 	f(x) = robustness_objective(x, sys, ψ)
-	return ForwardDiff.gradient(f, 𝐬)
+	return ReverseDiff.gradient(f, 𝐬)
 end
 ```
 - For the `robustness_objective` function of:
@@ -269,12 +267,12 @@ x0 = initial_guess(sys::LargeSystem)  # CollisionAvoidance
 
 initial_guess(sys::SmallSystem) = [0.0]
 initial_guess(sys::MediumSystem) = zeros(84)
-initial_guess(sys::LargeSystem) = [rand(Normal(0,100)), zeros(42)...]
+initial_guess(sys::LargeSystem) = [rand(Normal(0,100)), 0 0, 40, zeros(39)...]
 ```
 - To explain where these numbers came from:
     - `SmallSystem`: the initial guess is $0$ for the only search parameter: the initial state.
     - `MediumSystem`: the initial guess is $d \times |x| + |s_0| = 84$ for $d = 41$, $|x| = 2$ (disturbance on both $\theta$ and $\omega$), and $|s_0| = 2$ for both components of the initial state.
-    - `LargeSystem`: the initial guess is $d \times |x| + |\{s_0^{(1)}, s_0^{(2)}\}| = 43$ for $d = 41$, $|x| = 1$ (disturbance is only on the environment), and $|\{s_0^{(1)}, s_0^{(2)}\}| = 2$ for searching only over the $h$ and $\dot{h}$ initial state variables, setting the initial $h$ to $h \sim \mathcal{N}(0, 100)$.
+    - `LargeSystem`: the initial guess is $d \times |x| + |\{s_0^{(1)}, s_0^{(2)}\}| = 43$ for $d = 41$, $|x| = 1$ (disturbance is only on the environment), and $|\{s_0^{(1)}, s_0^{(2)}\}| = 2$ for searching only over the $h$ and $\dot{h}$ initial state variables, setting the initial $h$ to $h \sim \mathcal{N}(0, 100)$, the initial $t_\text{col}$ to $40$ and the other initial state variables and initial disturbances to zero.
 - Or you can write your own optimization algorithm :)
 """,
 	html"<h2hide>Details on the <code>extract</code> function</h2hide>",
@@ -643,24 +641,35 @@ end
 
 # ╔═╡ 9f739929-1cd3-4935-b229-ae3aeac7e131
 begin
-	ThisProject = Project1
+	global ThisProject = Project1
 	max_steps(sys::SmallSystem)  = 20
 	max_steps(sys::MediumSystem) = 1_000
 	max_steps(sys::LargeSystem)  = 10_000
 end;
 
 # ╔═╡ 60f72d30-ab80-11ef-3c20-270dbcdf0cc4
-Markdown.parse("""
-**Task**: Efficiently find likely failures using \$n\$ total function calls to the system `step` function.
-- **Small system**: 1D Gaussian \$\\mathcal{N}(0,1)\$. With \$n=$(format(max_steps(sys_small); latex=true))\$ `step` calls.
-- **Medium system**: Swinging inverted pendulum. With \$n=$(format(max_steps(sys_medium); latex=true))\$ `step` calls.
-- **Large system**: Aircraft collision avoidance system (CAS). With \$n=$(format(max_steps(sys_large); latex=true))\$ `step` calls.
+begin
+	function try_max_steps(sys)
+		try
+			return "\$n = $(format(max_steps(sys); latex=true))\$"
+		catch
 
-Your job is to write the following function that returns the failure trajectory `τ` (i.e., a `Vector` of \$(s,a,o,x)\$ tuples) with the highest likelihood you found:
-```julia
-most_likely_failure(sys, ψ; n)::Vector{NamedTuple}
-```
-""")
+			return "**LOADING...**"
+		end
+	end
+
+	Markdown.parse("""
+	**Task**: Efficiently find likely failures using \$n\$ total function calls to the system `step` function.
+	- **Small system**: 1D Gaussian \$\\mathcal{N}(0,1)\$. With $(try_max_steps(sys_small)) `step` calls.
+	- **Medium system**: Swinging inverted pendulum. With $(try_max_steps(sys_medium)) `step` calls.
+	- **Large system**: Aircraft collision avoidance system (CAS). With $(try_max_steps(sys_large)) `step` calls.
+	
+	Your job is to write the following function that returns the failure trajectory `τ` (i.e., a `Vector` of \$(s,a,o,x)\$ tuples) with the highest likelihood you found:
+	```julia
+	most_likely_failure(sys, ψ; n)::Vector{NamedTuple}
+	```
+	""")
+end
 
 # ╔═╡ d566993e-587d-4aa3-995b-eb955dec5758
 html_expand("Expand for baseline implementation using <code>DirectFalsification</code>.", [
@@ -683,7 +692,7 @@ alg = DirectFalsification(1, $(max_steps(sys_small)))
 τ_failures = falsify(alg, sys_small, ψ_small)
 ℓτ = maximum(s->pdf(ps_small, s[1].s), τ_failures)
 ```
-**Note**: _But we want to the `NominalTrajectoryDistribution` to keep the algorithm general for the medium/large problems that **do** have disturbances._
+**Note**: _But we want to use the `NominalTrajectoryDistribution` to keep the algorithm general for the medium/large problems that **do** have disturbances._
 """)])
 
 # ╔═╡ c2ae204e-dbcc-453a-81f5-791ba4be39db
@@ -773,8 +782,9 @@ $(@bind rerun_medium LargeCheckBox(text="⟵ Click to re-run the <code>MediumSys
 )
 
 # ╔═╡ be8c37e8-45db-4198-b0b9-d287e73fb818
-submission_details(@bind(directory_trigger, OpenDirectory(@__DIR__)), ThisProject,
-	[SmallSystem, MediumSystem, LargeSystem])
+try
+	submission_details(@bind(directory_trigger, OpenDirectory(@__DIR__)), ThisProject, [SmallSystem, MediumSystem, LargeSystem])
+catch end
 
 # ╔═╡ 0c520f93-49ce-45eb-899d-a31105d856c8
 if directory_trigger
@@ -1005,6 +1015,8 @@ end
 
 # ╔═╡ 5a1ed20d-788b-4655-bdd8-069545f48929
 begin
+	extract(sys::System, input) = extract(sys.env, input)
+
 	function extract(env::SimpleGaussian, input)
 		s = input[1]             # Objective is simply over the initial state
 		𝐱 = [Disturbance(0,0,0)] # No disturbances for the SimpleGaussian
@@ -1025,7 +1037,8 @@ begin
 
 	initial_guess(sys::SmallSystem) = [0.0]
 	initial_guess(sys::MediumSystem) = zeros(84)
-	initial_guess(sys::LargeSystem) = [rand(Normal(0,100)), zeros(42)...]
+	initial_guess(sys::LargeSystem) =
+		[rand(Normal(0,100)), 0, 0, 40, zeros(39)...]
 
 	md"> *Helper `extract` and `initial_guess` functions.*"
 end
@@ -1067,130 +1080,12 @@ begin
 
 	import StanfordAA228V:
 		Always, Predicate, FlippedPredicate,
-		plot, plot!, plot_cdf, plot_pendulum, plot_cas_lookahead # dark_mode triggers
+		plot, plot!, plot_cdf, plot_pendulum # dark_mode triggers
 
 	import StanfordAA228V.SignalTemporalLogic: ρ
 
 	pkg_trigger = true
 	md"> _AA228V/CS238V package management._"
-end
-
-# ╔═╡ bb296b6b-b8b3-4892-aeed-a0468374bfe7
-function Plots.plot(sys::SmallSystem, ψ, τ=missing;
-					is_dark_mode=dark_mode, max_points=500, kwargs...)
-	ps = Ps(sys.env)
-
-	plot(
-		bg="transparent",
-		background_color_inside=is_dark_mode ? "black" : "white",
-		bglegend=is_dark_mode ? "black" : "white",
-		fg=is_dark_mode ? "white" : "black",
-		gridalpha=is_dark_mode ? 0.5 : 0.1,
-	)
-
-	# Create a range of x values
-	_X = range(-4, 4, length=1000)
-	_Y = pdf.(ps, _X)
-
-	# Plot the Gaussian density
-	plot!(_X, _Y,
-	     xlim=(-4, 4),
-	     ylim=(-0.001, 0.41),
-	     linecolor=is_dark_mode ? "white" : "black",
-		 fillcolor=is_dark_mode ? "darkgray" : "lightgray",
-		 fill=true,
-	     xlabel="state \$s\$",
-	     ylabel="density \$p(s)\$",
-	     size=(600, 300),
-	     label=false)
-
-	# Identify the indices where x ≤ c or x ≥ c
-	c = ψ.formula.ϕ.c
-	
-	if ψ.formula.ϕ isa StanfordAA228V.Predicate
-		idx = _X .≤ c
-	else
-		idx = _X .≥ c
-	end
-
-	# Extract the x and y values for the region to fill
-	x_fill = _X[idx]
-	y_fill = _Y[idx]
-
-	# Create the coordinates for the filled polygon
-	# Start with the x and y values where x <= -2
-	# Then add the same x values in reverse with y = 0 to close the polygon
-	polygon_x = vcat(x_fill, reverse(x_fill))
-	polygon_y = vcat(y_fill, zeros(length(y_fill)))
-
-	# Add the filled area to the plot
-	plot!(polygon_x, polygon_y,
-	      fill=true,
-	      fillcolor="crimson",
-	      linecolor="transparent", # No border for the filled area
-		  alpha=0.5,
-	      label=false)
-
-	# Draw failure threshold
-	vline!([c];
-		   color="crimson", legend=:topleft, label="Failure threshold")
-
-	if !ismissing(τ)
-		count_plotted_succeses = 0
-		count_plotted_failures = 0
-		function plot_point!(τᵢ)
-			if isfailure(ψ, τᵢ) && count_plotted_failures == 0
-				label = "Failure state"
-				count_plotted_failures += 1
-			elseif !isfailure(ψ, τᵢ) && count_plotted_succeses == 0
-				label = "Succes state"
-				count_plotted_succeses += 1
-			else
-				label = false
-			end
-			color = isfailure(ψ, τᵢ) ? "black" : "#009E73"
-			τₓ = τᵢ[1].s[1]
-			scatter!([τₓ], [pdf(ps, τₓ)], color=color, msc="white", m=:circle, label=label)
-		end
-
-		if τ isa Vector{<:Vector}
-			# Multiple rollouts
-			success_points = 0
-			for τᵢ in τ
-				is_fail = isfailure(ψ, τᵢ)
-				if is_fail
-					plot_point!(τᵢ)
-				elseif success_points ≤ max_points
-					success_points += 1
-					plot_point!(τᵢ)
-				end
-			end
-		elseif τ isa Vector
-			# Single rollout
-			plot_point!(τ)
-		end
-	end
-
-	return plot!()
-end; md"`plot(sys::SmallSystem, ψ, τ)`"
-
-# ╔═╡ e86d260f-c93d-4561-a9f1-44e4c7af827e
-wrapdiv(plot(sys_small, ψ_small); options="class='centered'")
-
-# ╔═╡ d4d057d7-cc9d-4949-9e3f-44a8aa67d725
-begin
-	wrapdiv(begin
-		plot(sys_small, ψ_small, baseline_small_results.τ)
-		title!("Baseline most-likely failure found")
-	end; options="class='centered'")
-end
-
-# ╔═╡ fe7f4a79-1a63-4272-a776-358a309c8550
-begin
-	wrapdiv(begin
-		plot(sys_small, ψ_small, baseline_small_results.τs)
-		title!("States from baseline")
-	end; options="class='centered'")
 end
 
 # ╔═╡ 44c8fbe0-21e7-482b-84a9-c3d32a4737dd
@@ -1242,8 +1137,10 @@ begin
 	global UsingThisViolatesTheHonorCode = @load ThisProject.backend
 	create_specification = UsingThisViolatesTheHonorCode.create_specification
 	ψ2latex = UsingThisViolatesTheHonorCode.ψ2latex
+	small_extras = UsingThisViolatesTheHonorCode.small_extras
 	rerun = UsingThisViolatesTheHonorCode.rerun
 	rerun_multiple = UsingThisViolatesTheHonorCode.rerun_multiple
+	centered = UsingThisViolatesTheHonorCode.centered
 
 	md"""
 	# Backend
@@ -1251,28 +1148,43 @@ begin
 	"""
 end
 
+# ╔═╡ e86d260f-c93d-4561-a9f1-44e4c7af827e
+centered(plot(sys_small, ψ_small))
+
+# ╔═╡ d4d057d7-cc9d-4949-9e3f-44a8aa67d725
+centered(begin
+	plot(sys_small, ψ_small, baseline_small_results.τ)
+	title!("Baseline most-likely failure found")
+end)
+
+# ╔═╡ fe7f4a79-1a63-4272-a776-358a309c8550
+centered(begin
+	plot(sys_small, ψ_small, baseline_small_results.τs)
+	title!("States from baseline")
+end)
+
 # ╔═╡ beaec161-ad89-4f83-9066-f420a1d04d39
 rerun(sys_small, ψ_small;
 	  save=false, f=most_likely_failure_small,
-	  project=ThisProject, latextras=ψ2latex(sys_small, ψ_small))[2]
+	  project=ThisProject, latextras=small_extras(sys_small, ψ_small))[3]
 
 # ╔═╡ c524297f-2bf3-4dd2-b7b4-fc5ce9a81738
 begin
 	ψ_small_different = LTLSpecification(@formula □(s->s < 2))
-	latextras_different = ψ2latex(sys_small, ψ_small_different)
+	latextras_different = small_extras(sys_small, ψ_small_different)
 	rerun(sys_small, ψ_small_different;
 	      f=most_likely_failure_small, save=false,
-		  project=ThisProject, latextras=latextras_different)[2]
+		  project=ThisProject, latextras=latextras_different)[3]
 end
 
 # ╔═╡ 61173ec6-c7d6-44fa-8c47-5f7295dd49cf
 begin
 	rerun_rand_small # trigger
 	ψ_small_rand = create_specification()
-	latextras_rand = ψ2latex(sys_small, ψ_small_rand)
+	latextras_rand = small_extras(sys_small, ψ_small_rand)
 	rerun(sys_small, ψ_small_rand;
 	      f=most_likely_failure_small, save=false,
-		  project=ThisProject, latextras=latextras_rand)[2]
+		  project=ThisProject, latextras=latextras_rand)[3]
 end
 
 # ╔═╡ 57d321cd-2029-4e49-8b56-9c5c48721ac4
@@ -1286,20 +1198,23 @@ If your `most_likely_failure` function for the small system is fast enough, you 
 \$\$$(ψ2latex(sys_small, ψ_small_slider))\$\$
 """)
 
+# ╔═╡ b61b8f52-9bf3-4766-9208-3e40134a3573
+try
+	global τ_small_slider = most_likely_failure_small(sys_small, ψ_small_slider)
+	global ℓ_small_slider = logpdf(NominalTrajectoryDistribution(sys_small), τ_small_slider)
+	Markdown.parse("""
+	\$\$\\begin{gather}
+	\\ell_\\text{truth} = $(logpdf(Normal(), ψ_small_slider.formula.ϕ.c)) \\tag{true MLF log-likelihood} \\\\
+	\\ell = $ℓ_small_slider \\tag{failure log-likelihood} \\\\
+	n_\\text{steps} = $(stepcount()) \\tag{number of \\texttt{step} calls}
+	\\end{gather}\$\$""")
+catch end
+
 # ╔═╡ 57c5a6f0-2527-4988-9bf0-140495ba9b7e
-begin
-	try
-		τ_small_slider = most_likely_failure_small(sys_small, ψ_small_slider)
-		ℓ_small_slider = logpdf(NominalTrajectoryDistribution(sys_small), τ_small_slider)
-		Markdown.MD(Markdown.parse("""
-		\$\$\\begin{align}
-		\\exp(\\ell_\\text{baseline}) &= $(round(ℓ_small_slider, sigdigits=3))\\tag{failure likelihood} \\\\
-		n_\\text{steps} &= $(stepcount()) \\tag{number of \\texttt{step} calls}
-		\\end{align}\$\$"""),
-		md"$(plot(sys_small, ψ_small_slider, τ_small_slider))")
-	catch
-		almost(md"*Slider plot will show when issues are fixed with `most_likely_failure` above*")
-	end
+if !isnothing(τ_small_slider)
+	centered(plot(sys_small, ψ_small_slider, τ_small_slider))
+else
+	almost(md"*Slider plot will show when issues are fixed with `most_likely_failure` above*")
 end
 
 # ╔═╡ d0a3770a-2c48-42db-9a71-6b7f695f22d8
@@ -1312,94 +1227,155 @@ begin
 end
 
 # ╔═╡ f286f3b2-3bac-4384-9b40-522e974a14ee
-Markdown.MD(HTML("<h2 id='graded-test'>$(pass_small ? "✔️" : "✖️") Graded small test ($(pass_small ? "$(ThisProject.points_small)/$(ThisProject.points_small)" : "0/$(ThisProject.points_small)") points)</h2>"),
-	md"""
-✳️ **If the following tests pass, then you're finished with the small problem.**
-
-We'll test multiple failure thresholds in the specification $\psi$. Make sure the above 'randon test' works well across different failure thresholds to ensure this will pass.""")
+begin
+	local pass
+	try
+		pass = pass_small
+	catch
+		pass = false
+	end
+	
+	Markdown.MD(HTML("<h2 id='graded-test'>$(pass ? "✔️" : "✖️") Graded small test ($(pass ? "$(ThisProject.points_small)/$(ThisProject.points_small)" : "0/$(ThisProject.points_small)") points)</h2>"),
+		md"""
+	✳️ **If the following tests pass, then you're finished with the small problem.**
+	
+	We'll test multiple failure thresholds in the specification $\psi$. Make sure the above 'randon test' works well across different failure thresholds to ensure this will pass.""")
+end
 
 # ╔═╡ b417e370-efae-40e8-9247-5daf14fcc749
 begin
-	τ_medium, log_medium, pass_medium = rerun(sys_medium, ψ_medium;
+	τ_medium, _, log_medium, pass_medium = rerun(sys_medium, ψ_medium;
 											  f=most_likely_failure_medium,
 											  run=rerun_medium, project=ThisProject)
 	log_medium
 end
 
 # ╔═╡ 23999cd9-543b-47dc-a0b2-e133ba95891e
-Markdown.parse("""
-## $(pass_medium ? "✔️" : "✖️") Graded medium test ($(pass_medium ? "$(ThisProject.points_medium)/$(ThisProject.points_medium)" : "0/$(ThisProject.points_medium)") points)
-""")
+begin
+	local pass
+	try
+		pass = pass_medium
+	catch
+		pass = false
+	end
+	Markdown.parse("""
+	## $(pass ? "✔️" : "✖️") Graded medium test ($(pass ? "$(ThisProject.points_medium)/$(ThisProject.points_medium)" : "0/$(ThisProject.points_medium)") points)
+	""")
+end
 
 # ╔═╡ f6eb6d1a-a9a0-4234-8699-269a92f666c0
 begin
-	τ_large, log_large, pass_large = rerun(sys_large, ψ_large;
+	τ_large, _, log_large, pass_large = rerun(sys_large, ψ_large;
 										   f=most_likely_failure_large,
 										   run=rerun_large, project=ThisProject)
 	log_large
 end
 
 # ╔═╡ 7c473630-6555-4ada-85f3-0d40aefe6370
-Markdown.parse("""
-## $(pass_large ? "✔️" : "✖️") Graded large test ($(pass_large ? "$(ThisProject.points_large)/$(ThisProject.points_large)" : "0/$(ThisProject.points_large)") points)
-""")
+begin
+	local pass
+	try
+		pass = pass_large
+	catch
+		pass = false
+	end
+	Markdown.parse("""
+	## $(pass ? "✔️" : "✖️") Graded large test ($(pass ? "$(ThisProject.points_large)/$(ThisProject.points_large)" : "0/$(ThisProject.points_large)") points)
+	""")
+end
 
 # ╔═╡ dbd088d1-f4c9-4e6a-b280-960b06da76e4
-Markdown.MD(Markdown.parse("# $(all([pass_small, pass_medium, pass_large]) ? "✅" : "❌") Final Check"),
-@mdx("""If the following test indicator is <span style='color:#759466'><b>green</b></span>, you can submit to Gradescope."""))
+begin
+	local passes = falses(3)
+	try
+		passes = [pass_small, pass_medium, pass_large]
+	catch end
+	Markdown.MD(Markdown.parse("# $(all(passes) ? "✅" : "❌") Final Check"),
+	@mdx("""If the following test indicator is <span style='color:#759466'><b>green</b></span>, you can submit to Gradescope."""))
+end
 
 # ╔═╡ 1bb92755-65e3-457e-84cd-252eae5e4d7e
-if all([pass_small, pass_medium, pass_large])
-	correct(Markdown.MD(md"""
-All tests have passed, **_you're done with Project 1!_**""",
-@mdx("""
-|  System  |  Passed?  |  Points  |
-| :------: | :-------: | :------: |
-| Small | $(pass_small ? HTML("<span style='color:#759466'><b>Passed!</b></span>") : HTML("<span style='color:#B83A4B'><b>Failed.</b></span>")) | $(pass_small ? "$(ThisProject.points_small)/$(ThisProject.points_small)" : "0/$(ThisProject.points_small)") |
-| Medium | $(pass_medium ? HTML("<span style='color:#759466'><b>Passed!</b></span>") : HTML("<span style='color:#B83A4B'><b>Failed.</b></span>")) | $(pass_medium ? "$(ThisProject.points_medium)/$(ThisProject.points_medium)" : "0/$(ThisProject.points_medium)") |
-| Large | $(pass_large ? HTML("<span style='color:#759466'><b>Passed!</b></span>") : HTML("<span style='color:#B83A4B'><b>Failed.</b></span>")) | $(pass_large ? "$(ThisProject.points_large)/$(ThisProject.points_large)" : "0/$(ThisProject.points_large)") |
-"""),
-md"""
-**📩 Please see the [Submission](#submission) section at the top of the page.**
-"""))
-else
-	almost(Markdown.MD(md"**_Some tests have failed:_**", @mdx("""
-|  System  |  Passed?  | Points |
-| :------: | :-------: | :----: |
-| Small | $(pass_small ? HTML("<span style='color:#759466'><b>Passed!</b></span>") : HTML("<span style='color:#B83A4B'><b>Failed.</b></span>")) | $(pass_small ? "$(ThisProject.points_small)/$(ThisProject.points_small)" : "0/$(ThisProject.points_small)") |
-| Medium | $(pass_medium ? HTML("<span style='color:#759466'><b>Passed!</b></span>") : HTML("<span style='color:#B83A4B'><b>Failed.</b></span>")) | $(pass_medium ? "$(ThisProject.points_medium)/$(ThisProject.points_medium)" : "0/$(ThisProject.points_medium)") |
-| Large | $(pass_large ? HTML("<span style='color:#759466'><b>Passed!</b></span>") : HTML("<span style='color:#B83A4B'><b>Failed.</b></span>")) | $(pass_large ? "$(ThisProject.points_large)/$(ThisProject.points_large)" : "0/$(ThisProject.points_large)") |
-"""),
-md"""
-_Please fix the above failing tests before submission._
+begin
+	local passes = falses(3)
 
-_You may partially submit individual `.val` files to Gradescope, you have unlimited Gradescope submissions until the deadline. But please make sure to submit all **three** `.val` files once complete._"""))
+	try
+		passes[1] = pass_small
+	catch end
+
+	try
+		passes[2] = pass_medium
+	catch end
+
+	try
+		passes[3] = pass_large
+	catch end
+
+	if all(passes)
+		correct(Markdown.MD(md"""
+	All tests have passed, **_you're done with Project 1!_**""",
+	@mdx("""
+	|  System  |  Passed?  |  Points  |
+	| :------: | :-------: | :------: |
+	| Small | $(passes[1] ? HTML("<span style='color:#759466'><b>Passed!</b></span>") : HTML("<span style='color:#B83A4B'><b>Failed.</b></span>")) | $(passes[1] ? "$(ThisProject.points_small)/$(ThisProject.points_small)" : "0/$(ThisProject.points_small)") |
+	| Medium | $(passes[2] ? HTML("<span style='color:#759466'><b>Passed!</b></span>") : HTML("<span style='color:#B83A4B'><b>Failed.</b></span>")) | $(passes[2] ? "$(ThisProject.points_medium)/$(ThisProject.points_medium)" : "0/$(ThisProject.points_medium)") |
+	| Large | $(passes[3] ? HTML("<span style='color:#759466'><b>Passed!</b></span>") : HTML("<span style='color:#B83A4B'><b>Failed.</b></span>")) | $(passes[3] ? "$(ThisProject.points_large)/$(ThisProject.points_large)" : "0/$(ThisProject.points_large)") |
+	"""),
+	md"""
+	**📩 Please see the [Submission](#submission) section at the top of the page.**
+	"""))
+	else
+		almost(Markdown.MD(md"**_Some tests have failed:_**", @mdx("""
+	|  System  |  Passed?  | Points |
+	| :------: | :-------: | :----: |
+	| Small | $(passes[1] ? HTML("<span style='color:#759466'><b>Passed!</b></span>") : HTML("<span style='color:#B83A4B'><b>Failed.</b></span>")) | $(passes[1] ? "$(ThisProject.points_small)/$(ThisProject.points_small)" : "0/$(ThisProject.points_small)") |
+	| Medium | $(passes[2] ? HTML("<span style='color:#759466'><b>Passed!</b></span>") : HTML("<span style='color:#B83A4B'><b>Failed.</b></span>")) | $(passes[2] ? "$(ThisProject.points_medium)/$(ThisProject.points_medium)" : "0/$(ThisProject.points_medium)") |
+	| Large | $(passes[3] ? HTML("<span style='color:#759466'><b>Passed!</b></span>") : HTML("<span style='color:#B83A4B'><b>Failed.</b></span>")) | $(passes[3] ? "$(ThisProject.points_large)/$(ThisProject.points_large)" : "0/$(ThisProject.points_large)") |
+	"""),
+	md"""
+	_Please fix the above failing tests before submission._
+	
+	_You may partially submit individual `.val` files to Gradescope, you have unlimited Gradescope submissions until the deadline. But please make sure to submit all **three** `.val` files once complete._"""))
+	end
 end
 
 # ╔═╡ d9ab8278-eb76-4a36-aa0e-4ec74704f5e0
 begin
-	global user_score = -Inf	
+	negative_infinity = -1e228
+
+	function check_inf(score)
+		if isinf(score)
+			negative_infinity, negative_infinity
+		else
+			score, rd(score)
+		end
+	end
+
+	global 𝔼_logpdf_small = 𝔼_logpdf_small_rd = "—"
 	try
-		global user_score = 
-			leaderboard_scores(
+		global 𝔼_logpdf_small, 𝔼_logpdf_small_rd =
+			check_inf(mean(log_likelihood(sys_small, τ) for τ in τs_small))
+	catch end
+
+	global logpdf_medium = logpdf_medium_rd = "—"
+	try
+		global logpdf_medium, logpdf_medium_rd =
+			check_inf(log_likelihood(sys_medium, τ_medium))
+	catch end
+
+	global logpdf_large = logpdf_large_rd = "—"
+	try
+		global logpdf_large, logpdf_large_rd =
+			check_inf(log_likelihood(sys_large, τ_large))
+	catch end
+
+	global user_score = user_score_rd = "—"
+	try
+		global user_score, user_score_rd = 
+			check_inf(leaderboard_scores(
 				[sys_small, sys_medium, sys_large],
-				[τs_small, τ_medium, τ_large]; 𝐰=𝐰)
+				[τs_small, τ_medium, τ_large]; 𝐰=𝐰))
 	catch end
 
-	global 𝔼_logpdf_small = -Inf
-	try
-		global 𝔼_logpdf_small = mean(log_likelihood(sys_small, τ) for τ in τs_small)
-	catch end
-
-	global logpdf_medium = -Inf
-	try
-		global logpdf_medium = log_likelihood(sys_medium, τ_medium)
-	catch end
-
-	global logpdf_large = -Inf
-	try
-		global logpdf_large = log_likelihood(sys_large, τ_large)
-	catch end
 
 	Markdown.parse("""
 # Leaderboard
@@ -1412,7 +1388,9 @@ Your leaderboard entry on Gradescope should look something like this:
 
 | Rank | Submission Name | Score | 𝔼[log 𝑝(small)] | log 𝑝(medium) | log 𝑝(large) |
 | :--: | :-------------: | :---: | :-----------: | :------------: | :-----------: |
-| — | $(guess_username()) | $(rd(user_score)) | $(rd(𝔼_logpdf_small)) | $(rd(logpdf_medium)) | $(rd(logpdf_large)) |
+| — | $(guess_username()) | $(user_score_rd) | $(𝔼_logpdf_small_rd) | $(logpdf_medium_rd) | $(logpdf_large_rd) |
+
+_Note, if any of the scores are \$-\\infty\$, then they will show up as \$$(expnum(negative_infinity))\$ (a Gradescope quirk)._
 """)
 end
 
@@ -1488,8 +1466,6 @@ PLUTO_PROJECT_TOML_CONTENTS = """
 BSON = "fbb218c0-5317-5bc6-957e-2ee96dd4b1f0"
 Base64 = "2a0f44e3-6c83-55bd-87e4-b1978d98bd5f"
 Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
-Downloads = "f43a241f-c20a-4ad4-852c-f6b1247861c6"
-ForwardDiff = "f6369f11-7733-5829-9624-2563aa707210"
 GridInterpolations = "bb4c363b-b914-514b-8517-4eb369bc008a"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 MarkdownLiteral = "736d6165-7244-6769-4267-6b50796e6954"
@@ -1499,14 +1475,13 @@ Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
 PlutoUI = "7f904dfe-b85e-4ff6-b463-dae2292396a8"
 ProgressLogging = "33c8b6b6-d38a-422a-b730-caa89a2f386c"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
+ReverseDiff = "37e2e3b7-166d-5795-8a7a-e32c996b4267"
 StanfordAA228V = "6f6e590e-f8c2-4a21-9268-94576b9fb3b1"
-TOML = "fa267f1f-6049-4f14-aa54-33bafae1ed76"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [compat]
 BSON = "~0.3.9"
 Distributions = "~0.25.115"
-ForwardDiff = "~0.10.38"
 GridInterpolations = "~1.2.1"
 MarkdownLiteral = "~0.1.1"
 Optim = "~1.10.0"
@@ -1514,7 +1489,8 @@ Parameters = "~0.12.3"
 Plots = "~1.40.9"
 PlutoUI = "~0.7.60"
 ProgressLogging = "~0.1.4"
-StanfordAA228V = "~0.1.16"
+ReverseDiff = "~1.15.3"
+StanfordAA228V = "~0.1.19"
 """
 
 # ╔═╡ 00000000-0000-0000-0000-000000000002
@@ -1523,7 +1499,7 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.11.2"
 manifest_format = "2.0"
-project_hash = "8dea9a5862078eb6b3a517e41ac14d0341de2e51"
+project_hash = "c6ef565ba26dccc187c15b3e19882bc6b820f3e4"
 
 [[deps.AbstractFFTs]]
 deps = ["LinearAlgebra"]
@@ -1681,9 +1657,9 @@ weakdeps = ["SparseArrays"]
 
 [[deps.CodecBzip2]]
 deps = ["Bzip2_jll", "TranscodingStreams"]
-git-tree-sha1 = "e7c529cc31bb85b97631b922fa2e6baf246f5905"
+git-tree-sha1 = "84990fa864b7f2b4901901ca12736e45ee79068c"
 uuid = "523fee87-0ab8-5b00-afb7-3ecf72e48cfd"
-version = "0.8.4"
+version = "0.8.5"
 
 [[deps.CodecZlib]]
 deps = ["TranscodingStreams", "Zlib_jll"]
@@ -1994,6 +1970,11 @@ git-tree-sha1 = "846f7026a9decf3679419122b49f8a1fdb48d2d5"
 uuid = "559328eb-81f9-559d-9380-de523a88c83c"
 version = "1.0.16+0"
 
+[[deps.FunctionWrappers]]
+git-tree-sha1 = "d62485945ce5ae9c0c48f124a84998d755bae00e"
+uuid = "069b7b12-0de2-55c6-9aab-29f3d0a68a2e"
+version = "1.1.3"
+
 [[deps.Future]]
 deps = ["Random"]
 uuid = "9fa8497b-333b-5362-9e8d-4d0656e87820"
@@ -2007,9 +1988,9 @@ version = "0.5.5"
 
 [[deps.GLFW_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Libglvnd_jll", "Xorg_libXcursor_jll", "Xorg_libXi_jll", "Xorg_libXinerama_jll", "Xorg_libXrandr_jll", "libdecor_jll", "xkbcommon_jll"]
-git-tree-sha1 = "532f9126ad901533af1d4f5c198867227a7bb077"
+git-tree-sha1 = "fcb0584ff34e25155876418979d4c8971243bb89"
 uuid = "0656b61e-2033-5cc2-a64a-77c0f6c09b89"
-version = "3.4.0+1"
+version = "3.4.0+2"
 
 [[deps.GLPK]]
 deps = ["GLPK_jll", "MathOptInterface"]
@@ -2042,15 +2023,15 @@ version = "0.2.0"
 
 [[deps.GR]]
 deps = ["Artifacts", "Base64", "DelimitedFiles", "Downloads", "GR_jll", "HTTP", "JSON", "Libdl", "LinearAlgebra", "Preferences", "Printf", "Qt6Wayland_jll", "Random", "Serialization", "Sockets", "TOML", "Tar", "Test", "p7zip_jll"]
-git-tree-sha1 = "52adc6828958ea8a0cf923d53aa10773dbca7d5f"
+git-tree-sha1 = "424c8f76017e39fdfcdbb5935a8e6742244959e8"
 uuid = "28b8d3ca-fb5f-59d9-8090-bfdbd6d07a71"
-version = "0.73.9"
+version = "0.73.10"
 
 [[deps.GR_jll]]
 deps = ["Artifacts", "Bzip2_jll", "Cairo_jll", "FFMPEG_jll", "Fontconfig_jll", "FreeType2_jll", "GLFW_jll", "JLLWrappers", "JpegTurbo_jll", "Libdl", "Libtiff_jll", "Pixman_jll", "Qt6Base_jll", "Zlib_jll", "libpng_jll"]
-git-tree-sha1 = "4e9e2966af45b06f24fd952285841428f1d6e858"
+git-tree-sha1 = "b90934c8cb33920a8dc66736471dc3961b42ec9f"
 uuid = "d2c73de3-f751-5644-a686-071e5b155ba9"
-version = "0.73.9+0"
+version = "0.73.10+0"
 
 [[deps.Gettext_jll]]
 deps = ["Artifacts", "CompilerSupportLibraries_jll", "JLLWrappers", "Libdl", "Libiconv_jll", "Pkg", "XML2_jll"]
@@ -2060,9 +2041,9 @@ version = "0.21.0+0"
 
 [[deps.Glib_jll]]
 deps = ["Artifacts", "Gettext_jll", "JLLWrappers", "Libdl", "Libffi_jll", "Libiconv_jll", "Libmount_jll", "PCRE2_jll", "Zlib_jll"]
-git-tree-sha1 = "48b5d4c75b2c9078ead62e345966fa51a25c05ad"
+git-tree-sha1 = "b0036b392358c80d2d2124746c2bf3d48d457938"
 uuid = "7746bdde-850d-59dc-9ae8-88ece973131d"
-version = "2.82.2+1"
+version = "2.82.4+0"
 
 [[deps.Graphite2_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
@@ -2083,9 +2064,9 @@ version = "1.0.2"
 
 [[deps.HTTP]]
 deps = ["Base64", "CodecZlib", "ConcurrentUtilities", "Dates", "ExceptionUnwrapping", "Logging", "LoggingExtras", "MbedTLS", "NetworkOptions", "OpenSSL", "PrecompileTools", "Random", "SimpleBufferStream", "Sockets", "URIs", "UUIDs"]
-git-tree-sha1 = "627fcacdb7cb51dc67f557e1598cdffe4dda386d"
+git-tree-sha1 = "c67b33b085f6e2faf8bf79a61962e7339a81129c"
 uuid = "cd3eb016-35fb-5094-929b-558a96fad6f3"
-version = "1.10.14"
+version = "1.10.15"
 
 [[deps.HarfBuzz_jll]]
 deps = ["Artifacts", "Cairo_jll", "Fontconfig_jll", "FreeType2_jll", "Glib_jll", "Graphite2_jll", "JLLWrappers", "Libdl", "Libffi_jll"]
@@ -2164,9 +2145,9 @@ version = "0.21.4"
 
 [[deps.JpegTurbo_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl"]
-git-tree-sha1 = "25ee0be4d43d0269027024d75a24c24d6c6e590c"
+git-tree-sha1 = "ef10afc9f4b942bcd75f4c3bc9d9e8d802944c23"
 uuid = "aacddb02-875f-59d6-b918-886e6ef4fbf8"
-version = "3.0.4+0"
+version = "3.1.0+0"
 
 [[deps.JuMP]]
 deps = ["LinearAlgebra", "MacroTools", "MathOptInterface", "MutableArithmetics", "OrderedCollections", "PrecompileTools", "Printf", "SparseArrays"]
@@ -2204,9 +2185,9 @@ version = "3.100.2+0"
 
 [[deps.LERC_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl"]
-git-tree-sha1 = "36bdbc52f13a7d1dcb0f3cd694e01677a515655b"
+git-tree-sha1 = "4ec1e8fac04150b570e315baaa68950e368a803d"
 uuid = "88015f11-f218-50d7-93a8-a6af411a945d"
-version = "4.0.0+0"
+version = "4.0.0+1"
 
 [[deps.LLVM]]
 deps = ["CEnum", "LLVMExtra_jll", "Libdl", "Preferences", "Printf", "Unicode"]
@@ -2324,9 +2305,9 @@ version = "1.7.0+0"
 
 [[deps.Libgpg_error_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl"]
-git-tree-sha1 = "c6ce1e19f3aec9b59186bdf06cdf3c4fc5f5f3e6"
+git-tree-sha1 = "a7f43994b47130e4f491c3b2dbe78fe9e2aed2b3"
 uuid = "7add5ba3-2f88-524e-9cd5-f83b8a55f7b8"
-version = "1.50.0+0"
+version = "1.51.0+0"
 
 [[deps.Libiconv_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl"]
@@ -2549,9 +2530,9 @@ version = "0.11.31"
 
 [[deps.Pango_jll]]
 deps = ["Artifacts", "Cairo_jll", "Fontconfig_jll", "FreeType2_jll", "FriBidi_jll", "Glib_jll", "HarfBuzz_jll", "JLLWrappers", "Libdl"]
-git-tree-sha1 = "e127b609fb9ecba6f201ba7ab753d5a605d53801"
+git-tree-sha1 = "ed6834e95bd326c52d5675b4181386dfbe885afb"
 uuid = "36c8627f-9965-5494-a995-c6b170f724f3"
-version = "1.54.1+0"
+version = "1.55.5+0"
 
 [[deps.Parameters]]
 deps = ["OrderedCollections", "UnPack"]
@@ -2619,15 +2600,15 @@ version = "1.40.9"
 
 [[deps.Pluto]]
 deps = ["Base64", "Configurations", "Dates", "Downloads", "ExpressionExplorer", "FileWatching", "FuzzyCompletions", "HTTP", "HypertextLiteral", "InteractiveUtils", "Logging", "LoggingExtras", "MIMEs", "Malt", "Markdown", "MsgPack", "Pkg", "PlutoDependencyExplorer", "PrecompileSignatures", "PrecompileTools", "REPL", "RegistryInstances", "RelocatableFolders", "Scratch", "Sockets", "TOML", "Tables", "URIs", "UUIDs"]
-git-tree-sha1 = "3d97d067ea3d04f51821ac86b0d04024fe6e4df8"
+git-tree-sha1 = "b5509a2e4d4c189da505b780e3f447d1e38a0350"
 uuid = "c3e4b0f8-55cb-11ea-2926-15256bba5781"
-version = "0.20.3"
+version = "0.20.4"
 
 [[deps.PlutoDependencyExplorer]]
 deps = ["ExpressionExplorer", "InteractiveUtils", "Markdown"]
-git-tree-sha1 = "592470bdf383cd34e88a21bbd7f1f7ffc52a21c6"
+git-tree-sha1 = "e0864c15334d2c4bac8137ce3359f1174565e719"
 uuid = "72656b73-756c-7461-726b-72656b6b696b"
-version = "1.1.0"
+version = "1.2.0"
 
 [[deps.PlutoUI]]
 deps = ["AbstractPlutoDingetjes", "Base64", "ColorTypes", "Dates", "FixedPointNumbers", "Hyperscript", "HypertextLiteral", "IOCapture", "InteractiveUtils", "JSON", "Logging", "MIMEs", "Markdown", "Random", "Reexport", "URIs", "UUIDs"]
@@ -2771,6 +2752,12 @@ git-tree-sha1 = "838a3a4188e2ded87a4f9f184b4b0d78a1e91cb7"
 uuid = "ae029012-a4dd-5104-9daa-d747884805df"
 version = "1.3.0"
 
+[[deps.ReverseDiff]]
+deps = ["ChainRulesCore", "DiffResults", "DiffRules", "ForwardDiff", "FunctionWrappers", "LinearAlgebra", "LogExpFunctions", "MacroTools", "NaNMath", "Random", "SpecialFunctions", "StaticArrays", "Statistics"]
+git-tree-sha1 = "cc6cd622481ea366bb9067859446a8b01d92b468"
+uuid = "37e2e3b7-166d-5795-8a7a-e32c996b4267"
+version = "1.15.3"
+
 [[deps.Rmath]]
 deps = ["Random", "Rmath_jll"]
 git-tree-sha1 = "852bd0f55565a9e973fcfee83a84413270224dc4"
@@ -2873,16 +2860,16 @@ uuid = "860ef19b-820b-49d6-a774-d7a799459cd3"
 version = "1.0.2"
 
 [[deps.StanfordAA228V]]
-deps = ["AbstractPlutoDingetjes", "BSON", "Base64", "Distributions", "ForwardDiff", "GridInterpolations", "LazySets", "LinearAlgebra", "Markdown", "Optim", "Parameters", "Pkg", "Plots", "Pluto", "PlutoUI", "ProgressLogging", "Random", "SignalTemporalLogic", "Statistics"]
-git-tree-sha1 = "b240b8a46d44d24d98cd0eab1f692c1259a1af31"
+deps = ["AbstractPlutoDingetjes", "BSON", "Base64", "Distributions", "Downloads", "ForwardDiff", "GridInterpolations", "LazySets", "LinearAlgebra", "Markdown", "Optim", "Parameters", "Pkg", "Plots", "Pluto", "PlutoUI", "ProgressLogging", "Random", "SignalTemporalLogic", "Statistics", "TOML"]
+git-tree-sha1 = "e46052dbc617bef1389267fee8f2ce0ecd2ff8e6"
 uuid = "6f6e590e-f8c2-4a21-9268-94576b9fb3b1"
-version = "0.1.16"
+version = "0.1.19"
 
 [[deps.StaticArrays]]
 deps = ["LinearAlgebra", "PrecompileTools", "Random", "StaticArraysCore"]
-git-tree-sha1 = "777657803913ffc7e8cc20f0fd04b634f871af8f"
+git-tree-sha1 = "7c01731da8ab6d3094c4d44c9057b00932459255"
 uuid = "90137ffa-7385-5640-81b9-e52037218182"
-version = "1.9.8"
+version = "1.9.9"
 weakdeps = ["ChainRulesCore", "Statistics"]
 
     [deps.StaticArrays.extensions]
@@ -3373,9 +3360,9 @@ version = "3.5.0+0"
 
 [[deps.xkbcommon_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg", "Wayland_jll", "Wayland_protocols_jll", "Xorg_libxcb_jll", "Xorg_xkeyboard_config_jll"]
-git-tree-sha1 = "9c304562909ab2bab0262639bd4f444d7bc2be37"
+git-tree-sha1 = "63406453ed9b33a0df95d570816d5366c92b7809"
 uuid = "d8fb68d0-12a3-5cfd-a85a-d49703b185fd"
-version = "1.4.1+1"
+version = "1.4.1+2"
 """
 
 # ╔═╡ Cell order:
@@ -3413,7 +3400,6 @@ version = "1.4.1+1"
 # ╠═9c1daa96-76b2-4a6f-8d0e-f95d26168d2b
 # ╟─370a15eb-df4b-493a-af77-00914b4616ea
 # ╠═ab4c6807-5b4e-4688-b794-159e26a1599b
-# ╟─bb296b6b-b8b3-4892-aeed-a0468374bfe7
 # ╟─e86d260f-c93d-4561-a9f1-44e4c7af827e
 # ╟─166bd412-d433-4dc9-b874-7359108c0a8b
 # ╟─9132a200-f63b-444b-9830-b03cf075021b
@@ -3443,6 +3429,7 @@ version = "1.4.1+1"
 # ╟─61173ec6-c7d6-44fa-8c47-5f7295dd49cf
 # ╟─d647ac21-738b-43e7-bbbd-582b6294560e
 # ╠═57d321cd-2029-4e49-8b56-9c5c48721ac4
+# ╟─b61b8f52-9bf3-4766-9208-3e40134a3573
 # ╟─57c5a6f0-2527-4988-9bf0-140495ba9b7e
 # ╠═7910c15c-a231-4a0f-a4ed-1fe0b52f62c7
 # ╟─cbc3a060-b4ec-4572-914c-e07880dd3537
