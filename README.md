@@ -18,6 +18,8 @@ Uses the [`StanfordAA228V.jl`](https://github.com/sisl/StanfordAA228V.jl) Julia 
 # Installation
 For additional installation help, [please post on Ed](https://edstem.org/us/courses/69226/discussion).
 
+You can also follow [this video](https://youtu.be/dhziWVLqGSc).
+
 ## 1. Install `git`
 - https://git-scm.com/book/en/v2/Getting-Started-Installing-Git
 
