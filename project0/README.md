@@ -31,7 +31,6 @@ _A light-weight introduction to falsification._
         <source media="(prefers-color-scheme: light)" srcset="./../media/pluto-open.png">
         <source media="(prefers-color-scheme: dark)" srcset="./../media/pluto-open-dark.png">
         <img src="./../media/pluto-open.png">
-    </picture>
-</p>
+    </picture> </p>
     - Click `Run notebook code`.
 1. See `project0.jl` within Pluto for details.

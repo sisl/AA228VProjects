@@ -31,7 +31,6 @@ _Efficiently finding the most-likely failure._
         <source media="(prefers-color-scheme: light)" srcset="./../media/pluto-open.png">
         <source media="(prefers-color-scheme: dark)" srcset="./../media/pluto-open-dark.png">
         <img src="./../media/pluto-open.png">
-    </picture>
-</p>
+    </picture> </p>
     - Click `Run notebook code`.
 1. See `project1.jl` within Pluto for details.
