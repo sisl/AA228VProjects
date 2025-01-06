@@ -1198,7 +1198,7 @@ begin
 		pass = false
 	end
 	
-	Markdown.MD(HTML("<h2 id='graded-test'>$(pass ? "✔️" : "✖️") Graded small test ($(pass ? "$(ThisProject.points_small)/$(ThisProject.points_small)" : "0/$(ThisProject.points_small)") points)</h2>"),
+	Markdown.MD(HTML("<h2 id='graded-test'>$(pass ? "✅" : "❌") Graded small test ($(pass ? "$(ThisProject.points_small)/$(ThisProject.points_small)" : "0/$(ThisProject.points_small)") points)</h2>"),
 		md"""
 	✳️ **If the following tests pass, then you're finished with the small problem.**
 	
@@ -1254,7 +1254,7 @@ begin
 		pass = false
 	end
 	Markdown.parse("""
-	## $(pass ? "✔️" : "✖️") Graded medium test ($(pass ? "$(ThisProject.points_medium)/$(ThisProject.points_medium)" : "0/$(ThisProject.points_medium)") points)
+	## $(pass ? "✅" : "❌") Graded medium test ($(pass ? "$(ThisProject.points_medium)/$(ThisProject.points_medium)" : "0/$(ThisProject.points_medium)") points)
 	""")
 end
 
@@ -1309,7 +1309,7 @@ begin
 		pass = false
 	end
 	Markdown.parse("""
-	## $(pass ? "✔️" : "✖️") Graded large test ($(pass ? "$(ThisProject.points_large)/$(ThisProject.points_large)" : "0/$(ThisProject.points_large)") points)
+	## $(pass ? "✅" : "❌") Graded large test ($(pass ? "$(ThisProject.points_large)/$(ThisProject.points_large)" : "0/$(ThisProject.points_large)") points)
 	""")
 end
 
@@ -1355,7 +1355,7 @@ begin
 
 	Markdown.parse("""
 # Leaderboard
-If the above tests pass, then you will receive full credit for your submission on Gradescope under the **`"Project $(ThisProject.project_num) (.val files)"`** assignment.
+If the above tests pass, then you will receive full credit for your submission on Gradescope under the **`"Project $(ThisProject.project_num) (.val files + .jl file)"`** assignment.
 
 _However_, we have a leaderboard so that students can participate in a friendly competition to find the best estimate of the failure probability for each problem.
 	
