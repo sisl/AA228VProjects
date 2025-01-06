@@ -33,7 +33,7 @@ begin
 	using Distributions
 	using Random
 	using Plots
-	using ForwardDiff
+	using ReverseDiff
 	using Optim
 	using Parameters
 	using BSON
@@ -1427,7 +1427,6 @@ BSON = "fbb218c0-5317-5bc6-957e-2ee96dd4b1f0"
 Base64 = "2a0f44e3-6c83-55bd-87e4-b1978d98bd5f"
 Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
 Downloads = "f43a241f-c20a-4ad4-852c-f6b1247861c6"
-ForwardDiff = "f6369f11-7733-5829-9624-2563aa707210"
 GridInterpolations = "bb4c363b-b914-514b-8517-4eb369bc008a"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 MarkdownLiteral = "736d6165-7244-6769-4267-6b50796e6954"
@@ -1437,6 +1436,7 @@ Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
 PlutoUI = "7f904dfe-b85e-4ff6-b463-dae2292396a8"
 ProgressLogging = "33c8b6b6-d38a-422a-b730-caa89a2f386c"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
+ReverseDiff = "37e2e3b7-166d-5795-8a7a-e32c996b4267"
 StanfordAA228V = "6f6e590e-f8c2-4a21-9268-94576b9fb3b1"
 TOML = "fa267f1f-6049-4f14-aa54-33bafae1ed76"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
@@ -1444,7 +1444,6 @@ Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 [compat]
 BSON = "~0.3.9"
 Distributions = "~0.25.115"
-ForwardDiff = "~0.10.38"
 GridInterpolations = "~1.2.1"
 MarkdownLiteral = "~0.1.1"
 Optim = "~1.10.0"
@@ -1452,6 +1451,7 @@ Parameters = "~0.12.3"
 Plots = "~1.40.9"
 PlutoUI = "~0.7.60"
 ProgressLogging = "~0.1.4"
+ReverseDiff = "~1.15.3"
 StanfordAA228V = "~0.1.16"
 """
 
@@ -1461,7 +1461,7 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.11.2"
 manifest_format = "2.0"
-project_hash = "8dea9a5862078eb6b3a517e41ac14d0341de2e51"
+project_hash = "2299a655a5d5d106a07ee32a061a91ebe0a318ab"
 
 [[deps.AbstractFFTs]]
 deps = ["LinearAlgebra"]
@@ -1931,6 +1931,11 @@ deps = ["Artifacts", "JLLWrappers", "Libdl"]
 git-tree-sha1 = "846f7026a9decf3679419122b49f8a1fdb48d2d5"
 uuid = "559328eb-81f9-559d-9380-de523a88c83c"
 version = "1.0.16+0"
+
+[[deps.FunctionWrappers]]
+git-tree-sha1 = "d62485945ce5ae9c0c48f124a84998d755bae00e"
+uuid = "069b7b12-0de2-55c6-9aab-29f3d0a68a2e"
+version = "1.1.3"
 
 [[deps.Future]]
 deps = ["Random"]
@@ -2708,6 +2713,12 @@ deps = ["UUIDs"]
 git-tree-sha1 = "838a3a4188e2ded87a4f9f184b4b0d78a1e91cb7"
 uuid = "ae029012-a4dd-5104-9daa-d747884805df"
 version = "1.3.0"
+
+[[deps.ReverseDiff]]
+deps = ["ChainRulesCore", "DiffResults", "DiffRules", "ForwardDiff", "FunctionWrappers", "LinearAlgebra", "LogExpFunctions", "MacroTools", "NaNMath", "Random", "SpecialFunctions", "StaticArrays", "Statistics"]
+git-tree-sha1 = "cc6cd622481ea366bb9067859446a8b01d92b468"
+uuid = "37e2e3b7-166d-5795-8a7a-e32c996b4267"
+version = "1.15.3"
 
 [[deps.Rmath]]
 deps = ["Random", "Rmath_jll"]
