@@ -1190,11 +1190,20 @@ begin
 end
 
 # ╔═╡ f286f3b2-3bac-4384-9b40-522e974a14ee
-Markdown.MD(HTML("<h2 id='graded-test'>$(pass_small ? "✔️" : "✖️") Graded small test ($(pass_small ? "$(Project2.points_small)/$(Project2.points_small)" : "0/$(Project2.points_small)") points)</h2>"),
-	md"""
-✳️ **If the following tests pass, then you're finished with the small problem.**
-
-We'll test multiple failure thresholds in the specification $\psi$. Make sure the above 'randon test' works well across different failure thresholds to ensure this will pass.""")
+begin
+	local pass
+	try
+		pass = pass_small
+	catch
+		pass = false
+	end
+	
+	Markdown.MD(HTML("<h2 id='graded-test'>$(pass ? "✔️" : "✖️") Graded small test ($(pass ? "$(ThisProject.points_small)/$(ThisProject.points_small)" : "0/$(ThisProject.points_small)") points)</h2>"),
+		md"""
+	✳️ **If the following tests pass, then you're finished with the small problem.**
+	
+	We'll test multiple failure thresholds in the specification $\psi$. Make sure the above 'randon test' works well across different failure thresholds to ensure this will pass.""")
+end
 
 # ╔═╡ 44c8fbe0-21e7-482b-84a9-c3d32a4737dd
 begin
@@ -1237,9 +1246,17 @@ begin
 end
 
 # ╔═╡ 23999cd9-543b-47dc-a0b2-e133ba95891e
-Markdown.parse("""
-## $(pass_medium ? "✔️" : "✖️") Graded medium test ($(pass_medium ? "$(Project2.points_medium)/$(Project2.points_medium)" : "0/$(Project2.points_medium)") points)
-""")
+begin
+	local pass
+	try
+		pass = pass_medium
+	catch
+		pass = false
+	end
+	Markdown.parse("""
+	## $(pass ? "✔️" : "✖️") Graded medium test ($(pass ? "$(ThisProject.points_medium)/$(ThisProject.points_medium)" : "0/$(ThisProject.points_medium)") points)
+	""")
+end
 
 # ╔═╡ 08cdfc42-06c6-4d27-a846-4a0a0809c174
 begin
@@ -1284,9 +1301,17 @@ begin
 end
 
 # ╔═╡ 7c473630-6555-4ada-85f3-0d40aefe6370
-Markdown.parse("""
-## $(pass_large ? "✔️" : "✖️") Graded large test ($(pass_large ? "$(Project2.points_large)/$(Project2.points_large)" : "0/$(Project2.points_large)") points)
-""")
+begin
+	local pass
+	try
+		pass = pass_large
+	catch
+		pass = false
+	end
+	Markdown.parse("""
+	## $(pass ? "✔️" : "✖️") Graded large test ($(pass ? "$(ThisProject.points_large)/$(ThisProject.points_large)" : "0/$(ThisProject.points_large)") points)
+	""")
+end
 
 # ╔═╡ dbd088d1-f4c9-4e6a-b280-960b06da76e4
 Markdown.MD(Markdown.parse("# $(all([pass_small, pass_medium, pass_large]) ? "✅" : "❌") Final Check"),
