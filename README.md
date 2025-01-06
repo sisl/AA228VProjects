@@ -13,7 +13,7 @@ Uses the [`StanfordAA228V.jl`](https://github.com/sisl/StanfordAA228V.jl) Julia 
 - **[Project 0](./project0)** — _A light-weight introduction to falsification._
 - **[Project 1](./project1)** — _Efficiently finding the most-likely failure._
 - **[Project 2](./project2)** — _Efficiently estimating the failure probability._
-- **[Project 3](./project3)** — _TODO._
+- **[Project 3](./project3)** — _Estimating the volume of a reachable set._
 
 # Installation
 For additional installation help, [please post on Ed](https://edstem.org/us/courses/69226/discussion).

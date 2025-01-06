@@ -7,7 +7,7 @@ _Efficiently estimating the failure probability._
 <p align="center">
     <picture>
         <source media="(prefers-color-scheme: light)" srcset="./../media/cas-lookahead.gif">
-        <source media="(prefers-color-scheme: dark)" srcset="./../media/cas--lookahead-dark.gif">
+        <source media="(prefers-color-scheme: dark)" srcset="./../media/cas-lookahead-dark.gif">
         <img src="./../media/cas-lookahead.gif">
     </picture>
 </p>
