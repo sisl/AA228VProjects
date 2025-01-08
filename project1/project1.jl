@@ -1436,9 +1436,9 @@ begin
 		pass = false
 	end
 	
-	Markdown.MD(HTML("<h2 id='graded-test'>$(pass ? "✔️" : "✖️") Graded small test ($(pass ? "$(ThisProject.points_small)/$(ThisProject.points_small)" : "0/$(ThisProject.points_small)") points)</h2>"),
+	Markdown.MD(HTML("<h2 id='graded-test'>$(pass ? "✅" : "❌") Graded small test ($(pass ? "$(ThisProject.points_small)/$(ThisProject.points_small)" : "0/$(ThisProject.points_small)") points)</h2>"),
 		md"""
-	✳️ **If the following tests pass, then you're finished with the small problem.**
+	**If the following tests pass, then you're finished with the small problem.**
 	
 	We'll test multiple failure thresholds in the specification $\psi$. Make sure the above 'randon test' works well across different failure thresholds to ensure this will pass.""")
 end
@@ -1460,7 +1460,7 @@ begin
 		pass = false
 	end
 	Markdown.parse("""
-	## $(pass ? "✔️" : "✖️") Graded medium test ($(pass ? "$(ThisProject.points_medium)/$(ThisProject.points_medium)" : "0/$(ThisProject.points_medium)") points)
+	## $(pass ? "✅" : "❌") Graded medium test ($(pass ? "$(ThisProject.points_medium)/$(ThisProject.points_medium)" : "0/$(ThisProject.points_medium)") points)
 	""")
 end
 
@@ -1481,7 +1481,7 @@ begin
 		pass = false
 	end
 	Markdown.parse("""
-	## $(pass ? "✔️" : "✖️") Graded large test ($(pass ? "$(ThisProject.points_large)/$(ThisProject.points_large)" : "0/$(ThisProject.points_large)") points)
+	## $(pass ? "✅" : "❌") Graded large test ($(pass ? "$(ThisProject.points_large)/$(ThisProject.points_large)" : "0/$(ThisProject.points_large)") points)
 	""")
 end
 
