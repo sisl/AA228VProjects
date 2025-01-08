@@ -952,6 +952,186 @@ end
 # ╔═╡ 4edc5933-9457-4c7c-8456-a26974e0587e
 html_half_space()
 
+# ╔═╡ 38b64ee2-5372-4374-80e8-fbf203021a61
+begin
+	function GridInterpolations.interpolants(grid::RectangleGrid, x::AbstractVector)
+	    if any(isnan, x)
+	        throw(DomainError("Input contains NaN!"))
+	    end
+	    cut_counts = grid.cut_counts
+	    cuts = grid.cuts
+	
+	    # Reset the values in index and weight:
+	    num_points = 2^dimensions(grid)
+	    index = Vector{Int}(undef, num_points)
+	    index2 = Vector{Int}(undef, num_points)
+	    weight = Vector{eltype(x)}(undef, num_points)
+	    weight2 = Vector{eltype(x)}(undef, num_points)
+	
+	    # Note: these values are set explicitly because we have not verified that the logic below is independent of the initial values. See discussion in PR #47. These can be removed if it can be proved that the logic is independent of the initial values.
+	    index .= 1
+	    index2 .= 1
+	    weight .= zero(eltype(weight))
+	    weight2 .= zero(eltype(weight2))
+	
+	    weight[1] = one(eltype(weight))
+	    weight2[1] = one(eltype(weight2))
+	
+	    l = 1
+	    subblock_size = 1
+	    cut_i = 1
+	    n = 1
+	    for d = 1:length(x)
+	        coord = x[d]
+	        lasti = cut_counts[d] + cut_i - 1
+	        ii = cut_i
+	
+	        if coord <= cuts[ii]
+	            i_lo, i_hi = ii, ii
+	        elseif coord >= cuts[lasti]
+	            i_lo, i_hi = lasti, lasti
+	        else
+	            while cuts[ii] < coord
+	                ii = ii + 1
+	            end
+	            if cuts[ii] == coord
+	                i_lo, i_hi = ii, ii
+	            else
+	                i_lo, i_hi = (ii - 1), ii
+	            end
+	        end
+	
+	        # the @inbounds are needed below to prevent allocation
+	        if i_lo == i_hi
+	            for i = 1:l
+	                @inbounds index[i] += (i_lo - cut_i) * subblock_size
+	            end
+	        else
+	            low = (1 - (coord - cuts[i_lo]) / (cuts[i_hi] - cuts[i_lo]))
+	            for i = 1:l
+	                @inbounds index2[i] = index[i] + (i_lo - cut_i) * subblock_size
+	                @inbounds index2[i+l] = index[i] + (i_hi - cut_i) * subblock_size
+	            end
+	            @inbounds index[:] = index2
+	            for i = 1:l
+	                @inbounds weight2[i] = weight[i] * low
+	                @inbounds weight2[i+l] = weight[i] * (1 - low)
+	            end
+	            @inbounds weight[:] = weight2
+	            l = l * 2
+	            n = n * 2
+	        end
+	        cut_i = cut_i + cut_counts[d]
+	        subblock_size = subblock_size * (cut_counts[d])
+	    end
+	
+	    v = min(l, length(index))
+	    return view(Vector(index), 1:v), view(Vector(weight), 1:v)
+	end
+	
+	function GridInterpolations.interpolants(grid::SimplexGrid, x::AbstractVector)
+	
+	    weight = Vector{eltype(x)}(undef, dimensions(grid) + 1)
+	    index = Vector{Int}(undef, dimensions(grid) + 1)
+	
+	    x_p = grid.x_p # residuals
+	    ihi = grid.ihi # indicies of cuts above point
+	    ilo = grid.ilo # indicies of cuts below point
+	    n_ind = grid.n_ind
+	
+	    cut_counts = grid.cut_counts
+	    cuts = grid.cuts
+	
+	    cut_i = 1
+	
+	    for i = 1:dimensions(grid)
+	        # find indicies of coords if match
+	        coord = x[i]
+	        lasti = cut_counts[i] + cut_i - 1
+	        ii = cut_i
+	        # check bounds, snap to closest if out
+	        if coord <= cuts[ii]
+	            ihi[i] = ii
+	            ilo[i] = ii
+	            x_p[i] = zero(eltype(x))
+	        elseif coord >= cuts[lasti]
+	            ihi[i] = lasti
+	            ilo[i] = lasti
+	            x_p[i] = zero(eltype(x))
+	        else
+	            # increment through cut points if in bounds
+	            while cuts[ii] < coord
+	                ii += 1
+	            end
+	            # if on cut assign cut indecies
+	            if cuts[ii] == coord
+	                ilo[i] = ii
+	                ihi[i] = ii
+	                x_p[i] = zero(eltype(x))
+	            else
+	                # if between cuts assign lo and high indecies and translate
+	                ilo[i] = ii - 1
+	                ihi[i] = ii
+	                lo = cuts[ilo[i]]
+	                hi = cuts[ihi[i]]
+	                x_p[i] = (x[i] - lo) / (hi - lo)
+	            end
+	        end
+	        cut_i = cut_i + cut_counts[i]
+	    end
+	
+	    # initialize sort indecies
+	    for i = 1:length(n_ind)
+	        n_ind[i] = i
+	    end
+	    # sort translated and scaled x values
+	    sortperm!(n_ind, x_p, rev=true) ############################################# killer of speed
+	    x_p = x_p[n_ind]
+	    n_ind = n_ind .- 1
+	
+	    # get weight
+	    for i = 1:(length(x_p)+1)
+	        if i == 1
+	            weight[i] = 1 - x_p[i]
+	        elseif i == length(x_p) + 1
+	            weight[i] = x_p[i-1]
+	        else
+	            weight[i] = x_p[i-1] - x_p[i]
+	        end
+	    end
+	
+	    # get indices
+	    fill!(index, 0)
+	    i_index = 0
+	    for i = 1:(length(x_p)+1)
+	        siz = 1
+	        ct = 0
+	        good_count = 1
+	        if i > 1
+	            i_index = i_index + 2^(n_ind[i-1])
+	        end
+	        for k = 1:length(x)
+	            onHi = ((i_index & good_count) > 0)
+	            good_count <<= 1
+	            if onHi
+	                index[i] += (ihi[k] - 1 - ct) * siz
+	            else
+	                index[i] += (ilo[k] - 1 - ct) * siz
+	            end
+	            siz = siz * cut_counts[k]
+	            ct += cut_counts[k]
+	        end
+	        index[i] += 1
+	    end
+	
+	    weight = weight ./ sum(weight)
+	
+	    return SVector(index), SVector(weight)
+	end
+
+	md"> _GridInterpolations changes for ReverseDiff._"
+end
+
 # ╔═╡ 50f1c7a3-9219-40ce-a060-77beb243b7af
 begin
 	function task_description(sys, details)
@@ -3526,6 +3706,7 @@ version = "1.4.1+2"
 # ╟─ba6c082b-6e62-42fc-a85c-c8b7efc89b88
 # ╟─5aef09eb-ddc5-4b99-abf2-568621b871d5
 # ╟─173388ab-207a-42a6-b364-b2c1cb335f6b
+# ╟─38b64ee2-5372-4374-80e8-fbf203021a61
 # ╟─50f1c7a3-9219-40ce-a060-77beb243b7af
 # ╟─5563f0da-7552-4879-a38a-ba1748d39d52
 # ╟─98cbe931-d362-4039-97ba-41e0049619a3
