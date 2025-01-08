@@ -1580,7 +1580,7 @@ begin
 
 	Markdown.parse("""
 # Leaderboard
-If the above tests pass, then you will receive full credit for your submission on Gradescope under the **`"Project 1 (.val files)"`** assignment.
+If the above tests pass, then you will receive full credit for your submission on Gradescope under the **`"Project 1 (.val files + .jl file)"`** assignment.
 
 _However_, we have a leaderboard so that students can participate in a friendly competition to find the most-likely failures for each problem.
 	
