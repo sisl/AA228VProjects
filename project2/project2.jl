@@ -1034,9 +1034,25 @@ begin
 
 	import StanfordAA228V.SignalTemporalLogic: ρ
 
+	function separator(rulecolor=dark_mode ? "#ffffff26" : "#00000026")
+		Markdown.parse("""# \${\\color{$rulecolor}\\rule{1000px}{3px}}\$""")
+	end
+
 	pkg_trigger = true
 	md"> _AA228V/CS238V package management._"
 end
+
+# ╔═╡ 8469fe70-8cf6-43c1-b16b-d4b970a2c807
+separator()
+
+# ╔═╡ a6ac99ee-2894-40d4-8dd5-35d551a0a041
+separator()
+
+# ╔═╡ fa762985-56eb-4ea4-9c91-95731bf6a475
+separator()
+
+# ╔═╡ 5b1d8594-dd10-44f3-accf-d5060f75c1c8
+separator()
 
 # ╔═╡ 95e3d42f-b33f-4294-81c5-f34a300dc9b4
 # This needs to be in the cell above.
@@ -3376,6 +3392,7 @@ version = "1.4.1+2"
 # ╟─109c3d27-2c23-48a7-9fd7-be8a1f359e55
 # ╟─bc2f62f5-1330-46cd-bb81-411baa483488
 # ╟─a46702a3-4a8c-4749-bd00-52f8cce5b8ee
+# ╟─8469fe70-8cf6-43c1-b16b-d4b970a2c807
 # ╟─fd8c851a-3a42-41c5-b0fd-a12085543c9b
 # ╟─17fa8557-9656-4347-9d44-213fd3b635a6
 # ╠═22feee3d-4627-4358-9937-3c780b7e8bcb
@@ -3428,6 +3445,7 @@ version = "1.4.1+2"
 # ╟─307afd9c-6dac-4a6d-89d7-4d8cabfe3fe5
 # ╟─d0a3770a-2c48-42db-9a71-6b7f695f22d8
 # ╟─fda151a1-5069-44a8-baa1-d7903bc89797
+# ╟─a6ac99ee-2894-40d4-8dd5-35d551a0a041
 # ╟─8c78529c-1e00-472c-bb76-d984b37235ab
 # ╟─daada216-11d4-4f8b-807c-d347130a3928
 # ╟─d18c2105-c2af-4dda-8388-617aa816a567
@@ -3453,6 +3471,7 @@ version = "1.4.1+2"
 # ╟─b417e370-efae-40e8-9247-5daf14fcc749
 # ╟─a1701563-1528-4aac-b7be-bbbb56de374b
 # ╟─60ab8107-db65-4fb6-aeea-d4978aed77bd
+# ╟─fa762985-56eb-4ea4-9c91-95731bf6a475
 # ╟─aa0c4ffc-d7f0-484e-a1e2-7f6f92a3a53d
 # ╟─e189b31e-7e24-4c32-989f-3e600a44d4bc
 # ╟─f8ea2983-c2d0-40ea-b949-9fc478ea45f8
@@ -3479,6 +3498,7 @@ version = "1.4.1+2"
 # ╟─f6eb6d1a-a9a0-4234-8699-269a92f666c0
 # ╟─101ab5bc-00f4-4acd-b8b4-f8164d7cb030
 # ╟─74aeca7b-0658-427f-8c02-d093a0d725ee
+# ╟─5b1d8594-dd10-44f3-accf-d5060f75c1c8
 # ╟─dbd088d1-f4c9-4e6a-b280-960b06da76e4
 # ╟─1bb92755-65e3-457e-84cd-252eae5e4d7e
 # ╟─6d5c805b-330c-4b04-a51c-15e674352b1b

@@ -1285,9 +1285,19 @@ begin
 
 	import StanfordAA228V.SignalTemporalLogic: ρ
 
+	function separator(rulecolor=dark_mode ? "#ffffff26" : "#00000026")
+		Markdown.parse("""# \${\\color{$rulecolor}\\rule{1000px}{3px}}\$""")
+	end
+
 	pkg_trigger = true
 	md"> _AA228V/CS238V package management._"
 end
+
+# ╔═╡ 7e9405c4-1d1d-4cfa-9fab-a3471c8ad119
+separator()
+
+# ╔═╡ e29b6ddd-d3da-4122-a561-18bc267e2047
+separator()
 
 # ╔═╡ 44c8fbe0-21e7-482b-84a9-c3d32a4737dd
 plot(sys_medium, ψ_medium, baseline_medium_results.τs; max_lines=100)
@@ -1309,11 +1319,17 @@ begin
 	)
 end
 
+# ╔═╡ e86fb6e9-edcd-459b-b1fb-7338bb54d6c4
+separator()
+
 # ╔═╡ 797cbe41-a5f3-4179-9143-9ef6e6888a4d
 plot(sys_large, ψ_large, baseline_large_results.τs)
 
 # ╔═╡ 4ae85f59-4e94-48aa-8ccb-91311466c51f
 plot(sys_large, ψ_large, baseline_large_results.τ)
+
+# ╔═╡ 36b510f5-31a2-4c94-9705-cd66e98e2e61
+separator()
 
 # ╔═╡ 95e3d42f-b33f-4294-81c5-f34a300dc9b4
 # This needs to be in the cell above.
@@ -3592,6 +3608,7 @@ version = "1.4.1+2"
 # ╟─109c3d27-2c23-48a7-9fd7-be8a1f359e55
 # ╟─bc2f62f5-1330-46cd-bb81-411baa483488
 # ╟─a46702a3-4a8c-4749-bd00-52f8cce5b8ee
+# ╟─7e9405c4-1d1d-4cfa-9fab-a3471c8ad119
 # ╟─fd8c851a-3a42-41c5-b0fd-a12085543c9b
 # ╟─17fa8557-9656-4347-9d44-213fd3b635a6
 # ╠═22feee3d-4627-4358-9937-3c780b7e8bcb
@@ -3637,6 +3654,7 @@ version = "1.4.1+2"
 # ╟─307afd9c-6dac-4a6d-89d7-4d8cabfe3fe5
 # ╟─d0a3770a-2c48-42db-9a71-6b7f695f22d8
 # ╟─fda151a1-5069-44a8-baa1-d7903bc89797
+# ╟─e29b6ddd-d3da-4122-a561-18bc267e2047
 # ╟─8c78529c-1e00-472c-bb76-d984b37235ab
 # ╟─daada216-11d4-4f8b-807c-d347130a3928
 # ╟─d18c2105-c2af-4dda-8388-617aa816a567
@@ -3665,6 +3683,7 @@ version = "1.4.1+2"
 # ╟─38f26afd-ffa5-48d6-90cc-e3ec189c2bf1
 # ╟─b417e370-efae-40e8-9247-5daf14fcc749
 # ╟─60ab8107-db65-4fb6-aeea-d4978aed77bd
+# ╟─e86fb6e9-edcd-459b-b1fb-7338bb54d6c4
 # ╟─aa0c4ffc-d7f0-484e-a1e2-7f6f92a3a53d
 # ╟─e189b31e-7e24-4c32-989f-3e600a44d4bc
 # ╟─7d054465-9f80-4dfb-9b5f-76c3977de7cd
@@ -3691,6 +3710,7 @@ version = "1.4.1+2"
 # ╟─7fe1c3d7-469c-47d9-9d46-e5b8b263edb9
 # ╟─f6eb6d1a-a9a0-4234-8699-269a92f666c0
 # ╟─74aeca7b-0658-427f-8c02-d093a0d725ee
+# ╟─36b510f5-31a2-4c94-9705-cd66e98e2e61
 # ╟─dbd088d1-f4c9-4e6a-b280-960b06da76e4
 # ╟─1bb92755-65e3-457e-84cd-252eae5e4d7e
 # ╟─6d5c805b-330c-4b04-a51c-15e674352b1b
