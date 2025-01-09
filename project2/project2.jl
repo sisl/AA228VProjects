@@ -483,7 +483,7 @@ Markdown.MD(
 	- It uses a proportional controller to keep it upright.
 	- The state is comprised of the angle $\theta$ and angular velocity $\omega$ making $s = [\theta, \omega]$
 	- Actions are left/right adjustments in the range $[-2, 2]$
-	- Disturbances $x$ are treated as addative noise: $x \sim \mathcal{N}(\mathbf{0}, 0.1^2I)$
+	- Disturbances $x$ are treated as additive noise: $x \sim \mathcal{N}(\mathbf{0}, 0.1^2I)$
 	""",
 	depth_highlight(sys_medium)
 )
