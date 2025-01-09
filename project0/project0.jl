@@ -104,7 +104,7 @@ i.e., "the state \$s\$ in the trajectory \$\\tau\$ should _always_ (\$\\square\$
 Markdown.parse("""
 A failure is unlikely given that the probability of failure is:
 
-\$\$P(s > $(ψ.formula.ϕ.c)) \\approx $(round(cdf(ps, ψ.formula.ϕ.c), sigdigits=4))\$\$
+\$\$P(s \\le $(ψ.formula.ϕ.c)) \\approx $(round(cdf(ps, ψ.formula.ϕ.c), sigdigits=4))\$\$
 """)
 
 # ╔═╡ 00d4d678-a19d-4bba-b8f5-79d7e1466a63
