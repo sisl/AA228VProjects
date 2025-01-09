@@ -943,6 +943,8 @@ end
 
 # ╔═╡ 5a1ed20d-788b-4655-bdd8-069545f48929
 begin
+	extract(sys::System, input) = extract(sys.env, input)
+
 	function extract(env::SimpleGaussian, input)
 		s = input[1]             # Objective is simply over the initial state
 		𝐱 = [Disturbance(0,0,0)] # No disturbances for the SimpleGaussian
@@ -963,7 +965,8 @@ begin
 
 	initial_guess(sys::SmallSystem) = [0.0]
 	initial_guess(sys::MediumSystem) = zeros(84)
-	initial_guess(sys::LargeSystem) = [rand(Normal(0,100)), zeros(42)...]
+	initial_guess(sys::LargeSystem) =
+		[rand(Normal(0,100)), 0, 0, 40, zeros(39)...]
 
 	md"> *Helper `extract` and `initial_guess` functions.*"
 end
