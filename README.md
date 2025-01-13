@@ -49,7 +49,7 @@ _**Note**: You only need to do this once._
     1. Open a terminal and navigate to where you want the code to live.
     1. Run:
         ```
-        git clone https://github.com/sisl/AA228VProjects
+        git clone --depth 1 https://github.com/sisl/AA228VProjects
         ```
 1. _Install [**Pluto**](https://plutojl.org/) and the SISL Julia package registry:_
     1. Open `julia` in a terminal.
