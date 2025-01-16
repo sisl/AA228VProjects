@@ -15,6 +15,10 @@ Uses the [`StanfordAA228V.jl`](https://github.com/sisl/StanfordAA228V.jl) Julia 
 - **[Project 2](./project2)** — _Efficiently estimating the failure probability._
 - **[Project 3](./project3)** — _Estimating the volume of a reachable set._
 
+# FAQs
+
+Please see the [FAQs page](https://github.com/sisl/AA228V-FAQs).
+
 # Installation
 For additional installation help, [please post on Ed](https://edstem.org/us/courses/69226/discussion).
 
