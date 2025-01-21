@@ -45,9 +45,6 @@ begin
 	md"> _Additional package management._"
 end
 
-# ╔═╡ 2e5b9ee3-4a17-4435-bba5-c8797fd1b85b
-html"<h1 style='display: flex; justify-content: center; color: var(--cursor-color); font-variant: small-caps;'>⚠️— Important —⚠️</h1><span style='display: flex; justify-content: center; font-size: 15pt; color: var(--cursor-color);'><b>THIS NOTEBOOK IS CURRENTLY UNDER CONSTRUCTION</b></span>"
-
 # ╔═╡ 117d0059-ce1a-497e-8667-a0c2ef20c632
 md"""
 # Project 2: Estimating failure probability
@@ -94,7 +91,7 @@ You can create as many new cells anywhere as you like. Click the `+` icon on the
 	md"""
 After editing a cell, you can run it several ways:
 1. To run the current cell: `<SHIFT+ENTER>`
-1. To run the current cell and create a new one below: `<CTRL+S>` or `<CMD+S>`
+1. To run the current cell and create a new one below: `<CTRL+ENTER>` or `<CMD+ENTER>`
 1. To run all cells with unsaved changes: `<CTRL+S>` or `<CMD+S>`
 	""",
 	html"<h2hide>Multiple lines of code in a cell</h2hide>",
@@ -180,6 +177,9 @@ To enter them into cells, type the above "**Code**" and hit `<TAB><TAB>` (or `<T
 See the Julia docs for more examples: [https://docs.julialang.org/en/v1/manual/unicode-input/](https://docs.julialang.org/en/v1/manual/unicode-input/)
 """
 ])
+
+# ╔═╡ 41406be3-4c2d-41db-bdb4-9e2ff875cebe
+highlight(md"Here's the link to the notebook on [Julia and Pluto tips](https://sisl.github.io/AA228VLectureNotebooks/media/html/julia_pluto_session.html).")
 
 # ╔═╡ a21612a1-1092-4892-9132-629833e7c867
 
@@ -283,8 +283,59 @@ This code will add a new method for `disturbance_distribution` with the input ty
 This is common in Julia where you need to use the funciton name qualified with the module name. Read more in the ["Namespace Management" section of the Julia docs.](https://docs.julialang.org/en/v1/manual/modules/#namespace-management)
 """)
 
+# ╔═╡ bed9a6ed-3ca0-492d-9141-a34b601ea315
+highlight(md"See the FAQs page for continuously updated tips: [https://github.com/sisl/AA228V-FAQs](https://github.com/sisl/AA228V-FAQs)")
+
 # ╔═╡ a46702a3-4a8c-4749-bd00-52f8cce5b8ee
 html_half_space()
+
+# ╔═╡ 84d9c552-2e78-4922-9ec0-4d12d0c62643
+html_expand("Expand for <code>SmallSystem</code> code.", md"""
+```julia
+## Agent
+struct NoAgent <: Agent end
+(c::NoAgent)(s, a=missing) = nothing
+Distributions.pdf(c::NoAgent, s, x) = 1.0
+
+## Environment
+struct SimpleGaussian <: Environment end
+(env::SimpleGaussian)(s, a, xs=missing) = s
+Ps(env::SimpleGaussian) = Normal(0, 1) # Initial state distribution
+
+## Sensor
+struct IdealSensor <: Sensor end
+
+(sensor::IdealSensor)(s) = s
+(sensor::IdealSensor)(s, x) = sensor(s)
+
+Distributions.pdf(sensor::IdealSensor, s, xₛ) = 1.0
+```
+""")
+
+# ╔═╡ e6e675bf-5181-4e45-8c5d-e576aa411064
+html_expand("Stuck? <span style='color: crimson'>Expand for hints</span>.", hint(md"""If you're trying fuzzing as a proposal distribution, the `disturbance_distribution` for the `SmallSystem` does not apply:
+
+```julia
+D = DisturbanceDistribution((o)->Deterministic(),
+							(s,a)->Deterministic(),
+							(s)->Deterministic())
+```
+where
+```julia
+struct DisturbanceDistribution
+    Da # agent disturbance distribution
+    Ds # environment disturbance distribution
+    Do # sensor disturbance distribution
+end
+```
+but the `initial_state_distribution` should be changed:
+```julia
+function StanfordAA228V.initial_state_distribution(p::YourFuzzingDistribution)
+    return Normal(SOME_MEAN, SOME_STD)
+end
+```
+See _Example 4.3_ in the textbook for how this is applied to the pendulum.
+"""))
 
 # ╔═╡ 17fa8557-9656-4347-9d44-213fd3b635a6
 Markdown.parse("""
@@ -304,7 +355,8 @@ Markdown.MD(
 	- There are no disturbances.
 	- The (initial and only) state $s$ is sampled from $\mathcal{N}(0,1)$.
 	""",
-	depth_highlight(sys_small)
+	depth_highlight(sys_small),
+	md"_(Same small system as Project 1)_"
 )
 
 # ╔═╡ 6f3e24de-094c-49dc-b892-6721b3cc54ed
@@ -462,6 +514,75 @@ highlight(md"**Note**: You might fail on some of these specifications. Don't wor
 # ╔═╡ fda151a1-5069-44a8-baa1-d7903bc89797
 html_space()
 
+# ╔═╡ e61657ef-961b-42af-89d7-e242d477ba1f
+html_expand("Expand for <code>MediumSystem</code> code.", md"""
+```julia
+## Agent
+struct ProportionalController <: Agent
+    k
+end
+
+(c::ProportionalController)(s, a=missing) = c.k' * s
+
+## Environment
+@with_kw struct InvertedPendulum <: Environment
+    m::Float64 = 1.0
+    l::Float64 = 1.0
+    g::Float64 = 10.0
+    dt::Float64 = 0.05
+    ω_max::Float64 = 8.0
+    a_max::Float64 = 2.0
+end
+
+function (env::InvertedPendulum)(s, a, xs=missing)
+    θ, ω = s[1], s[2]
+    dt, g, m, l = env.dt, env.g, env.m, env.l
+
+    a = clamp(a, -env.a_max, env.a_max)
+
+    ω = ω + (3g / (2 * l) * sin(θ) + 3 * a / (m * l^2)) * dt
+    θ = θ + ω * dt
+    ω = clamp(ω, -env.ω_max, env.ω_max)
+
+    return [θ, ω]
+end
+
+# Initial state distribution
+Ps(env::InvertedPendulum) = MvNormal(zeros(2), diagm([(π/32)^2, 0.5^2]))
+
+## Sensor
+struct AdditiveNoiseSensor <: Sensor
+    Do
+end
+
+(sensor::AdditiveNoiseSensor)(s) = sensor(s, rand(Do(sensor, s)))
+(sensor::AdditiveNoiseSensor)(s, x) = s + x
+
+Do(sensor::AdditiveNoiseSensor, s) = sensor.Do
+
+Os(sensor::AdditiveNoiseSensor) = I
+```
+""")
+
+# ╔═╡ 1cef8f2a-faee-4709-a0e9-6e5f2e3ce4cd
+html_expand("Stuck? <span style='color: crimson'>Expand for hints</span>.", hint(md"""If you're trying fuzzing as a proposal distribution, the `disturbance_distribution` for the `MediumSystem` applies disturbances to the _sensor_:
+
+```julia
+D = DisturbanceDistribution((o)->Deterministic(),
+							(s,a)->Deterministic(),
+							(s)->MvNormal(SOME_MEAN_VECTOR, SOME_COVARIANCE))
+```
+where
+```julia
+struct DisturbanceDistribution
+    Da # agent disturbance distribution
+    Ds # environment disturbance distribution
+    Do # sensor disturbance distribution
+end
+```
+See _Example 4.3_ in the textbook.
+"""))
+
 # ╔═╡ d18c2105-c2af-4dda-8388-617aa816a567
 Markdown.parse("""
 ## Medium system
@@ -485,7 +606,8 @@ Markdown.MD(
 	- Actions are left/right adjustments in the range $[-2, 2]$
 	- Disturbances $x$ are treated as additive noise: $x \sim \mathcal{N}(\mathbf{0}, 0.1^2I)$
 	""",
-	depth_highlight(sys_medium)
+	depth_highlight(sys_medium),
+	md"_(Same medium system as Project 1)_"
 )
 
 # ╔═╡ c4c0328d-8cb3-41d5-9740-0197cbf760c2
@@ -531,6 +653,91 @@ We'll automatically test your `estimate_probability(::MediumSystem, ψ)` functio
 # ╔═╡ 60ab8107-db65-4fb6-aeea-d4978aed77bd
 html_space()
 
+# ╔═╡ 155f2bfe-badd-46fe-9d1e-b73099be5e77
+html_expand("Expand for <code>LargeSystem</code> code.", md"""
+```julia
+## Agent
+struct InterpAgent <: Agent
+    grid::RectangleGrid
+    Q
+end
+
+(c::InterpAgent)(s) = argmax([interpolate(c.grid, q, s) for q in c.Q])
+(c::InterpAgent)(s, x) = c(s)
+
+Distributions.pdf(c::InterpAgent, o, xₐ) = 1.0
+
+## Environment
+@with_kw struct CollisionAvoidance <: Environment
+    ddh_max::Float64 = 1.0 # [m/s²]
+    𝒜::Vector{Float64} = [-5.0, 0.0, 5.0] # [m/s]
+    Ds::Sampleable = Normal(0,1.5)
+end
+
+# NominalTrajectoryDistribution on the environment (D.Ds)
+Ds(env::CollisionAvoidance, s, a) = env.Ds
+
+function (env::CollisionAvoidance)(s, a, x)
+    a = env.𝒜[a]
+
+    h, dh, a_prev, τ = s
+
+    h = h + dh
+
+    if a != 0.0
+        if abs(a - dh) < env.ddh_max
+            dh += a
+        else
+            dh += sign(a - dh) * env.ddh_max
+        end
+    end
+
+    a_prev = a
+    τ = max(τ - 1.0, -1.0)
+
+    return [h, dh + x, a_prev, τ]
+end
+
+(env::CollisionAvoidance)(s, a) = env(s, a, rand(Ds(env, s, a)))
+
+# Initial state distribution
+Ps(env::CollisionAvoidance) = product_distribution(
+	Uniform(-100, 100),                # Initial h
+	Uniform(-10, 10),                  # Initial dh
+	DiscreteNonParametric([0], [1.0]), # Initial a_prev
+	DiscreteNonParametric([40], [1.0]) # Initial τ
+)
+
+## Sensor
+struct IdealSensor <: Sensor end
+
+(sensor::IdealSensor)(s) = s
+(sensor::IdealSensor)(s, x) = sensor(s)
+
+Distributions.pdf(sensor::IdealSensor, s, xₛ) = 1.0
+```
+""")
+
+# ╔═╡ 82d11960-a4b1-4e7e-9c7e-783351c9bcd5
+html_expand("Stuck? <span style='color: crimson'>Expand for hints</span>.", hint(md"""If you're trying fuzzing as a proposal distribution, the `disturbance_distribution` for the `LargeSystem` applies disturbances to the _environment_:
+
+```julia
+D = DisturbanceDistribution((o)->Deterministic(),
+							(s,a)->Normal(SOME_MEAN, SOME_STD),
+							(s)->Deterministic())
+```
+where
+```julia
+struct DisturbanceDistribution
+    Da # agent disturbance distribution
+    Ds # environment disturbance distribution
+    Do # sensor disturbance distribution
+end
+```
+See _Example 4.3_ in the textbook for how this is applied to the pendulum.
+"""))
+
+
 # ╔═╡ 7d054465-9f80-4dfb-9b5f-76c3977de7cd
 Markdown.parse("""
 ## Large system
@@ -553,11 +760,11 @@ end
 begin
 	ThisProject = Project2
 
-	max_steps(sys::SmallSystem)  = 50
-	max_steps(sys::MediumSystem) = 5_000
-	max_steps(sys::LargeSystem)  = 50_000
+	max_steps(sys::SmallSystem)  = 200
+	max_steps(sys::MediumSystem) = 10_000
+	max_steps(sys::LargeSystem)  = 200_000
 
-	num_seeds(sys::SmallSystem)  = 10
+	num_seeds(sys::SmallSystem)  = 20
 	num_seeds(sys::MediumSystem) = 5
 	num_seeds(sys::LargeSystem)  = 3
 end;
@@ -614,12 +821,44 @@ Markdown.MD(
 # ╔═╡ db5c210a-e783-40bf-892d-58a9fe5dfb23
 Markdown.parse("""
 ## Average performance
-Because most estimation algorithms are stochastic, we will test your implemented algorithms to get the average \$\\hat{P}_\\text{fail}\$ over \$$(num_seeds(sys_small))\$ _random number generator_ (RNG) seeds. Note this specific number of seeds is for the small system, please refer to the other sections for their prescribed number of seeds.
+Because most estimation algorithms are stochastic, we will test your implemented algorithms to get the average \$\\hat{P}_\\text{fail}\$ over \$K = $(num_seeds(sys_small))\$ _random number generator_ (RNG) seeds. Note this specific number of seeds is for the small system, please refer to the other sections for their prescribed number of seeds.
 
 _We will report the mean and standard deviation of your estimates._
 
 **Your mean estimate should be better than random.**
 """)
+
+# ╔═╡ b60c518f-41bb-4abd-b573-d3f8d29f60de
+function aggregate_performance(alg::Function, sys, ψ; seeds=1:num_seeds(sys))
+	estimates = []
+	for seed in seeds
+		Random.seed!(seed)
+		pfail = alg(sys, ψ)
+		push!(estimates, pfail)
+	end
+	return estimates
+end
+
+# ╔═╡ 402c0eaa-727f-4c54-89ec-64c3dfb8002c
+fbaseline(sys,ψ,seeds) =
+	aggregate_performance(estimate_probability_baseline, sys, ψ; seeds);
+
+# ╔═╡ 782a2696-41a7-4bcf-8002-058d18d82840
+begin
+	baseline_μₘ, baseline_σₘ =
+		aggregate_performance(estimate_probability_baseline, sys_medium, ψ_medium);
+	
+	Markdown.parse("""
+	### Example aggregate performance for the baseline
+	The aggregate estimated failure probability using the Monte Carlo baseline is:
+	
+	\$\$\\begin{equation}
+	\\hat{P}_\\text{fail}^{(\\text{baseline})} \\approx $(baseline_μₘ) \\pm $(round(baseline_σₘ; sigdigits=4))
+	\\end{equation}\$\$
+	
+	_Note that we will test over different RNG seeds than those defaulted above._
+	""")
+end
 
 # ╔═╡ fc2d34da-258c-4460-a0a4-c70b072f91ca
 @small function estimate_probability(sys::SmallSystem, ψ; n=max_steps(sys))
@@ -684,7 +923,8 @@ Markdown.MD(
 	- Disturbances \$x\$ are applied to \$\\dot{h}\$ as environment noise: \$x \\sim \\mathcal{N}(0, 1.5)\$
 	- Finite horizon (i.e., rollout depth) of \$d=$(get_depth(sys_large))\$ for \$t_\\text{col}\$ from \$40-0\$ seconds.
 	"""),
-	depth_highlight(sys_large)
+	depth_highlight(sys_large),
+	md"_(Same large system as Project 1)_"
 )
 
 # ╔═╡ d23f0299-981c-43b9-88f3-fb6e07927498
@@ -721,6 +961,25 @@ _We will report the mean and standard deviation of your estimates._
 **Your mean estimate should be better than random.**
 """)
 
+# ╔═╡ c22f039c-d7bb-4f7f-9284-cf66906f6390
+begin
+	baseline_μₗ, baseline_σₗ =
+		aggregate_performance(estimate_probability_baseline, sys_large, ψ_large)	
+	
+	Markdown.parse("""
+	### Example aggregate performance for the baseline
+	The aggregate estimated failure probability using the Monte Carlo baseline is:
+	
+	\$\$\\begin{equation}
+	\\hat{P}_\\text{fail}^{(\\text{baseline})} \\approx $(baseline_μₗ) \\pm $(baseline_σₗ)
+	\\end{equation}\$\$
+
+	Notice the high standard deviation! This is because failures are extremely rare for the CAS problem.
+
+	_Note that we will test over different RNG seeds than those defaulted above._
+	""")
+end
+
 # ╔═╡ e3d6fdf1-3a9e-446b-8482-49d6f64b652e
 html_quarter_space()
 
@@ -733,13 +992,13 @@ Please fill in the following `estimate_probability` function.
 # ╔═╡ 18a70925-3c2a-4317-8bbc-c2a096ec56d0
 start_code()
 
+# ╔═╡ 4c5210d6-598f-4167-a6ee-93bceda7223b
+end_code()
+
 # ╔═╡ 3471a623-16af-481a-8f66-5bd1e7890188
 @large function estimate_probability(sys::LargeSystem, ψ; n=max_steps(sys))
 	# TODO: WRITE YOUR CODE HERE
 end
-
-# ╔═╡ 4c5210d6-598f-4167-a6ee-93bceda7223b
-end_code()
 
 # ╔═╡ 2ba2d3a2-3f6c-4d5f-8c45-8d00947f6e05
 html_quarter_space()
@@ -828,20 +1087,12 @@ begin
 	mean_and_std(X::Vector) = (mean(X), std(X))
 end; md"> _Project 2 specific functions._"
 
-# ╔═╡ b60c518f-41bb-4abd-b573-d3f8d29f60de
-function aggregate_performance(alg::Function, sys, ψ; seeds=1:num_seeds(sys))
-	estimates = []
-	for seed in seeds
-		Random.seed!(seed)
-		pfail = alg(sys, ψ)
-		push!(estimates, pfail)
-	end
-	return mean_and_std(estimates)
-end
-
 # ╔═╡ 66309827-bd01-417b-bf14-0240805139ca
-baseline_μₛ, baseline_σₛ =
-	aggregate_performance(estimate_probability_baseline, sys_small, ψ_small);
+baseline_μₛ, baseline_σₛ = let
+	baseline_small =
+		aggregate_performance(estimate_probability_baseline, sys_small, ψ_small)
+	mean_and_std(baseline_small)
+end;
 
 # ╔═╡ aced4250-12be-41ca-8caf-bc660e2d629b
 Markdown.parse("""
@@ -849,7 +1100,7 @@ Markdown.parse("""
 The aggregate estimated failure probability using the Monte Carlo baseline is:
 
 \$\$\\begin{equation}
-\\hat{P}_\\text{fail}^{(\\text{baseline})} \\approx $(baseline_μₛ) \\pm $(round(baseline_σₛ; sigdigits=4))
+\\mathbb{E}_k\\left[\\hat{P}_\\text{fail}^{(\\text{baseline})}\\right] \\approx $(baseline_μₛ) \\pm $(round(baseline_σₛ; sigdigits=4))
 \\end{equation}\$\$
 
 where the _true_ probability of failure of the simple Gaussian system is:
@@ -858,48 +1109,8 @@ where the _true_ probability of failure of the simple Gaussian system is:
 P_\\text{fail}^{(\\text{truth})} = $(cdf(ps_small, ψ_small.formula.ϕ.c))
 \\end{equation}\$\$
 
-_Note that we will test over different RNG seeds than those defaulted above._
+_Note that we will test over \$K\$ different RNG seeds than those defaulted above._
 """)
-
-# ╔═╡ 402c0eaa-727f-4c54-89ec-64c3dfb8002c
-fbaseline(sys,ψ,seeds) =
-	aggregate_performance(estimate_probability_baseline, sys, ψ; seeds);
-
-# ╔═╡ 782a2696-41a7-4bcf-8002-058d18d82840
-begin
-	baseline_μₘ, baseline_σₘ =
-		aggregate_performance(estimate_probability_baseline, sys_medium, ψ_medium);
-	
-	Markdown.parse("""
-	### Example aggregate performance for the baseline
-	The aggregate estimated failure probability using the Monte Carlo baseline is:
-	
-	\$\$\\begin{equation}
-	\\hat{P}_\\text{fail}^{(\\text{baseline})} \\approx $(baseline_μₘ) \\pm $(round(baseline_σₘ; sigdigits=4))
-	\\end{equation}\$\$
-	
-	_Note that we will test over different RNG seeds than those defaulted above._
-	""")
-end
-
-# ╔═╡ c22f039c-d7bb-4f7f-9284-cf66906f6390
-begin
-	baseline_μₗ, baseline_σₗ =
-		aggregate_performance(estimate_probability_baseline, sys_large, ψ_large)	
-	
-	Markdown.parse("""
-	### Example aggregate performance for the baseline
-	The aggregate estimated failure probability using the Monte Carlo baseline is:
-	
-	\$\$\\begin{equation}
-	\\hat{P}_\\text{fail}^{(\\text{baseline})} \\approx $(baseline_μₗ) \\pm $(baseline_σₗ)
-	\\end{equation}\$\$
-
-	Notice the high standard deviation! This is because failures are extremely rare for the CAS problem.
-
-	_Note that we will test over different RNG seeds than those defaulted above._
-	""")
-end
 
 # ╔═╡ d0a25025-9309-463f-a09a-9d7ea3df8143
 task_description(sys_small, "1D Gaussian for the _small_ setting")
@@ -1230,7 +1441,7 @@ begin
 
 	let τs = baseline_trajectories(sys_medium, ψ_medium; seed=1)
 		Div(begin
-			plot(sys_medium, ψ_medium, τs; max_lines=max_steps(sys_medium)÷get_depth(sys_medium))
+			plot(sys_medium, ψ_medium, τs; max_lines=max_steps(sys_medium)÷get_depth(sys_medium), max_lines_include_failure=true)
 		end; style=divcenter)
 	end
 end
@@ -1294,10 +1505,10 @@ end
 Markdown.parse("""
 ## Baseline: Large
 
-The Monte Carlo baseline estimate with \$n_\\text{step}\$ of \$$(format(max_steps(sys_large); latex=true))\$ which equates to \$\\lfloor{n/d}\\rfloor = $(max_steps(sys_large)÷get_depth(sys_large))\$ rollouts is:
+The Monte Carlo baseline with \$n_\\text{step}\$ of \$$(format(max_steps(sys_large); latex=true))\$ which equates to \$\\lfloor{n/d}\\rfloor = $(max_steps(sys_large)÷get_depth(sys_large))\$ rollouts is:
 
 \$\$\\begin{gather}
-\\hat{P}_\\text{fail} = \\frac{$(Int(baseline_large_results.pfail*baseline_large_results.m))}{$(baseline_large_results.m)} = $(round(baseline_large_results.pfail, digits=5))\\tag{failure probability estimate}
+\\hat{P}_\\text{fail} = \\frac{$(round(Int, baseline_large_results.pfail*baseline_large_results.m))}{$(baseline_large_results.m)} = $(round(baseline_large_results.pfail, digits=5))\\tag{failure probability estimate}
 \\end{gather}\$\$
 This can be interpreted from the following plot as:
 
@@ -1487,7 +1698,7 @@ Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [compat]
 BSON = "~0.3.9"
-Distributions = "~0.25.115"
+Distributions = "~0.25.117"
 GridInterpolations = "~1.2.1"
 MarkdownLiteral = "~0.1.1"
 Optim = "~1.10.0"
@@ -1505,7 +1716,7 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.11.2"
 manifest_format = "2.0"
-project_hash = "2299a655a5d5d106a07ee32a061a91ebe0a318ab"
+project_hash = "91538048e08f7fd4297122351360ee0fbc7dca09"
 
 [[deps.AbstractFFTs]]
 deps = ["LinearAlgebra"]
@@ -1596,6 +1807,12 @@ version = "1.0.1"
     Metal = "dde4c033-4e86-420c-a63e-0dd931031962"
     oneAPI = "8f75cd03-7ff8-4ecb-9b8f-daf728133b1b"
 
+[[deps.AxisAlgorithms]]
+deps = ["LinearAlgebra", "Random", "SparseArrays", "WoodburyMatrices"]
+git-tree-sha1 = "01b8ccb13d68535d73d2b0c23e39bd23155fb712"
+uuid = "13072b0f-2c55-5437-9ae7-d433b7a33950"
+version = "1.1.0"
+
 [[deps.BSON]]
 git-tree-sha1 = "4c3e506685c527ac6a54ccc0c8c76fd6f91b42fb"
 uuid = "fbb218c0-5317-5bc6-957e-2ee96dd4b1f0"
@@ -1606,10 +1823,10 @@ uuid = "2a0f44e3-6c83-55bd-87e4-b1978d98bd5f"
 version = "1.11.0"
 
 [[deps.BenchmarkTools]]
-deps = ["JSON", "Logging", "Printf", "Profile", "Statistics", "UUIDs"]
-git-tree-sha1 = "f1dff6729bc61f4d49e140da1af55dcd1ac97b2f"
+deps = ["Compat", "JSON", "Logging", "Printf", "Profile", "Statistics", "UUIDs"]
+git-tree-sha1 = "e38fbc49a620f5d0b660d7f543db1009fe0f8336"
 uuid = "6e4b80f9-dd63-53aa-95a3-0cdb28fa8baf"
-version = "1.5.0"
+version = "1.6.0"
 
 [[deps.BitFlags]]
 git-tree-sha1 = "0691e34b3bb8be9307330f88d1a3c3f25466c24d"
@@ -1810,6 +2027,17 @@ git-tree-sha1 = "23163d55f885173722d1e4cf0f6110cdbaf7e272"
 uuid = "b552c78f-8df3-52c6-915a-8e097449b14b"
 version = "1.15.1"
 
+[[deps.Distances]]
+deps = ["LinearAlgebra", "Statistics", "StatsAPI"]
+git-tree-sha1 = "c7e3a542b999843086e2f29dac96a618c105be1d"
+uuid = "b4f34e82-e78d-54a5-968a-f98e89d6e8f7"
+version = "0.10.12"
+weakdeps = ["ChainRulesCore", "SparseArrays"]
+
+    [deps.Distances.extensions]
+    DistancesChainRulesCoreExt = "ChainRulesCore"
+    DistancesSparseArraysExt = "SparseArrays"
+
 [[deps.Distributed]]
 deps = ["Random", "Serialization", "Sockets"]
 uuid = "8ba89e20-285c-5b6f-9357-94700520ee1b"
@@ -1817,9 +2045,9 @@ version = "1.11.0"
 
 [[deps.Distributions]]
 deps = ["AliasTables", "FillArrays", "LinearAlgebra", "PDMats", "Printf", "QuadGK", "Random", "SpecialFunctions", "Statistics", "StatsAPI", "StatsBase", "StatsFuns"]
-git-tree-sha1 = "4b138e4643b577ccf355377c2bc70fa975af25de"
+git-tree-sha1 = "03aa5d44647eaec98e1920635cdfed5d5560a8b9"
 uuid = "31c24e10-a181-5473-b8eb-7969acd0382f"
-version = "0.25.115"
+version = "0.25.117"
 
     [deps.Distributions.extensions]
     DistributionsChainRulesCoreExt = "ChainRulesCore"
@@ -1876,9 +2104,9 @@ uuid = "e2ba6199-217a-4e67-a87a-7c52f15ade04"
 version = "0.1.10"
 
 [[deps.ExpressionExplorer]]
-git-tree-sha1 = "7005f1493c18afb2fa3bdf06e02b16a9fde5d16d"
+git-tree-sha1 = "71d0768dd78ad62d3582091bf338d98af8bbda67"
 uuid = "21656369-7473-754a-2065-74616d696c43"
-version = "1.1.0"
+version = "1.1.1"
 
 [[deps.ExproniconLite]]
 git-tree-sha1 = "4c9ed87a6b3cd90acf24c556f2119533435ded38"
@@ -2016,10 +2244,10 @@ uuid = "781609d7-10c4-51f6-84f2-b8444358ff6d"
 version = "6.3.0+0"
 
 [[deps.GPUArrays]]
-deps = ["Adapt", "GPUArraysCore", "KernelAbstractions", "LLVM", "LinearAlgebra", "Printf", "Random", "Reexport", "Serialization", "Statistics"]
-git-tree-sha1 = "4ec797b1b2ee964de0db96f10cce05b81f23e108"
+deps = ["Adapt", "GPUArraysCore", "KernelAbstractions", "LLVM", "LinearAlgebra", "Printf", "Random", "Reexport", "ScopedValues", "Serialization", "Statistics"]
+git-tree-sha1 = "0ef97e93edced3d0e713f4cfd031cc9020e022b0"
 uuid = "0c68f7d7-f131-5f86-a1c3-88cf8149b2d7"
-version = "11.1.0"
+version = "11.2.1"
 
 [[deps.GPUArraysCore]]
 deps = ["Adapt"]
@@ -2029,15 +2257,15 @@ version = "0.2.0"
 
 [[deps.GR]]
 deps = ["Artifacts", "Base64", "DelimitedFiles", "Downloads", "GR_jll", "HTTP", "JSON", "Libdl", "LinearAlgebra", "Preferences", "Printf", "Qt6Wayland_jll", "Random", "Serialization", "Sockets", "TOML", "Tar", "Test", "p7zip_jll"]
-git-tree-sha1 = "424c8f76017e39fdfcdbb5935a8e6742244959e8"
+git-tree-sha1 = "9bf00ba4c45867c86251a7fd4cb646dcbeb41bf0"
 uuid = "28b8d3ca-fb5f-59d9-8090-bfdbd6d07a71"
-version = "0.73.10"
+version = "0.73.12"
 
 [[deps.GR_jll]]
 deps = ["Artifacts", "Bzip2_jll", "Cairo_jll", "FFMPEG_jll", "Fontconfig_jll", "FreeType2_jll", "GLFW_jll", "JLLWrappers", "JpegTurbo_jll", "Libdl", "Libtiff_jll", "Pixman_jll", "Qt6Base_jll", "Zlib_jll", "libpng_jll"]
-git-tree-sha1 = "b90934c8cb33920a8dc66736471dc3961b42ec9f"
+git-tree-sha1 = "36d5430819123553bf31dfdceb3653ca7d9e62d7"
 uuid = "d2c73de3-f751-5644-a686-071e5b155ba9"
-version = "0.73.10+0"
+version = "0.73.12+0"
 
 [[deps.Gettext_jll]]
 deps = ["Artifacts", "CompilerSupportLibraries_jll", "JLLWrappers", "Libdl", "Libiconv_jll", "Pkg", "XML2_jll"]
@@ -2080,6 +2308,11 @@ git-tree-sha1 = "55c53be97790242c29031e5cd45e8ac296dadda3"
 uuid = "2e76f6c2-a576-52d4-95c1-20adfe4de566"
 version = "8.5.0+0"
 
+[[deps.HashArrayMappedTries]]
+git-tree-sha1 = "2eaa69a7cab70a52b9687c8bf950a5a93ec895ae"
+uuid = "076d061b-32b6-4027-95e0-9a2c6f6d7e74"
+version = "0.2.0"
+
 [[deps.HypergeometricFunctions]]
 deps = ["LinearAlgebra", "OpenLibm_jll", "SpecialFunctions"]
 git-tree-sha1 = "b1c2585431c382e3fe5805874bda6aea90a95de9"
@@ -2115,6 +2348,16 @@ deps = ["Markdown"]
 uuid = "b77e0a4c-d291-57a0-90e8-8db25a27a240"
 version = "1.11.0"
 
+[[deps.Interpolations]]
+deps = ["Adapt", "AxisAlgorithms", "ChainRulesCore", "LinearAlgebra", "OffsetArrays", "Random", "Ratios", "Requires", "SharedArrays", "SparseArrays", "StaticArrays", "WoodburyMatrices"]
+git-tree-sha1 = "88a101217d7cb38a7b481ccd50d21876e1d1b0e0"
+uuid = "a98d9a8b-a2ab-59e6-89dd-64a1c18fca59"
+version = "0.15.1"
+weakdeps = ["Unitful"]
+
+    [deps.Interpolations.extensions]
+    InterpolationsUnitfulExt = "Unitful"
+
 [[deps.IntervalArithmetic]]
 deps = ["CRlibm", "EnumX", "FastRounding", "LinearAlgebra", "Markdown", "Random", "RecipesBase", "RoundingEmulator", "SetRounding", "StaticArrays"]
 git-tree-sha1 = "f59e639916283c1d2e106d2b00910b50f4dab76c"
@@ -2149,6 +2392,18 @@ git-tree-sha1 = "31e996f0a15c7b280ba9f76636b3ff9e2ae58c9a"
 uuid = "682c06a0-de6a-54ab-a142-c8b1cf79cde6"
 version = "0.21.4"
 
+[[deps.JSON3]]
+deps = ["Dates", "Mmap", "Parsers", "PrecompileTools", "StructTypes", "UUIDs"]
+git-tree-sha1 = "1d322381ef7b087548321d3f878cb4c9bd8f8f9b"
+uuid = "0f8b85d8-7281-11e9-16c2-39a750bddbf1"
+version = "1.14.1"
+
+    [deps.JSON3.extensions]
+    JSON3ArrowExt = ["ArrowTypes"]
+
+    [deps.JSON3.weakdeps]
+    ArrowTypes = "31f734f8-188a-4ce0-8406-c8a06bd891cd"
+
 [[deps.JpegTurbo_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl"]
 git-tree-sha1 = "eac1206917768cb54957c65a615460d87b455fc1"
@@ -2157,9 +2412,9 @@ version = "3.1.1+0"
 
 [[deps.JuMP]]
 deps = ["LinearAlgebra", "MacroTools", "MathOptInterface", "MutableArithmetics", "OrderedCollections", "PrecompileTools", "Printf", "SparseArrays"]
-git-tree-sha1 = "866dd0bf0474f0d5527c2765c71889762ba90a27"
+git-tree-sha1 = "02b6e65736debc1f47b40b0f7d5dfa0217ee1f09"
 uuid = "4076af6c-e467-56ae-b986-b466b2749572"
-version = "1.23.5"
+version = "1.23.6"
 
     [deps.JuMP.extensions]
     JuMPDimensionalDataExt = "DimensionalData"
@@ -2221,9 +2476,9 @@ version = "18.1.7+0"
 
 [[deps.LZO_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl"]
-git-tree-sha1 = "854a9c268c43b77b0a27f22d7fab8d33cdb3a731"
+git-tree-sha1 = "1c602b1127f4751facb671441ca72715cc95938a"
 uuid = "dd4b983a-f0e5-5f8d-a1b7-129d4a5fb1ac"
-version = "2.10.2+3"
+version = "2.10.3+0"
 
 [[deps.LaTeXStrings]]
 git-tree-sha1 = "dda21b8cbd6a6c40d9d02a73230f9d70fed6918c"
@@ -2317,15 +2572,15 @@ version = "1.51.1+0"
 
 [[deps.Libiconv_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl"]
-git-tree-sha1 = "61dfdba58e585066d8bce214c5a51eaa0539f269"
+git-tree-sha1 = "be484f5c92fad0bd8acfef35fe017900b0b73809"
 uuid = "94ce4f54-9a6c-5748-9c1c-f9c7231a4531"
-version = "1.17.0+1"
+version = "1.18.0+0"
 
 [[deps.Libmount_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl"]
-git-tree-sha1 = "84eef7acd508ee5b3e956a2ae51b05024181dee0"
+git-tree-sha1 = "89211ea35d9df5831fca5d33552c02bd33878419"
 uuid = "4b2f31a3-9ecc-558c-b454-b3730dcb73e9"
-version = "2.40.2+2"
+version = "2.40.3+0"
 
 [[deps.Libtiff_jll]]
 deps = ["Artifacts", "JLLWrappers", "JpegTurbo_jll", "LERC_jll", "Libdl", "XZ_jll", "Zlib_jll", "Zstd_jll"]
@@ -2335,9 +2590,9 @@ version = "4.7.1+0"
 
 [[deps.Libuuid_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl"]
-git-tree-sha1 = "edbf5309f9ddf1cab25afc344b1e8150b7c832f9"
+git-tree-sha1 = "e888ad02ce716b319e6bdb985d2ef300e7089889"
 uuid = "38a345b3-de98-5d2b-a5d3-14cd9215e700"
-version = "2.40.2+2"
+version = "2.40.3+0"
 
 [[deps.LineSearches]]
 deps = ["LinearAlgebra", "NLSolversBase", "NaNMath", "Parameters", "Printf"]
@@ -2382,10 +2637,9 @@ uuid = "6c6e2e6c-3030-632d-7369-2d6c69616d65"
 version = "0.1.4"
 
 [[deps.MacroTools]]
-deps = ["Markdown", "Random"]
-git-tree-sha1 = "2fa9ee3e63fd3a4f7a9a4f4744a52f4856de82df"
+git-tree-sha1 = "72aebe0b5051e5143a079a4685a46da330a40472"
 uuid = "1914dd2f-81c6-5fcd-8719-6d5c9610ff09"
-version = "0.5.13"
+version = "0.5.15"
 
 [[deps.Malt]]
 deps = ["Distributed", "Logging", "RelocatableFolders", "Serialization", "Sockets"]
@@ -2405,10 +2659,10 @@ uuid = "736d6165-7244-6769-4267-6b50796e6954"
 version = "0.1.1"
 
 [[deps.MathOptInterface]]
-deps = ["BenchmarkTools", "CodecBzip2", "CodecZlib", "DataStructures", "ForwardDiff", "JSON", "LinearAlgebra", "MutableArithmetics", "NaNMath", "OrderedCollections", "PrecompileTools", "Printf", "SparseArrays", "SpecialFunctions", "Test", "Unicode"]
-git-tree-sha1 = "e065ca5234f53fd6f920efaee4940627ad991fb4"
+deps = ["BenchmarkTools", "CodecBzip2", "CodecZlib", "DataStructures", "ForwardDiff", "JSON3", "LinearAlgebra", "MutableArithmetics", "NaNMath", "OrderedCollections", "PrecompileTools", "Printf", "SparseArrays", "SpecialFunctions", "Test", "Unicode"]
+git-tree-sha1 = "f346e3b50c8bb62b7a5c4961ebdbaef65d1ce1e2"
 uuid = "b8f27783-ece8-5eb3-8dc8-9495eed66fee"
-version = "1.34.0"
+version = "1.35.1"
 
 [[deps.MbedTLS]]
 deps = ["Dates", "MbedTLS_jll", "MozillaCACerts_jll", "NetworkOptions", "Random", "Sockets"]
@@ -2448,9 +2702,9 @@ version = "1.2.1"
 
 [[deps.MutableArithmetics]]
 deps = ["LinearAlgebra", "SparseArrays", "Test"]
-git-tree-sha1 = "a2710df6b0931f987530f59427441b21245d8f5e"
+git-tree-sha1 = "43122df26d27424b23577d59e2d8020f28386516"
 uuid = "d8a4904e-b15c-11e9-3269-09a3773c0cb0"
-version = "1.6.0"
+version = "1.6.2"
 
 [[deps.NLSolversBase]]
 deps = ["DiffResults", "Distributed", "FiniteDiff", "ForwardDiff"]
@@ -2460,13 +2714,22 @@ version = "7.8.3"
 
 [[deps.NaNMath]]
 deps = ["OpenLibm_jll"]
-git-tree-sha1 = "0877504529a3e5c3343c6f8b4c0381e57e4387e4"
+git-tree-sha1 = "030ea22804ef91648f29b7ad3fc15fa49d0e6e71"
 uuid = "77ba4419-2d1f-58cd-9bb1-8ffee604a2e3"
-version = "1.0.2"
+version = "1.0.3"
 
 [[deps.NetworkOptions]]
 uuid = "ca575930-c2e3-43a9-ace4-1e988b2c1908"
 version = "1.2.0"
+
+[[deps.OffsetArrays]]
+git-tree-sha1 = "5e1897147d1ff8d98883cda2be2187dcf57d8f0c"
+uuid = "6fe1bfb0-de20-5000-8ca7-80f57d26f881"
+version = "1.15.0"
+weakdeps = ["Adapt"]
+
+    [deps.OffsetArrays.extensions]
+    OffsetArraysAdaptExt = "Adapt"
 
 [[deps.Ogg_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
@@ -2530,9 +2793,9 @@ version = "10.42.0+1"
 
 [[deps.PDMats]]
 deps = ["LinearAlgebra", "SparseArrays", "SuiteSparse"]
-git-tree-sha1 = "949347156c25054de2db3b166c52ac4728cbad65"
+git-tree-sha1 = "966b85253e959ea89c53a9abebbf2e964fbf593b"
 uuid = "90014a1f-27ba-587c-ab20-58faa44d9150"
-version = "0.11.31"
+version = "0.11.32"
 
 [[deps.Pango_jll]]
 deps = ["Artifacts", "Cairo_jll", "Fontconfig_jll", "FreeType2_jll", "FriBidi_jll", "Glib_jll", "HarfBuzz_jll", "JLLWrappers", "Libdl"]
@@ -2661,9 +2924,9 @@ uuid = "33c8b6b6-d38a-422a-b730-caa89a2f386c"
 version = "0.1.4"
 
 [[deps.PtrArrays]]
-git-tree-sha1 = "77a42d78b6a92df47ab37e177b2deac405e1c88f"
+git-tree-sha1 = "1d36ef11a9aaf1e8b74dacc6a731dd1de8fd493d"
 uuid = "43287f4e-b6f4-7ad1-bb20-aadabca52c3d"
-version = "1.2.1"
+version = "1.3.0"
 
 [[deps.Qt6Base_jll]]
 deps = ["Artifacts", "CompilerSupportLibraries_jll", "Fontconfig_jll", "Glib_jll", "JLLWrappers", "Libdl", "Libglvnd_jll", "OpenSSL_jll", "Vulkan_Loader_jll", "Xorg_libSM_jll", "Xorg_libXext_jll", "Xorg_libXrender_jll", "Xorg_libxcb_jll", "Xorg_xcb_util_cursor_jll", "Xorg_xcb_util_image_jll", "Xorg_xcb_util_keysyms_jll", "Xorg_xcb_util_renderutil_jll", "Xorg_xcb_util_wm_jll", "Zlib_jll", "libinput_jll", "xkbcommon_jll"]
@@ -2710,6 +2973,16 @@ version = "1.11.0"
 deps = ["SHA"]
 uuid = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 version = "1.11.0"
+
+[[deps.Ratios]]
+deps = ["Requires"]
+git-tree-sha1 = "1342a47bf3260ee108163042310d26f2be5ec90b"
+uuid = "c84ed2f1-dad5-54f0-aa8e-dbefe2724439"
+version = "0.4.5"
+weakdeps = ["FixedPointNumbers"]
+
+    [deps.Ratios.extensions]
+    RatiosFixedPointNumbersExt = "FixedPointNumbers"
 
 [[deps.ReachabilityBase]]
 deps = ["ExprTools", "InteractiveUtils", "LinearAlgebra", "Random", "Requires", "SparseArrays"]
@@ -2784,6 +3057,12 @@ version = "0.2.1"
 [[deps.SHA]]
 uuid = "ea8e919c-243c-51af-8825-aaa63cd721ce"
 version = "0.7.0"
+
+[[deps.ScopedValues]]
+deps = ["HashArrayMappedTries", "Logging"]
+git-tree-sha1 = "1147f140b4c8ddab224c94efa9569fc23d63ab44"
+uuid = "7e506255-f358-4e82-b7e4-beb19740aa63"
+version = "1.3.0"
 
 [[deps.Scratch]]
 deps = ["Dates"]
@@ -2866,10 +3145,10 @@ uuid = "860ef19b-820b-49d6-a774-d7a799459cd3"
 version = "1.0.2"
 
 [[deps.StanfordAA228V]]
-deps = ["AbstractPlutoDingetjes", "BSON", "Base64", "Distributions", "Downloads", "ForwardDiff", "GridInterpolations", "LazySets", "LinearAlgebra", "Markdown", "Optim", "Parameters", "Pkg", "Plots", "Pluto", "PlutoUI", "ProgressLogging", "Random", "SignalTemporalLogic", "Statistics", "TOML"]
-git-tree-sha1 = "5376632ae8604432fd7c8ce7308edf70950c1da8"
+deps = ["AbstractPlutoDingetjes", "BSON", "Base64", "Distances", "Distributions", "Downloads", "ForwardDiff", "GridInterpolations", "Interpolations", "LazySets", "LinearAlgebra", "Markdown", "Optim", "Parameters", "Pkg", "Plots", "Pluto", "PlutoUI", "ProgressLogging", "Random", "SignalTemporalLogic", "Statistics", "TOML"]
+git-tree-sha1 = "f981afcdd7bdea2601b181fb044001680cca8247"
 uuid = "6f6e590e-f8c2-4a21-9268-94576b9fb3b1"
-version = "0.1.22"
+version = "0.1.23"
 
 [[deps.StaticArrays]]
 deps = ["LinearAlgebra", "PrecompileTools", "Random", "StaticArraysCore"]
@@ -2937,6 +3216,12 @@ weakdeps = ["Adapt", "GPUArraysCore", "KernelAbstractions", "LinearAlgebra", "Sp
     StructArraysSparseArraysExt = "SparseArrays"
     StructArraysStaticArraysExt = "StaticArrays"
 
+[[deps.StructTypes]]
+deps = ["Dates", "UUIDs"]
+git-tree-sha1 = "159331b30e94d7b11379037feeb9b690950cace8"
+uuid = "856f2bd8-1eba-4b0a-8007-ebc267875bd4"
+version = "1.11.0"
+
 [[deps.StyledStrings]]
 uuid = "f489334b-da3d-4c2e-b8f0-e476e12c162b"
 version = "1.11.0"
@@ -2989,9 +3274,9 @@ uuid = "3bb67fe8-82b1-5028-8e26-92a6c54297fa"
 version = "0.11.3"
 
 [[deps.Tricks]]
-git-tree-sha1 = "7822b97e99a1672bfb1b49b668a6d46d58d8cbcb"
+git-tree-sha1 = "6cae795a5a9313bbb4f60683f7263318fc7d1505"
 uuid = "410a4b4d-49e4-4fbc-ab6d-cb71b17b3775"
-version = "0.1.9"
+version = "0.1.10"
 
 [[deps.URIs]]
 git-tree-sha1 = "67db6cc7b3821e19ebe75791a9dd19c9b1188f2b"
@@ -3070,6 +3355,12 @@ git-tree-sha1 = "5db3e9d307d32baba7067b13fc7b5aa6edd4a19a"
 uuid = "2381bf8a-dfd0-557d-9999-79630e7b1b91"
 version = "1.36.0+0"
 
+[[deps.WoodburyMatrices]]
+deps = ["LinearAlgebra", "SparseArrays"]
+git-tree-sha1 = "c1a7aa6219628fcd757dede0ca95e245c5cd9511"
+uuid = "efce3f68-66dc-5838-9240-27a6d6f5f9b6"
+version = "1.0.0"
+
 [[deps.XML2_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Libiconv_jll", "Zlib_jll"]
 git-tree-sha1 = "a2fccc6559132927d4c5dc183e3e01048c6dcbd6"
@@ -3108,9 +3399,9 @@ version = "1.8.6+3"
 
 [[deps.Xorg_libXau_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl"]
-git-tree-sha1 = "2b0e27d52ec9d8d483e2ca0b72b3cb1a8df5c27a"
+git-tree-sha1 = "e9216fdcd8514b7072b43653874fd688e4c6c003"
 uuid = "0c0b7dd1-d40b-584c-a123-a41640f87eec"
-version = "1.0.11+3"
+version = "1.0.12+0"
 
 [[deps.Xorg_libXcursor_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Xorg_libXfixes_jll", "Xorg_libXrender_jll"]
@@ -3120,9 +3411,9 @@ version = "1.2.3+0"
 
 [[deps.Xorg_libXdmcp_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl"]
-git-tree-sha1 = "02054ee01980c90297412e4c809c8694d7323af3"
+git-tree-sha1 = "89799ae67c17caa5b3b5a19b8469eeee474377db"
 uuid = "a3789734-cfe1-5b06-b2d0-1dd0d9d62d05"
-version = "1.1.4+3"
+version = "1.1.5+0"
 
 [[deps.Xorg_libXext_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Xorg_libX11_jll"]
@@ -3162,9 +3453,9 @@ version = "0.9.11+1"
 
 [[deps.Xorg_libpthread_stubs_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl"]
-git-tree-sha1 = "fee57a273563e273f0f53275101cd41a8153517a"
+git-tree-sha1 = "c57201109a9e4c0585b208bb408bc41d205ac4e9"
 uuid = "14d82f49-176c-5ed1-bb49-ad3f5cbd8c74"
-version = "0.1.1+3"
+version = "0.1.2+0"
 
 [[deps.Xorg_libxcb_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "XSLT_jll", "Xorg_libXau_jll", "Xorg_libXdmcp_jll", "Xorg_libpthread_stubs_jll"]
@@ -3228,9 +3519,9 @@ version = "2.39.0+0"
 
 [[deps.Xorg_xtrans_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl"]
-git-tree-sha1 = "b9ead2d2bdb27330545eb14234a2e300da61232e"
+git-tree-sha1 = "6dba04dbfb72ae3ebe5418ba33d087ba8aa8cb00"
 uuid = "c5fb5394-a638-5e4d-96e5-b29de1b5cf10"
-version = "1.5.0+3"
+version = "1.5.1+0"
 
 [[deps.Zlib_jll]]
 deps = ["Libdl"]
@@ -3261,9 +3552,9 @@ version = "0.6.75"
 
 [[deps.ZygoteRules]]
 deps = ["ChainRulesCore", "MacroTools"]
-git-tree-sha1 = "27798139afc0a2afa7b1824c206d5e87ea587a00"
+git-tree-sha1 = "434b3de333c75fc446aa0d19fc394edafd07ab08"
 uuid = "700de1a5-db45-46bc-99cf-38207098b444"
-version = "0.2.5"
+version = "0.2.7"
 
 [[deps.eudev_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg", "gperf_jll"]
@@ -3326,9 +3617,9 @@ version = "1.18.0+0"
 
 [[deps.libpng_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Zlib_jll"]
-git-tree-sha1 = "b7bfd3ab9d2c58c3829684142f5804e4c6499abc"
+git-tree-sha1 = "d7b5bbf1efbafb5eca466700949625e07533aff2"
 uuid = "b53b4c65-9356-5827-b1ea-8c7a1a84506f"
-version = "1.6.45+0"
+version = "1.6.45+1"
 
 [[deps.libvorbis_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Ogg_jll", "Pkg"]
@@ -3372,7 +3663,6 @@ version = "1.4.1+2"
 """
 
 # ╔═╡ Cell order:
-# ╟─2e5b9ee3-4a17-4435-bba5-c8797fd1b85b
 # ╟─6b17139e-6caf-4f07-a607-e403bf1ad794
 # ╠═14964632-98d8-4a2f-b2f6-e3f28b558803
 # ╟─117d0059-ce1a-497e-8667-a0c2ef20c632
@@ -3386,6 +3676,7 @@ version = "1.4.1+2"
 # ╟─0456a732-2672-4108-a241-db9ae879a913
 # ╟─6e8ab7c9-fb49-4d89-946d-c7d7588c199a
 # ╟─fe044059-9102-4e7f-9888-d9f03eec69ff
+# ╟─41406be3-4c2d-41db-bdb4-9e2ff875cebe
 # ╟─a21612a1-1092-4892-9132-629833e7c867
 # ╟─ec776b30-6a30-4643-a22c-e071a365d50b
 # ╟─18754cc6-c089-4245-ad10-2848594e49b4
@@ -3394,9 +3685,12 @@ version = "1.4.1+2"
 # ╟─dba42df0-3199-4c31-a735-b6b514703d50
 # ╟─109c3d27-2c23-48a7-9fd7-be8a1f359e55
 # ╟─bc2f62f5-1330-46cd-bb81-411baa483488
+# ╟─bed9a6ed-3ca0-492d-9141-a34b601ea315
 # ╟─a46702a3-4a8c-4749-bd00-52f8cce5b8ee
 # ╟─8469fe70-8cf6-43c1-b16b-d4b970a2c807
 # ╟─fd8c851a-3a42-41c5-b0fd-a12085543c9b
+# ╟─84d9c552-2e78-4922-9ec0-4d12d0c62643
+# ╟─e6e675bf-5181-4e45-8c5d-e576aa411064
 # ╟─17fa8557-9656-4347-9d44-213fd3b635a6
 # ╠═22feee3d-4627-4358-9937-3c780b7e8bcb
 # ╠═6f3e24de-094c-49dc-b892-6721b3cc54ed
@@ -3451,6 +3745,8 @@ version = "1.4.1+2"
 # ╟─a6ac99ee-2894-40d4-8dd5-35d551a0a041
 # ╟─8c78529c-1e00-472c-bb76-d984b37235ab
 # ╟─daada216-11d4-4f8b-807c-d347130a3928
+# ╟─e61657ef-961b-42af-89d7-e242d477ba1f
+# ╟─1cef8f2a-faee-4709-a0e9-6e5f2e3ce4cd
 # ╟─d18c2105-c2af-4dda-8388-617aa816a567
 # ╠═77637b5e-e3ce-4ecd-90fc-95611af18002
 # ╠═c4c0328d-8cb3-41d5-9740-0197cbf760c2
@@ -3478,6 +3774,8 @@ version = "1.4.1+2"
 # ╟─aa0c4ffc-d7f0-484e-a1e2-7f6f92a3a53d
 # ╟─e189b31e-7e24-4c32-989f-3e600a44d4bc
 # ╟─f8ea2983-c2d0-40ea-b949-9fc478ea45f8
+# ╟─155f2bfe-badd-46fe-9d1e-b73099be5e77
+# ╟─82d11960-a4b1-4e7e-9c7e-783351c9bcd5
 # ╟─7d054465-9f80-4dfb-9b5f-76c3977de7cd
 # ╠═1ec68a39-8de9-4fd3-be8a-26cf7706d1d6
 # ╟─d23f0299-981c-43b9-88f3-fb6e07927498
@@ -3492,8 +3790,8 @@ version = "1.4.1+2"
 # ╟─23fd490a-74d2-44b4-8a12-ea1460d95f85
 # ╟─18a70925-3c2a-4317-8bbc-c2a096ec56d0
 # ╟─45c79345-89da-498c-9a98-2ad55a0a6114
-# ╠═3471a623-16af-481a-8f66-5bd1e7890188
 # ╟─4c5210d6-598f-4167-a6ee-93bceda7223b
+# ╠═3471a623-16af-481a-8f66-5bd1e7890188
 # ╟─2ba2d3a2-3f6c-4d5f-8c45-8d00947f6e05
 # ╟─ea2d7eb7-d576-415c-ac4c-fea7f90de637
 # ╟─7c473630-6555-4ada-85f3-0d40aefe6370
