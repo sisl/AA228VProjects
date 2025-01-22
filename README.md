@@ -5,7 +5,13 @@
 
 Programming projects for Stanford's AA228V/CS238V _Validation of Safety-Critical Systems_.
 
-<p align="center"> <img src="./media/coverart.svg"> </p>
+<p align="right"> <img src="./media/coverart.svg"> </p>
+
+<picture>
+    <source media="(prefers-color-scheme: light)" srcset="./media/cas.gif">
+    <source media="(prefers-color-scheme: dark)" srcset="./media/cas-dark.gif">
+    <img src="./media/cas.gif">
+</picture>
 
 Uses the [`StanfordAA228V.jl`](https://github.com/sisl/StanfordAA228V.jl) Julia package.
 
