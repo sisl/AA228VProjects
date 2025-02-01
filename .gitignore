@@ -1,3 +1,4 @@
 .DS_Store
 *.val
 *backup*
+project1/*-project1.jl
