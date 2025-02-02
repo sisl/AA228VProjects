@@ -919,6 +919,8 @@ html_expand("Expand for a hints on a better solution to the large problem.", [
 	return nvreach(sys, d)
 	```
 
+	**(Or you can put the internals of `nvreach` directly into `estimate_reachable_sets`)**
+
 	If you're curious how to type certain variables used in the `nvreach` function, see the table below.
 
 	| Variable | How to produce it |
@@ -1111,39 +1113,19 @@ end
 # ╔═╡ 70e5bfca-7172-4f21-b3e6-e31ac16c4add
 begin
 	function sets(sys::Any, d::Any)
-		#=
-		Hey, you should define `sets` with the specific `sys` type, e.g.:
-		
-		sets(sys::SmallSystem, d)
-		sets(sys::LargeSystem, d)
-		sets(sys::LargeSystem, d)
-		sets(sys::LargeSystemSurrogate, d) # TODO!!!
-	
-		=#
+		# Hey, you should define `sets` with the specific `sys` type, e.g.:
 		error("""Please define `set(sys, d)` with the specific `sys` type:
-			sets(sys::SmallSystem, d)
+			sets(sys::MediumSystem, d)
 			sets(sys::LargeSystem, d)
-			sets(sys::LargeSystem, d)
-			sets(sys::LargeSystemSurrogate, d) # TODO!!!
 		""")
 	end
 
 
 	function intervals(sys::Any, d::Any)
-		#=
-		Hey, you should define `intervals` with the specific `sys` type, e.g.:
-		
-		intervals(sys::SmallSystem, d)
-		intervals(sys::LargeSystem, d)
-		intervals(sys::LargeSystem, d)
-		intervals(sys::LargeSystemSurrogate, d) # TODO!!!
-	
-		=#
+		# Hey, you should define `intervals` with the specific `sys` type, e.g.:
 		error("""Please define `intervals(sys, d)` with the specific `sys` type:
-			intervals(sys::SmallSystem, d)
+			intervals(sys::MediumSystem, d)
 			intervals(sys::LargeSystem, d)
-			intervals(sys::LargeSystem, d)
-			intervals(sys::LargeSystemSurrogate, d) # TODO!!!
 		""")
 	end
 
