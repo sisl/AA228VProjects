@@ -1286,7 +1286,7 @@ begin
 	global small_timestamp = 0
 	try
 		ℛ_small
-		small_timestamp = time() # Trigger for re-saving
+		global small_timestamp = time() # Trigger for re-saving
 	catch end
 end;
 
@@ -1354,7 +1354,7 @@ begin
 	global medium_timestamp = 0
 	try
 		ℛ_medium
-		medium_timestamp = time() # Trigger for re-saving
+		global medium_timestamp = time() # Trigger for re-saving
 	catch end
 end;
 
@@ -1417,7 +1417,7 @@ begin
 	global large_timestamp = 0
 	try
 		ℛ_large
-		large_timestamp = time() # Trigger for re-saving
+		global large_timestamp = time() # Trigger for re-saving
 	catch end
 end;
 
