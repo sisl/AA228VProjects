@@ -353,7 +353,7 @@ begin
 		- It uses a proportional controller to keep it upright.
 		- The state is comprised of the angle $\theta$ and angular velocity $\omega$ making $s = [\theta, \omega]$
 		- Actions are left/right adjustments in the range $[-2, 2]$
-		- Disturbances $x$ are treated as addative noise: $x \sim \mathcal{N}(\mathbf{0}, 0.1^2I)$
+		- Disturbances $x$ are treated as additive noise: $x \sim \mathcal{N}(\mathbf{0}, 0.1^2I)$
 		""",
 		depth_highlight(sys_medium)
 	)
@@ -366,7 +366,7 @@ Markdown.MD(
 	The small system is a simple _mass-spring-damper_. The mass-spring-damper system consists of a mass \$m\$ attached to a wall by a spring with spring constant \$k\$ and a damper with damping coefficient \$c\$.
 	- The state \$s\$ is the position (relative to the resting point) \$p\$ and velocity \$v\$ of the mass, \$s = [p,v]\$
 	- The action is the force \$\\beta\$ applies to the mass.
-	- The rollout depth is  are no dynamics (rollout depth \$d=$(get_depth(sys_small))\$).
+	- The rollout depth is \$d=$(get_depth(sys_small))\$.
 	- Disturbances are a noisy measurement of the state with uniform noise with \$\\epsilon = 0.5\$:
 
 	\$\$\\begin{align}
@@ -655,7 +655,9 @@ estimate_reachable_sets(sys, ψ)
 
 The return type of `estimate_reachable_sets` should either be:
 - a [`UnionSet`](https://juliareach.github.io/LazySets.jl/dev/lib/lazy_operations/UnionSet) or [`UnionSetArray`](https://juliareach.github.io/LazySets.jl/dev/lib/lazy_operations/UnionSet/#def_UnionSetArray) (from `LazySets.jl`)
+    - **This is already the type that is output from the `reachable` algorithms in the textbook.**
 - or a `Vector{<:LazySet}` (see [docs](https://juliareach.github.io/LazySets.jl/dev/lib/interfaces/LazySet/#LazySets.LazySet) for the `LazySet` subtypes)
+   - If you want to run your own custom reachability code, we also accept a `Vector` of `LazySet`s for each time step.
 """)
 
 # ╔═╡ c4fa9af9-1a79-43d7-9e8d-2854652a4ea2
@@ -901,12 +903,11 @@ html_expand("Expand for a hints on a better solution to the large problem.", [
 		ℛs = LazySet[𝒮]              # Initialze reachable sets w/ initial state set 𝒮
 	
 		@progress for t in 2:d
-			# OPTIONAL TODO:
-			#   ↪ If you want to use NeuralVerification.jl, do the following.
-			# 1. Pass 𝒮 to forward_network(solver, net, 𝒮) to get 𝒮′
-			# 2. Minkowski sum: 𝒮𝒳′ = 𝒮′ ⊕ 𝒳
-			# 3. Apply `concretize` to 𝒮𝒳′ to get the new 𝒮
-			# 4. Push this concrete set to ℛs: push!(ℛs, 𝒮)
+			# TODO:
+			# 1. Forward pass 𝒮 through the net: forward_network(solver, net, 𝒮)
+			# 2. Then what? ... \oplus<TAB> may be useful...
+			# 3. Tip: concretize afterwards.
+			# 4. Push to ℛs
 		end
 	
 		return UnionSetArray([ℛs...])
@@ -991,8 +992,8 @@ html_quarter_space()
 
 # ╔═╡ 860ec509-3a86-4842-9471-6b1a0b8f366d
 Markdown.parse("""
-## Comparing failure probabilities
-Since the failure probabilities across the three problems vary widely in range, we weight the errors using the weights \$\\mathbf{w} = [$(𝐰[1]),$(𝐰[2]),$(𝐰[3])]\$ (normalized to sum to one):
+## Comparing reachable volumes
+Since the reachable volumes across the three problems vary widely in range, we weight the errors using the weights \$\\mathbf{w} = [$(𝐰[1]),$(𝐰[2]),$(𝐰[3])]\$ (normalized to sum to one):
 
 \$\$\\bar{w_i} = \\frac{w_i}{\\sum_j w_j}\$\$
 
@@ -1036,7 +1037,7 @@ begin
 		"""
 			estimate_reachable_sets(sys::$(system_name(sys)), ψ$n_arg)::LazySet
 		
-		A function that takes in a system `sys` ($details) and $spec `ψ` and **returns the estimated reachable set**.
+		A function that takes in a system `sys` ($details) and $spec `ψ` and **returns the overapproximated reachable set**.
 		"""),
 		max_vertices_highlight,
 		md"""		
@@ -1114,7 +1115,7 @@ end
 begin
 	function sets(sys::Any, d::Any)
 		# Hey, you should define `sets` with the specific `sys` type, e.g.:
-		error("""Please define `set(sys, d)` with the specific `sys` type:
+		error("""Please define `sets(sys, d)` with the specific `sys` type:
 			sets(sys::MediumSystem, d)
 			sets(sys::LargeSystem, d)
 		""")
@@ -1297,23 +1298,19 @@ begin
 	global log_small = nothing
 	global vol_small = Inf
 
-	try
-		Δt_small = abs(time() - small_timestamp)
-		global pass_small, log_small, vol_small =
-			check_volume(sys_small, ψ_small, ℛ_small;
-				ℛ_optimal=ℛ_small_optimal,
-				ℛ_optimal_t=ℛ_small_optimal_over_time[t_small],
-				t=t_small,
-				reran=rerun_small,
-				τs=τs_small,
-				issound=issound_small,
-				outsiders=outsiders_small,
-				save=(Δt_small ≤ 1 && rerun_small),
-				project=ThisProject)
-		log_small
-	catch err
-		@warn err
-	end
+	Δt_small = abs(time() - small_timestamp)
+	global pass_small, log_small, vol_small =
+		check_volume(sys_small, ψ_small, ℛ_small;
+			ℛ_optimal=ℛ_small_optimal,
+			ℛ_optimal_t=ℛ_small_optimal_over_time[t_small],
+			t=t_small,
+			reran=rerun_small,
+			τs=τs_small,
+			issound=issound_small,
+			outsiders=outsiders_small,
+			save=(Δt_small ≤ 1 && rerun_small),
+			project=ThisProject)
+	log_small
 end
 
 # ╔═╡ f286f3b2-3bac-4384-9b40-522e974a14ee
@@ -1339,14 +1336,13 @@ begin
 	global τs_medium = missing
 	global issound_medium = missing
 	global outsiders_medium = missing
-	try
-		Random.seed!(4)
-		local d = get_depth(sys_medium)
-		global τs_medium = [rollout(sys_medium, d=d) for i in 1:1000]
-	
-		global issound_medium, outsiders_medium =
-			precompute_soundness_and_outsiders(sys_medium, ℛ_medium, τs_medium)
-	catch end
+
+	Random.seed!(4)
+	local d = get_depth(sys_medium)
+	global τs_medium = [rollout(sys_medium, d=d) for i in 1:1000]
+
+	global issound_medium, outsiders_medium =
+		precompute_soundness_and_outsiders(sys_medium, ℛ_medium, τs_medium)
 end;
 
 # ╔═╡ f0b7fd4f-2a76-4329-93d8-91d789c3445c
@@ -1364,21 +1360,17 @@ begin
 	global pass_medium = false
 	global log_medium = nothing
 	global vol_medium = Inf
-	try
-		Δt_medium = abs(time() - medium_timestamp)
-		global pass_medium, log_medium, vol_medium =
-			check_volume(sys_medium, ψ_medium, ℛ_medium;
-				t=t_medium, reran=rerun_medium,
-				save=(Δt_medium ≤ 1 && rerun_medium),
-				ℛmax=ℛmax_medium,
-				τs=τs_medium,
-				issound=issound_medium,
-				outsiders=outsiders_medium,
-				project=ThisProject)
-		log_medium
-	catch err
-		@warn err
-	end
+	Δt_medium = abs(time() - medium_timestamp)
+	global pass_medium, log_medium, vol_medium =
+		check_volume(sys_medium, ψ_medium, ℛ_medium;
+			t=t_medium, reran=rerun_medium,
+			save=(Δt_medium ≤ 1 && rerun_medium),
+			ℛmax=ℛmax_medium,
+			τs=τs_medium,
+			issound=issound_medium,
+			outsiders=outsiders_medium,
+			project=ThisProject)
+	log_medium
 end
 
 # ╔═╡ 23999cd9-543b-47dc-a0b2-e133ba95891e
@@ -1402,14 +1394,12 @@ begin
 	global τs_large = missing
 	global issound_large = missing
 	global outsiders_large = missing
-	try
-		Random.seed!(4)
-		local d = get_depth(sys_large)
-		global τs_large = [rollout(sys_large, d=d) for i in 1:1000]
-	
-		global issound_large, outsiders_large =
-			precompute_soundness_and_outsiders(sys_large, ℛ_large, τs_large)
-	catch end
+	Random.seed!(4)
+	local d = get_depth(sys_large)
+	global τs_large = [rollout(sys_large, d=d) for i in 1:1000]
+
+	global issound_large, outsiders_large =
+		precompute_soundness_and_outsiders(sys_large, ℛ_large, τs_large)
 end;
 
 # ╔═╡ 685ead39-822e-4207-9832-940da6a13de8
@@ -1428,22 +1418,18 @@ begin
 	global log_large = nothing
 	global vol_large = Inf
 
-	try
-		Δt_large = abs(time() - large_timestamp)
-		global pass_large, log_large, vol_large =
-			check_volume(sys_large, ψ_large, ℛ_large;
-				t=t_large, reran=rerun_large,
-				save=(Δt_large ≤ 1 && rerun_large),
-				ℛmax=ℛmax_large,
-				cmap=cmap,
-				τs=τs_large,
-				issound=issound_large,
-				outsiders=outsiders_large,
-				project=ThisProject)
-		log_large
-	catch err
-		@warn err
-	end
+	Δt_large = abs(time() - large_timestamp)
+	global pass_large, log_large, vol_large =
+		check_volume(sys_large, ψ_large, ℛ_large;
+			t=t_large, reran=rerun_large,
+			save=(Δt_large ≤ 1 && rerun_large),
+			ℛmax=ℛmax_large,
+			cmap=cmap,
+			τs=τs_large,
+			issound=issound_large,
+			outsiders=outsiders_large,
+			project=ThisProject)
+	log_large
 end
 
 # ╔═╡ 7c473630-6555-4ada-85f3-0d40aefe6370
@@ -4072,7 +4058,7 @@ version = "1.4.1+2"
 # ╟─bac5c489-553c-436f-b332-8a8e97126a51
 # ╟─1da9695f-b7fc-46eb-9ef9-12160246018d
 # ╟─0606d827-9c70-4a79-afa7-14fb6b806546
-# ╟─f180bd3a-12da-4942-b2af-2df2f5887201
+# ╠═f180bd3a-12da-4942-b2af-2df2f5887201
 # ╠═cb7b9b9f-59da-4851-ab13-c451c26117df
 # ╟─759534ca-b40b-4824-b7ec-3a5c06cbd23e
 # ╟─97dbe1e4-8045-4213-866f-6921c733fbeb
