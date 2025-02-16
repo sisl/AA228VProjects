@@ -12,6 +12,15 @@ _Estimating the volume of a reachable set._
     </picture>
 </p>
 
+# ❗️ Important ❗️
+**Please run this (one time) before starting Project 3.**
+
+Open a terminal and run:
+```
+git pull
+julia -e "using Pkg; Pkg.Registry.update()"
+```
+
 # Steps
 1. Open Pluto:
     - Run `julia` in a terminal.
