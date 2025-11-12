@@ -41,6 +41,11 @@ end
 # ╔═╡ 8f08e006-2d70-4173-a02e-267e8486f5c8
 using StanfordAA228V
 
+# ╔═╡ 6afcd4d2-efbe-4157-b9fc-d9ae296caa11
+begin
+    nothing  # CI placeholder
+end
+
 # ╔═╡ f53306f6-1072-40ae-bf65-1927e5eae088
 md"""
 # Project 0: Falsification introduction
@@ -2427,6 +2432,7 @@ version = "1.9.2+0"
 
 # ╔═╡ Cell order:
 # ╟─28504aea-ee04-4b70-a067-a450d8d6374f
+# ╟─6afcd4d2-efbe-4157-b9fc-d9ae296caa11
 # ╠═8f08e006-2d70-4173-a02e-267e8486f5c8
 # ╟─f53306f6-1072-40ae-bf65-1927e5eae088
 # ╟─2eec992f-0581-4b7b-a14f-ad119c230ae2

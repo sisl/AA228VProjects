@@ -20,6 +20,11 @@ end
 # ╠═╡ show_logs = false
 using StanfordAA228V
 
+# ╔═╡ 268f31d2-e485-43e1-a925-48928bb3e360
+begin
+    nothing  # CI placeholder
+end
+
 # ╔═╡ 173388ab-207a-42a6-b364-b2c1cb335f6b
 # ╠═╡ show_logs = false
 begin
@@ -4132,6 +4137,7 @@ version = "1.9.2+0"
 
 # ╔═╡ Cell order:
 # ╟─6b17139e-6caf-4f07-a607-e403bf1ad794
+# ╟─268f31d2-e485-43e1-a925-48928bb3e360
 # ╠═14964632-98d8-4a2f-b2f6-e3f28b558803
 # ╟─117d0059-ce1a-497e-8667-a0c2ef20c632
 # ╟─60f72d30-ab80-11ef-3c20-270dbcdf0cc4

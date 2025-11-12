@@ -44,6 +44,11 @@ begin
 	md"> _Additional package management._"
 end
 
+# ╔═╡ 75914983-18b1-45fc-81ec-595b2b34c594
+begin
+    nothing  # CI placeholder
+end
+
 # ╔═╡ 117d0059-ce1a-497e-8667-a0c2ef20c632
 md"""
 # Project 1: Finding the most-likely failure
@@ -3700,6 +3705,7 @@ version = "1.9.2+0"
 
 # ╔═╡ Cell order:
 # ╟─6b17139e-6caf-4f07-a607-e403bf1ad794
+# ╟─75914983-18b1-45fc-81ec-595b2b34c594
 # ╠═14964632-98d8-4a2f-b2f6-e3f28b558803
 # ╟─117d0059-ce1a-497e-8667-a0c2ef20c632
 # ╟─60f72d30-ab80-11ef-3c20-270dbcdf0cc4
