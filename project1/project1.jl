@@ -87,7 +87,7 @@ You can create as many new cells anywhere as you like. Click the `+` icon on the
 	md"""
 After editing a cell, you can run it several ways:
 1. To run the current cell: `<SHIFT+ENTER>`
-1. To run the current cell and create a new one below: `<CTRL+S>` or `<CMD+S>`
+1. To run the current cell and create a new one below: `<CTRL+ENTER>` or `<CMD+ENTER>`
 1. To run all cells with unsaved changes: `<CTRL+S>` or `<CMD+S>`
 	""",
 	html"<h2hide>Multiple lines of code in a cell</h2hide>",
