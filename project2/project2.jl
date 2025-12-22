@@ -890,7 +890,7 @@ end
 # ╔═╡ 307afd9c-6dac-4a6d-89d7-4d8cabfe3fe5
 Markdown.MD(
 	md"""
-$(@bind rerun_small LargeCheckBox(text="⟵ Click to re-run the <code>SmallSystem</code> evaluation.", default=parse(Bool, get(ENV, "AA228V_RUN_EVALS", "false"))))""",
+$(@bind rerun_small LargeCheckBox(text="⟵ Click to re-run the <code>SmallSystem</code> evaluation.", default=parse(Bool, get(ENV, "AA228V_CI_RUN_EVALS", "false"))))""",
 	Markdown.parse("""
 	↑ This will re-run **`estimate_probability(::SmallSystem, ψ)`** and re-save **`$(get_filename(sys_small, ThisProject))`**
 
@@ -916,7 +916,7 @@ end
 # ╔═╡ 38f26afd-ffa5-48d6-90cc-e3ec189c2bf1
 Markdown.MD(
 	md"""
-$(@bind rerun_medium LargeCheckBox(text="⟵ Click to re-run the <code>MediumSystem</code> evaluation.", default=parse(Bool, get(ENV, "AA228V_RUN_EVALS", "false"))))""",
+$(@bind rerun_medium LargeCheckBox(text="⟵ Click to re-run the <code>MediumSystem</code> evaluation.", default=parse(Bool, get(ENV, "AA228V_CI_RUN_EVALS", "false"))))""",
 	Markdown.parse("""
 	↑ This will re-run **`estimate_probability(::MediumSystem, ψ)`** and re-save **`$(get_filename(sys_medium, ThisProject))`**
 
@@ -1034,7 +1034,7 @@ We'll automatically test your `estimate_probability(::LargeSystem, ψ)` function
 # ╔═╡ 7fe1c3d7-469c-47d9-9d46-e5b8b263edb9
 Markdown.MD(
 	md"""
-$(@bind rerun_large LargeCheckBox(text="⟵ Click to re-run the <code>LargeSystem</code> evaluation.", default=parse(Bool, get(ENV, "AA228V_RUN_EVALS", "false"))))""",
+$(@bind rerun_large LargeCheckBox(text="⟵ Click to re-run the <code>LargeSystem</code> evaluation.", default=parse(Bool, get(ENV, "AA228V_CI_RUN_EVALS", "false"))))""",
 	Markdown.parse("""
 	↑ This will re-run **`estimate_probability(::LargeSystem, ψ)`** and re-save **`$(get_filename(sys_large, ThisProject))`**
 
