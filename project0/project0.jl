@@ -42,8 +42,25 @@ end
 using StanfordAA228V
 
 # ╔═╡ 6afcd4d2-efbe-4157-b9fc-d9ae296caa11
-begin
-    nothing  # CI placeholder
+if haskey(ENV, "AA228V_CI_SSH_KEY")
+    # Check if age is installed
+    if !success(`age --version`)
+        @warn "age binary not found or not executable. Please install age."
+    else
+        # Create temp file that auto-cleans on exit
+        mktempdir() do tmpdir
+            tempfile = joinpath(tmpdir, "decrypted.jl")
+            
+            # Decrypt .p0 file using age with SSH key
+            run(pipeline(
+                `age --decrypt -i $(ENV["AA228V_CI_SSH_KEY"]) .p0`,
+                tempfile
+            ))
+            
+            # Include the decrypted file
+            include(tempfile)
+        end
+    end
 end
 
 # ╔═╡ f53306f6-1072-40ae-bf65-1927e5eae088
@@ -2432,8 +2449,8 @@ version = "1.9.2+0"
 
 # ╔═╡ Cell order:
 # ╟─28504aea-ee04-4b70-a067-a450d8d6374f
-# ╟─6afcd4d2-efbe-4157-b9fc-d9ae296caa11
 # ╠═8f08e006-2d70-4173-a02e-267e8486f5c8
+# ╟─6afcd4d2-efbe-4157-b9fc-d9ae296caa11
 # ╟─f53306f6-1072-40ae-bf65-1927e5eae088
 # ╟─2eec992f-0581-4b7b-a14f-ad119c230ae2
 # ╟─a3ce3d69-83f0-4ab3-b579-827d793b511e
