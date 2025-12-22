@@ -1,2 +1,2 @@
 *.html linguist-vendored
-.p0 diff=age
+/project*/.p* diff=age
