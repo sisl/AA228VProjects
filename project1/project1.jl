@@ -1729,7 +1729,7 @@ Plots = "~1.41.1"
 PlutoUI = "~0.7.73"
 ProgressLogging = "~0.1.5"
 ReverseDiff = "~1.16.1"
-StanfordAA228V = "~0.1.27"
+StanfordAA228V = "~0.1.28"
 """
 
 # ╔═╡ 00000000-0000-0000-0000-000000000002

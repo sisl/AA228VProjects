@@ -467,7 +467,7 @@ Distributions = "~0.25.122"
 MarkdownLiteral = "~0.1.2"
 Plots = "~1.41.1"
 PlutoUI = "~0.7.73"
-StanfordAA228V = "~0.1.27"
+StanfordAA228V = "~0.1.28"
 """
 
 # ╔═╡ 00000000-0000-0000-0000-000000000002
@@ -1981,9 +1981,8 @@ version = "1.0.4"
 
 [[deps.StanfordAA228V]]
 deps = ["AbstractPlutoDingetjes", "BSON", "Base64", "Distances", "Distributions", "Downloads", "ForwardDiff", "GridInterpolations", "Interpolations", "LazySets", "LinearAlgebra", "Markdown", "Optim", "Parameters", "Pkg", "Plots", "Pluto", "PlutoUI", "ProgressLogging", "Random", "SignalTemporalLogic", "Statistics", "TOML"]
-git-tree-sha1 = "86ea9251637f86e14eaf1be169462aa710d4817f"
 uuid = "6f6e590e-f8c2-4a21-9268-94576b9fb3b1"
-version = "0.1.27"
+version = "0.1.28"
 
 [[deps.StaticArrays]]
 deps = ["LinearAlgebra", "PrecompileTools", "Random", "StaticArraysCore"]
