@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.20.20
+# v0.20.21
 
 using Markdown
 using InteractiveUtils
@@ -1736,9 +1736,9 @@ StanfordAA228V = "~0.1.28"
 PLUTO_MANIFEST_TOML_CONTENTS = """
 # This file is machine-generated - editing it directly is not advised
 
-julia_version = "1.12.1"
+julia_version = "1.12.2"
 manifest_format = "2.0"
-project_hash = "01533d1e8560e9180cac4aff34364b0ed83a29dd"
+project_hash = "8b99adcc986e58cce5310e964d2b31a7dcdcdde8"
 
 [[deps.ADTypes]]
 git-tree-sha1 = "27cecae79e5cc9935255f90c53bb831cc3c870d7"
@@ -2158,7 +2158,7 @@ version = "0.9.5"
 [[deps.Downloads]]
 deps = ["ArgTools", "FileWatching", "LibCURL", "NetworkOptions"]
 uuid = "f43a241f-c20a-4ad4-852c-f6b1247861c6"
-version = "1.6.0"
+version = "1.7.0"
 
 [[deps.EnumX]]
 git-tree-sha1 = "bddad79635af6aec424f53ed8aad5d7555dc6f00"
@@ -2645,7 +2645,7 @@ version = "0.6.4"
 [[deps.LibCURL_jll]]
 deps = ["Artifacts", "LibSSH2_jll", "Libdl", "OpenSSL_jll", "Zlib_jll", "nghttp2_jll"]
 uuid = "deac9b47-8bc7-5906-a0fe-35ac56dc84c0"
-version = "8.11.1+1"
+version = "8.15.0+0"
 
 [[deps.LibGit2]]
 deps = ["LibGit2_jll", "NetworkOptions", "Printf", "SHA"]
@@ -2865,7 +2865,7 @@ version = "1.6.0"
 [[deps.OpenSSL_jll]]
 deps = ["Artifacts", "Libdl"]
 uuid = "458c3c95-2e84-50aa-8efc-19380b2a3a95"
-version = "3.5.1+0"
+version = "3.5.4+0"
 
 [[deps.OpenSpecFun_jll]]
 deps = ["Artifacts", "CompilerSupportLibraries_jll", "JLLWrappers", "Libdl"]
@@ -3254,9 +3254,9 @@ version = "1.0.4"
 
 [[deps.StanfordAA228V]]
 deps = ["AbstractPlutoDingetjes", "BSON", "Base64", "Distances", "Distributions", "Downloads", "ForwardDiff", "GridInterpolations", "Interpolations", "LazySets", "LinearAlgebra", "Markdown", "Optim", "Parameters", "Pkg", "Plots", "Pluto", "PlutoUI", "ProgressLogging", "Random", "SignalTemporalLogic", "Statistics", "TOML"]
-git-tree-sha1 = "86ea9251637f86e14eaf1be169462aa710d4817f"
+git-tree-sha1 = "6fbdc3d82618f9392a8e1291c206d4b311310380"
 uuid = "6f6e590e-f8c2-4a21-9268-94576b9fb3b1"
-version = "0.1.27"
+version = "0.1.28"
 
 [[deps.StaticArrays]]
 deps = ["LinearAlgebra", "PrecompileTools", "Random", "StaticArraysCore"]
@@ -3697,9 +3697,9 @@ uuid = "8e850ede-7688-5339-a07c-302acd2aaf8d"
 version = "1.64.0+1"
 
 [[deps.p7zip_jll]]
-deps = ["Artifacts", "Libdl"]
+deps = ["Artifacts", "CompilerSupportLibraries_jll", "Libdl"]
 uuid = "3f19e933-33d8-53b3-aaab-bd5110c3b7a0"
-version = "17.5.0+2"
+version = "17.7.0+0"
 
 [[deps.x264_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl"]
