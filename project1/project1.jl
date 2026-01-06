@@ -894,22 +894,26 @@ alg = DirectFalsification(1, $(max_steps(sys_small)))
 """)])
 
 # ╔═╡ c2ae204e-dbcc-453a-81f5-791ba4be39db
-@tracked function most_likely_failure_baseline(sys, ψ; n=max_steps(sys), full=false)
+@tracked function most_likely_failure_baseline(sys, ψ; n=max_steps(sys))
 	d = get_depth(sys)
 	m = n ÷ d                                          # Get num rollouts, \div for ÷
 	pτ = NominalTrajectoryDistribution(sys, d)         # Trajectory distribution
 	τs = [rollout(sys, pτ; d) for _ in 1:m]            # Rollout with pτ, m*d steps
 	τs_failures = filter(τ->isfailure(ψ, τ), τs)       # Filter to get failure trajs.
 	τ_most_likely = argmax(τ->logpdf(pτ, τ), τs_failures) # Most-likely failure traj
-	return full ? (τ_most_likely, τs) : τ_most_likely     # Return MLF, or all trajs.
+	return τ_most_likely     # Return MLF, or all trajs.
 end
 
 # ╔═╡ 254956d0-8f58-4e2b-b8a9-5dd10dd074a2
 function run_baseline(sys::System, ψ; n, seed=4)
 	Random.seed!(seed)
-	τ, τs = most_likely_failure_baseline(sys, ψ; n, full=true)
+	τ = most_likely_failure_baseline(sys, ψ; n)
+
 	d = get_depth(sys)
 	p = NominalTrajectoryDistribution(sys, d)
+	m = n ÷ d                                          # Get num rollouts, \div for ÷
+	τs = [rollout(sys, p; d) for _ in 1:m]             # Rollout with pτ, m*d steps
+
 	ℓ = logpdf(p, τ)
 	n = stepcount()
 	return (τ=τ, τs=τs, ℓ=ℓ, n=n) # return these variables as a NamedTuple
