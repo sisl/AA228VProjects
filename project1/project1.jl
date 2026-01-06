@@ -381,6 +381,54 @@ This is common in Julia where you need to use the funciton name qualified with t
 # ╔═╡ a46702a3-4a8c-4749-bd00-52f8cce5b8ee
 html_half_space()
 
+# ╔═╡ 398e1f46-79ae-4ece-bca8-a4b9c6d21b79
+html_expand("Expand for <code>SmallSystem</code> code.", md"""
+```julia
+## Agent
+struct NoAgent <: Agent end
+(c::NoAgent)(s, a=missing) = nothing
+Distributions.pdf(c::NoAgent, s, x) = 1.0
+
+## Environment
+struct SimpleGaussian <: Environment end
+(env::SimpleGaussian)(s, a, xs=missing) = s
+Ps(env::SimpleGaussian) = Normal(0, 1) # Initial state distribution
+
+## Sensor
+struct IdealSensor <: Sensor end
+
+(sensor::IdealSensor)(s) = s
+(sensor::IdealSensor)(s, x) = sensor(s)
+
+Distributions.pdf(sensor::IdealSensor, s, xₛ) = 1.0
+```
+""")
+
+# ╔═╡ 6675c486-bf72-46ed-a51b-d275cf9fbb34
+html_expand("Stuck? <span style='color: crimson'>Expand for hints</span>.", hint(md"""If you're trying fuzzing, the `disturbance_distribution` for the `SmallSystem` does not apply:
+
+```julia
+D = DisturbanceDistribution((o)->Deterministic(),
+							(s,a)->Deterministic(),
+							(s)->Deterministic())
+```
+where
+```julia
+struct DisturbanceDistribution
+    Da # agent disturbance distribution
+    Ds # environment disturbance distribution
+    Do # sensor disturbance distribution
+end
+```
+but the `initial_state_distribution` should be changed:
+```julia
+function StanfordAA228V.initial_state_distribution(p::YourFuzzingDistribution)
+    return Normal(SOME_MEAN, SOME_STD)
+end
+```
+See _Example 4.3_ in the textbook for how this is applied to the pendulum.
+"""))
+
 # ╔═╡ 17fa8557-9656-4347-9d44-213fd3b635a6
 Markdown.parse("""
 ## Small system
@@ -510,6 +558,75 @@ _You can also click the slider then use the arrow keys for finer control._
 # ╔═╡ fda151a1-5069-44a8-baa1-d7903bc89797
 html_space()
 
+# ╔═╡ 60776523-c8f3-48d5-8e87-d73b6c767837
+html_expand("Expand for <code>MediumSystem</code> code.", md"""
+```julia
+## Agent
+struct ProportionalController <: Agent
+    k
+end
+
+(c::ProportionalController)(s, a=missing) = c.k' * s
+
+## Environment
+@with_kw struct InvertedPendulum <: Environment
+    m::Float64 = 1.0
+    l::Float64 = 1.0
+    g::Float64 = 10.0
+    dt::Float64 = 0.05
+    ω_max::Float64 = 8.0
+    a_max::Float64 = 2.0
+end
+
+function (env::InvertedPendulum)(s, a, xs=missing)
+    θ, ω = s[1], s[2]
+    dt, g, m, l = env.dt, env.g, env.m, env.l
+
+    a = clamp(a, -env.a_max, env.a_max)
+
+    ω = ω + (3g / (2 * l) * sin(θ) + 3 * a / (m * l^2)) * dt
+    θ = θ + ω * dt
+    ω = clamp(ω, -env.ω_max, env.ω_max)
+
+    return [θ, ω]
+end
+
+# Initial state distribution
+Ps(env::InvertedPendulum) = MvNormal(zeros(2), diagm([(π/32)^2, 0.5^2]))
+
+## Sensor
+struct AdditiveNoiseSensor <: Sensor
+    Do
+end
+
+(sensor::AdditiveNoiseSensor)(s) = sensor(s, rand(Do(sensor, s)))
+(sensor::AdditiveNoiseSensor)(s, x) = s + x
+
+Do(sensor::AdditiveNoiseSensor, s) = sensor.Do
+
+Os(sensor::AdditiveNoiseSensor) = I
+```
+""")
+
+# ╔═╡ d1ba7a5b-24f3-4c4f-bb15-c1a3584b35be
+html_expand("Stuck? <span style='color: crimson'>Expand for hints</span>.", hint(md"""If you're trying fuzzing, the `disturbance_distribution` for the `MediumSystem` applies disturbances to the _sensor_:
+
+```julia
+D = DisturbanceDistribution((o)->Deterministic(),
+							(s,a)->Deterministic(),
+							(s)->MvNormal(SOME_MEAN_VECTOR, SOME_COVARIANCE))
+```
+where
+```julia
+struct DisturbanceDistribution
+    Da # agent disturbance distribution
+    Ds # environment disturbance distribution
+    Do # sensor disturbance distribution
+end
+```
+See _Example 4.3_ in the textbook.
+"""))
+
 # ╔═╡ d18c2105-c2af-4dda-8388-617aa816a567
 Markdown.parse("""
 ## Medium system
@@ -617,6 +734,90 @@ We'll automatically test your `most_likely_failure(::MediumSystem, ψ)` function
 
 # ╔═╡ 60ab8107-db65-4fb6-aeea-d4978aed77bd
 html_space()
+
+# ╔═╡ 7f0ac01b-451a-4b99-91ea-1fda2831efbb
+html_expand("Expand for <code>LargeSystem</code> code.", md"""
+```julia
+## Agent
+struct InterpAgent <: Agent
+    grid::RectangleGrid
+    Q
+end
+
+(c::InterpAgent)(s) = argmax([interpolate(c.grid, q, s) for q in c.Q])
+(c::InterpAgent)(s, x) = c(s)
+
+Distributions.pdf(c::InterpAgent, o, xₐ) = 1.0
+
+## Environment
+@with_kw struct CollisionAvoidance <: Environment
+    ddh_max::Float64 = 1.0 # [m/s²]
+    𝒜::Vector{Float64} = [-5.0, 0.0, 5.0] # [m/s]
+    Ds::Sampleable = Normal(0, 1.5)
+end
+
+# NominalTrajectoryDistribution on the environment (D.Ds)
+Ds(env::CollisionAvoidance, s, a) = env.Ds
+
+function (env::CollisionAvoidance)(s, a, x)
+    a = env.𝒜[a]
+
+    h, dh, a_prev, τ = s
+
+    h = h + dh
+
+    if a != 0.0
+        if abs(a - dh) < env.ddh_max
+            dh += a
+        else
+            dh += sign(a - dh) * env.ddh_max
+        end
+    end
+
+    a_prev = a
+    τ = max(τ - 1.0, -1.0)
+
+    return [h, dh + x, a_prev, τ]
+end
+
+(env::CollisionAvoidance)(s, a) = env(s, a, rand(Ds(env, s, a)))
+
+# Initial state distribution
+Ps(env::CollisionAvoidance) = product_distribution(
+	Uniform(-100, 100),                # Initial h
+	Uniform(-10, 10),                  # Initial dh
+	DiscreteNonParametric([0], [1.0]), # Initial a_prev
+	DiscreteNonParametric([40], [1.0]) # Initial τ
+)
+
+## Sensor
+struct IdealSensor <: Sensor end
+
+(sensor::IdealSensor)(s) = s
+(sensor::IdealSensor)(s, x) = sensor(s)
+
+Distributions.pdf(sensor::IdealSensor, s, xₛ) = 1.0
+```
+""")
+
+# ╔═╡ a2883f00-693c-496d-ad4e-787acfee8521
+html_expand("Stuck? <span style='color: crimson'>Expand for hints</span>.", hint(md"""If you're trying fuzzing, the `disturbance_distribution` for the `LargeSystem` applies disturbances to the _environment_:
+
+```julia
+D = DisturbanceDistribution((o)->Deterministic(),
+							(s,a)->Normal(SOME_MEAN, SOME_STD),
+							(s)->Deterministic())
+```
+where
+```julia
+struct DisturbanceDistribution
+    Da # agent disturbance distribution
+    Ds # environment disturbance distribution
+    Do # sensor disturbance distribution
+end
+```
+See _Example 4.3_ in the textbook for how this is applied to the pendulum.
+"""))
 
 # ╔═╡ 7d054465-9f80-4dfb-9b5f-76c3977de7cd
 Markdown.parse("""
@@ -3752,6 +3953,8 @@ version = "1.13.0+0"
 # ╟─a46702a3-4a8c-4749-bd00-52f8cce5b8ee
 # ╟─7e9405c4-1d1d-4cfa-9fab-a3471c8ad119
 # ╟─fd8c851a-3a42-41c5-b0fd-a12085543c9b
+# ╟─398e1f46-79ae-4ece-bca8-a4b9c6d21b79
+# ╟─6675c486-bf72-46ed-a51b-d275cf9fbb34
 # ╟─17fa8557-9656-4347-9d44-213fd3b635a6
 # ╠═22feee3d-4627-4358-9937-3c780b7e8bcb
 # ╠═6f3e24de-094c-49dc-b892-6721b3cc54ed
@@ -3799,6 +4002,8 @@ version = "1.13.0+0"
 # ╟─e29b6ddd-d3da-4122-a561-18bc267e2047
 # ╟─8c78529c-1e00-472c-bb76-d984b37235ab
 # ╟─daada216-11d4-4f8b-807c-d347130a3928
+# ╟─60776523-c8f3-48d5-8e87-d73b6c767837
+# ╟─d1ba7a5b-24f3-4c4f-bb15-c1a3584b35be
 # ╟─d18c2105-c2af-4dda-8388-617aa816a567
 # ╠═77637b5e-e3ce-4ecd-90fc-95611af18002
 # ╠═c4c0328d-8cb3-41d5-9740-0197cbf760c2
@@ -3828,6 +4033,8 @@ version = "1.13.0+0"
 # ╟─e86fb6e9-edcd-459b-b1fb-7338bb54d6c4
 # ╟─aa0c4ffc-d7f0-484e-a1e2-7f6f92a3a53d
 # ╟─e189b31e-7e24-4c32-989f-3e600a44d4bc
+# ╟─7f0ac01b-451a-4b99-91ea-1fda2831efbb
+# ╟─a2883f00-693c-496d-ad4e-787acfee8521
 # ╟─7d054465-9f80-4dfb-9b5f-76c3977de7cd
 # ╠═1ec68a39-8de9-4fd3-be8a-26cf7706d1d6
 # ╟─d23f0299-981c-43b9-88f3-fb6e07927498
