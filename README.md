@@ -34,7 +34,7 @@ You can also follow [this video](https://youtu.be/dhziWVLqGSc).
 - https://git-scm.com/book/en/v2/Getting-Started-Installing-Git
 
 ## 2. Install Julia
-**Required Julia 1.11+**: https://julialang.org/downloads/
+**Required Julia 1.11+**: https://julialang.org/downloads/. We recommend 1.12.
 
 - Windows users:
     ```
@@ -48,7 +48,7 @@ You can also follow [this video](https://youtu.be/dhziWVLqGSc).
 This will give you the `julia` command in your terminal.
 
 > #### Already have Julia???
-> - If you already have `julia` and it's not updated to version 1.11, please run the following in a terminal:
+> - If you already have `julia` and it's not updated to version 1.12, please run the following in a terminal:
 > ```
 > juliaup update
 > ```
