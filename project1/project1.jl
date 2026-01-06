@@ -1912,7 +1912,7 @@ Plots = "~1.41.3"
 PlutoUI = "~0.7.77"
 ProgressLogging = "~0.1.6"
 ReverseDiff = "~1.16.1"
-StanfordAA228V = "~0.1.30"
+StanfordAA228V = "~0.2.0"
 """
 
 # ╔═╡ 00000000-0000-0000-0000-000000000002
@@ -1921,7 +1921,7 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.12.2"
 manifest_format = "2.0"
-project_hash = "76bf6d6dadb02cd77d1f977f2802795ebb2c7929"
+project_hash = "3e0374afaa84ee0c6b4ccd7a5f645f1ecba5885a"
 
 [[deps.ADTypes]]
 git-tree-sha1 = "f7304359109c768cf32dc5fa2d371565bb63b68a"
@@ -3449,9 +3449,9 @@ version = "1.0.4"
 
 [[deps.StanfordAA228V]]
 deps = ["AbstractPlutoDingetjes", "BSON", "Base64", "Distances", "Distributions", "Downloads", "ForwardDiff", "GridInterpolations", "Interpolations", "LazySets", "LinearAlgebra", "Markdown", "Optim", "Parameters", "Pkg", "Plots", "Pluto", "PlutoUI", "ProgressLogging", "Random", "SignalTemporalLogic", "Statistics", "TOML"]
-git-tree-sha1 = "c41f55550afca953aab9f2cf0d5bbe93763d9191"
+git-tree-sha1 = "7addc3a982bdcc1cd39fb2d38aba01630cecb6cb"
 uuid = "6f6e590e-f8c2-4a21-9268-94576b9fb3b1"
-version = "0.1.30"
+version = "0.2.0"
 
 [[deps.StaticArrays]]
 deps = ["LinearAlgebra", "PrecompileTools", "Random", "StaticArraysCore"]
@@ -4080,7 +4080,7 @@ version = "1.13.0+0"
 # ╟─5aef09eb-ddc5-4b99-abf2-568621b871d5
 # ╟─173388ab-207a-42a6-b364-b2c1cb335f6b
 # ╟─38b64ee2-5372-4374-80e8-fbf203021a61
-# ╟─50f1c7a3-9219-40ce-a060-77beb243b7af
+# ╠═50f1c7a3-9219-40ce-a060-77beb243b7af
 # ╟─5563f0da-7552-4879-a38a-ba1748d39d52
 # ╟─98cbe931-d362-4039-97ba-41e0049619a3
 # ╟─247f4c17-bee1-4315-aff9-017407ef9219
