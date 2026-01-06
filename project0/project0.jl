@@ -60,6 +60,8 @@ md"""
 - $(@bind directory_trigger OpenDirectory(@__DIR__))
     - ↑ Click to open directory.""",
 md"""
+Here's the link to the notebook on [Julia and Pluto tips](https://sisl.github.io/AA228VLectureNotebooks/media/html/julia_pluto_session.html).
+
 If you encounter issues, [please ask us on Ed](https://edstem.org/us/courses/69226/discussion).
 """)
 

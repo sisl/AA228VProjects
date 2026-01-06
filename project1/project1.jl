@@ -174,8 +174,8 @@ See the Julia docs for more examples: [https://docs.julialang.org/en/v1/manual/u
 """
 ])
 
-# ╔═╡ a21612a1-1092-4892-9132-629833e7c867
-
+# ╔═╡ 3f164a05-f7c2-47df-8d54-bacc307b1d3d
+highlight(md"Here's the link to the notebook on [Julia and Pluto tips](https://sisl.github.io/AA228VLectureNotebooks/media/html/julia_pluto_session.html).")
 
 # ╔═╡ ec776b30-6a30-4643-a22c-e071a365d50b
 md"""
@@ -3737,7 +3737,7 @@ version = "1.13.0+0"
 # ╟─0456a732-2672-4108-a241-db9ae879a913
 # ╟─6e8ab7c9-fb49-4d89-946d-c7d7588c199a
 # ╟─fe044059-9102-4e7f-9888-d9f03eec69ff
-# ╟─a21612a1-1092-4892-9132-629833e7c867
+# ╟─3f164a05-f7c2-47df-8d54-bacc307b1d3d
 # ╟─ec776b30-6a30-4643-a22c-e071a365d50b
 # ╟─18754cc6-c089-4245-ad10-2848594e49b4
 # ╟─d566993e-587d-4aa3-995b-eb955dec5758
