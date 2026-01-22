@@ -44,6 +44,17 @@ begin
 	md"> _Additional package management._"
 end
 
+# ╔═╡ 9ad80eba-53b1-470a-ab86-33d0731732dd
+CI_MODE = parse(Bool, get(ENV, "AA228V_CI_MODE", "0"))
+
+# ╔═╡ 93416e1d-d624-4d7a-892f-516000639cee
+CI_SOLUTIONS_LOADED = if CI_MODE
+    include("./project1_ci_solutions.jl")
+    true
+else
+    false
+end
+
 # ╔═╡ 117d0059-ce1a-497e-8667-a0c2ef20c632
 md"""
 # Project 1: Finding the most-likely failure
@@ -956,7 +967,7 @@ end
 # ╔═╡ 307afd9c-6dac-4a6d-89d7-4d8cabfe3fe5
 Markdown.MD(
 	md"""
-$(@bind rerun_small LargeCheckBox(text="⟵ Click to re-run the <code>SmallSystem</code> evaluation."))""",
+$(@bind rerun_small LargeCheckBox(text="⟵ Click to re-run the <code>SmallSystem</code> evaluation.", default=CI_MODE))""",
 	Markdown.parse("""
 	↑ This will re-run **`most_likely_failure(::SmallSystem, ψ)`** and re-save **`$(get_filename(sys_small, ThisProject))`**
 
@@ -975,7 +986,7 @@ end
 # ╔═╡ 38f26afd-ffa5-48d6-90cc-e3ec189c2bf1
 Markdown.MD(
 	md"""
-$(@bind rerun_medium LargeCheckBox(text="⟵ Click to re-run the <code>MediumSystem</code> evaluation."))""",
+$(@bind rerun_medium LargeCheckBox(text="⟵ Click to re-run the <code>MediumSystem</code> evaluation.", default=CI_MODE))""",
 	Markdown.parse("""
 	↑ This will re-run **`most_likely_failure(::MediumSystem, ψ)`** and re-save **`$(get_filename(sys_medium, ThisProject))`**
 
@@ -1081,7 +1092,7 @@ We'll automatically test your `most_likely_failure(::LargeSystem, ψ)` function 
 # ╔═╡ 7fe1c3d7-469c-47d9-9d46-e5b8b263edb9
 Markdown.MD(
 	md"""
-$(@bind rerun_large LargeCheckBox(text="⟵ Click to re-run the <code>LargeSystem</code> evaluation."))""",
+$(@bind rerun_large LargeCheckBox(text="⟵ Click to re-run the <code>LargeSystem</code> evaluation.", default=CI_MODE))""",
 	Markdown.parse("""
 	↑ This will re-run **`most_likely_failure(::LargeSystem, ψ)`** and re-save **`$(get_filename(sys_large, ThisProject))`**
 
@@ -1641,6 +1652,7 @@ end
 
 # ╔═╡ d0a3770a-2c48-42db-9a71-6b7f695f22d8
 begin
+    CI_SOLUTIONS_LOADED  # eval after loading CI
 	τs_small, log_small, pass_small = rerun_multiple(sys_small;
 		                                             f=most_likely_failure_small,
 												     run=rerun_small, 
@@ -1666,6 +1678,7 @@ end
 
 # ╔═╡ b417e370-efae-40e8-9247-5daf14fcc749
 begin
+    CI_SOLUTIONS_LOADED  # eval after loading CI
 	τ_medium, _, log_medium, pass_medium = rerun(sys_medium, ψ_medium;
 											  f=most_likely_failure_medium,
 											  run=rerun_medium, project=ThisProject)
@@ -1687,6 +1700,7 @@ end
 
 # ╔═╡ f6eb6d1a-a9a0-4234-8699-269a92f666c0
 begin
+    CI_SOLUTIONS_LOADED  # eval after loading CI
 	τ_large, _, log_large, pass_large = rerun(sys_large, ψ_large;
 										   f=most_likely_failure_large,
 										   run=rerun_large, project=ThisProject)
@@ -4090,5 +4104,7 @@ version = "1.13.0+0"
 # ╟─97042a5e-9691-493f-802e-2262f2da4627
 # ╟─9865ed62-b4fd-4e49-9259-3e5997c589f3
 # ╟─ef084fea-bf4d-48d9-9c84-8cc1dd98f2d7
+# ╟─9ad80eba-53b1-470a-ab86-33d0731732dd
+# ╟─93416e1d-d624-4d7a-892f-516000639cee
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
