@@ -44,17 +44,6 @@ begin
 	md"> _Additional package management._"
 end
 
-# ╔═╡ 9ad80eba-53b1-470a-ab86-33d0731732dd
-CI_MODE = parse(Bool, get(ENV, "AA228V_CI_MODE", "0"))
-
-# ╔═╡ 93416e1d-d624-4d7a-892f-516000639cee
-CI_SOLUTIONS_LOADED = if CI_MODE
-    include("./project1_ci_solutions.jl")
-    true
-else
-    false
-end
-
 # ╔═╡ 117d0059-ce1a-497e-8667-a0c2ef20c632
 md"""
 # Project 1: Finding the most-likely failure
@@ -964,17 +953,6 @@ baseline_details(sys_small; n_baseline=n_baseline_small, descr="simple Gaussian"
 	# TODO: WRITE YOUR CODE HERE
 end
 
-# ╔═╡ 307afd9c-6dac-4a6d-89d7-4d8cabfe3fe5
-Markdown.MD(
-	md"""
-$(@bind rerun_small LargeCheckBox(text="⟵ Click to re-run the <code>SmallSystem</code> evaluation.", default=CI_MODE))""",
-	Markdown.parse("""
-	↑ This will re-run **`most_likely_failure(::SmallSystem, ψ)`** and re-save **`$(get_filename(sys_small, ThisProject))`**
-
-	_Uncheck this to load results from the file._
-	""")
-)
-
 # ╔═╡ 772cf17e-0fdb-470e-9f12-9480af811edd
 baseline_details(sys_medium; n_baseline=n_baseline_medium, descr="pendulum", max_steps)
 
@@ -982,17 +960,6 @@ baseline_details(sys_medium; n_baseline=n_baseline_medium, descr="pendulum", max
 @medium function most_likely_failure(sys::MediumSystem, ψ; n=max_steps(sys))
 	# TODO: WRITE YOUR CODE HERE
 end
-
-# ╔═╡ 38f26afd-ffa5-48d6-90cc-e3ec189c2bf1
-Markdown.MD(
-	md"""
-$(@bind rerun_medium LargeCheckBox(text="⟵ Click to re-run the <code>MediumSystem</code> evaluation.", default=CI_MODE))""",
-	Markdown.parse("""
-	↑ This will re-run **`most_likely_failure(::MediumSystem, ψ)`** and re-save **`$(get_filename(sys_medium, ThisProject))`**
-
-	_Uncheck this to load results from the file._
-	""")
-)
 
 # ╔═╡ be8c37e8-45db-4198-b0b9-d287e73fb818
 try
@@ -1088,17 +1055,6 @@ md"""
 # 📊 Large Test
 We'll automatically test your `most_likely_failure(::LargeSystem, ψ)` function below.
 """
-
-# ╔═╡ 7fe1c3d7-469c-47d9-9d46-e5b8b263edb9
-Markdown.MD(
-	md"""
-$(@bind rerun_large LargeCheckBox(text="⟵ Click to re-run the <code>LargeSystem</code> evaluation.", default=CI_MODE))""",
-	Markdown.parse("""
-	↑ This will re-run **`most_likely_failure(::LargeSystem, ψ)`** and re-save **`$(get_filename(sys_large, ThisProject))`**
-
-	_Uncheck this to load results from the file._
-	""")
-)
 
 # ╔═╡ 74aeca7b-0658-427f-8c02-d093a0d725ee
 html_half_space()
@@ -1650,6 +1606,116 @@ else
 	almost(md"*Slider plot will show when issues are fixed with `most_likely_failure` above*")
 end
 
+# ╔═╡ 5563f0da-7552-4879-a38a-ba1748d39d52
+begin
+	pendulum_gif_name = dark_mode ? "pendulum-dark.gif" : "pendulum.gif"
+
+	if false
+		pendulum_anim = @animate for t in 1:get_depth(sys_medium)
+			θ_medium_failure = rad2deg(baseline_medium_results.τ[t].s[1])
+			θ_medium_success = rad2deg(baseline_medium_results.τs[2][t].s[1])
+			plot(
+				plot_pendulum(θ_medium_failure; title="Failure"),
+				plot_pendulum(θ_medium_success; title="Success"),
+				layout=(1,2),
+				size=(700,300),
+				dpi=400,
+			)
+		end
+
+		gif(pendulum_anim, joinpath(@__DIR__, "..", "media", pendulum_gif_name); fps=15, show_msg=false)
+	end
+
+	md"> _Inverted pendulum animated GIF._"
+end
+
+# ╔═╡ 4ea18122-b681-4de1-89e3-5fb7ce2f7a0b
+try LocalResource(joinpath(@__DIR__, "..", "media", pendulum_gif_name)) catch end
+
+# ╔═╡ 98cbe931-d362-4039-97ba-41e0049619a3
+begin
+	cas_gif_name = dark_mode ? "cas-dark.gif" : "cas.gif"
+	cas_fps = 15
+	cas_repeat = cas_fps # Repeat last frame x times
+
+	if false
+		cas_anim_T = 1:get_depth(sys_large)
+		cas_anim_T = vcat(cas_anim_T, fill(cas_anim_T[end], cas_repeat))
+		cas_anim = @animate for t in cas_anim_T
+			plot(
+				plot(sys_large, ψ_large, baseline_large_results.τ; t=t, title="CAS: Failure"),
+				plot(sys_large, ψ_large, baseline_large_results.τs[1234]; t=t, title="CAS: Success"),
+				layout=(1,2), dpi=300)
+		end
+
+		gif(cas_anim, joinpath(@__DIR__, "..", "media", cas_gif_name); fps=cas_fps, show_msg=false)
+
+		function n_minimum_robustness(τs, ψ, n)
+			ρs = [robustness([step.s for step in τ], ψ.formula) for τ in τs]
+			perm = sortperm(ρs)
+			return reverse(perm[1:n])
+		end
+	end
+
+	md"> _Collision avoidance animated GIF._"
+end
+
+# ╔═╡ e189b31e-7e24-4c32-989f-3e600a44d4bc
+try LocalResource(joinpath(@__DIR__, "..", "media", cas_gif_name)) catch end
+
+# ╔═╡ 97042a5e-9691-493f-802e-2262f2da4627
+Markdown.MD(notebook_style(), md"> _Notebook styling._")
+
+# ╔═╡ 9865ed62-b4fd-4e49-9259-3e5997c589f3
+Markdown.MD(button_style(rerun_rand_small), md"> _Button styling._")
+
+# ╔═╡ ef084fea-bf4d-48d9-9c84-8cc1dd98f2d7
+Markdown.MD(TableOfContents(), md"> _Table of contents._")
+
+# ╔═╡ 9ad80eba-53b1-470a-ab86-33d0731732dd
+CI_MODE = parse(Bool, get(ENV, "AA228V_CI_MODE", "0"))
+
+# ╔═╡ 307afd9c-6dac-4a6d-89d7-4d8cabfe3fe5
+Markdown.MD(
+	md"""
+$(@bind rerun_small LargeCheckBox(text="⟵ Click to re-run the <code>SmallSystem</code> evaluation.", default=CI_MODE))""",
+	Markdown.parse("""
+	↑ This will re-run **`most_likely_failure(::SmallSystem, ψ)`** and re-save **`$(get_filename(sys_small, ThisProject))`**
+
+	_Uncheck this to load results from the file._
+	""")
+)
+
+# ╔═╡ 38f26afd-ffa5-48d6-90cc-e3ec189c2bf1
+Markdown.MD(
+	md"""
+$(@bind rerun_medium LargeCheckBox(text="⟵ Click to re-run the <code>MediumSystem</code> evaluation.", default=CI_MODE))""",
+	Markdown.parse("""
+	↑ This will re-run **`most_likely_failure(::MediumSystem, ψ)`** and re-save **`$(get_filename(sys_medium, ThisProject))`**
+
+	_Uncheck this to load results from the file._
+	""")
+)
+
+# ╔═╡ 7fe1c3d7-469c-47d9-9d46-e5b8b263edb9
+Markdown.MD(
+	md"""
+$(@bind rerun_large LargeCheckBox(text="⟵ Click to re-run the <code>LargeSystem</code> evaluation.", default=CI_MODE))""",
+	Markdown.parse("""
+	↑ This will re-run **`most_likely_failure(::LargeSystem, ψ)`** and re-save **`$(get_filename(sys_large, ThisProject))`**
+
+	_Uncheck this to load results from the file._
+	""")
+)
+
+# ╔═╡ 93416e1d-d624-4d7a-892f-516000639cee
+CI_SOLUTIONS_LOADED = if CI_MODE
+    include("./project1_ci_solutions.jl")
+    true
+else
+    false
+end
+
 # ╔═╡ d0a3770a-2c48-42db-9a71-6b7f695f22d8
 begin
     CI_SOLUTIONS_LOADED  # eval after loading CI
@@ -1829,72 +1895,6 @@ Your leaderboard entry on Gradescope should look something like this:
 _Note, if any of the scores are \$-\\infty\$, then they will show up as \$$(expnum(negative_infinity))\$ (a Gradescope quirk)._
 """)
 end
-
-# ╔═╡ 5563f0da-7552-4879-a38a-ba1748d39d52
-begin
-	pendulum_gif_name = dark_mode ? "pendulum-dark.gif" : "pendulum.gif"
-
-	if false
-		pendulum_anim = @animate for t in 1:get_depth(sys_medium)
-			θ_medium_failure = rad2deg(baseline_medium_results.τ[t].s[1])
-			θ_medium_success = rad2deg(baseline_medium_results.τs[2][t].s[1])
-			plot(
-				plot_pendulum(θ_medium_failure; title="Failure"),
-				plot_pendulum(θ_medium_success; title="Success"),
-				layout=(1,2),
-				size=(700,300),
-				dpi=400,
-			)
-		end
-
-		gif(pendulum_anim, joinpath(@__DIR__, "..", "media", pendulum_gif_name); fps=15, show_msg=false)
-	end
-
-	md"> _Inverted pendulum animated GIF._"
-end
-
-# ╔═╡ 4ea18122-b681-4de1-89e3-5fb7ce2f7a0b
-try LocalResource(joinpath(@__DIR__, "..", "media", pendulum_gif_name)) catch end
-
-# ╔═╡ 98cbe931-d362-4039-97ba-41e0049619a3
-begin
-	cas_gif_name = dark_mode ? "cas-dark.gif" : "cas.gif"
-	cas_fps = 15
-	cas_repeat = cas_fps # Repeat last frame x times
-
-	if false
-		cas_anim_T = 1:get_depth(sys_large)
-		cas_anim_T = vcat(cas_anim_T, fill(cas_anim_T[end], cas_repeat))
-		cas_anim = @animate for t in cas_anim_T
-			plot(
-				plot(sys_large, ψ_large, baseline_large_results.τ; t=t, title="CAS: Failure"),
-				plot(sys_large, ψ_large, baseline_large_results.τs[1234]; t=t, title="CAS: Success"),
-				layout=(1,2), dpi=300)
-		end
-
-		gif(cas_anim, joinpath(@__DIR__, "..", "media", cas_gif_name); fps=cas_fps, show_msg=false)
-
-		function n_minimum_robustness(τs, ψ, n)
-			ρs = [robustness([step.s for step in τ], ψ.formula) for τ in τs]
-			perm = sortperm(ρs)
-			return reverse(perm[1:n])
-		end
-	end
-
-	md"> _Collision avoidance animated GIF._"
-end
-
-# ╔═╡ e189b31e-7e24-4c32-989f-3e600a44d4bc
-try LocalResource(joinpath(@__DIR__, "..", "media", cas_gif_name)) catch end
-
-# ╔═╡ 97042a5e-9691-493f-802e-2262f2da4627
-Markdown.MD(notebook_style(), md"> _Notebook styling._")
-
-# ╔═╡ 9865ed62-b4fd-4e49-9259-3e5997c589f3
-Markdown.MD(button_style(rerun_rand_small), md"> _Button styling._")
-
-# ╔═╡ ef084fea-bf4d-48d9-9c84-8cc1dd98f2d7
-Markdown.MD(TableOfContents(), md"> _Table of contents._")
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
