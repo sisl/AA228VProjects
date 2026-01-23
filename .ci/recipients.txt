@@ -1,0 +1,5 @@
+# GitHub handles (one per line)
+# Public keys will be fetched from github.com/<handle>.keys
+romeov
+smkatz12
+mossr
