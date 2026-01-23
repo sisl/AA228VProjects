@@ -51,6 +51,17 @@ begin
 	md"> _Additional package management._"
 end
 
+# ╔═╡ 9ad80eba-53b1-470a-ab86-33d0731732dd
+CI_MODE = parse(Bool, get(ENV, "AA228V_CI_MODE", "0"))
+
+# ╔═╡ 93416e1d-d624-4d7a-892f-516000639cee
+CI_SOLUTIONS_LOADED = if CI_MODE
+    include("./project3_ci_solutions.jl")
+    true
+else
+    false
+end
+
 # ╔═╡ 117d0059-ce1a-497e-8667-a0c2ef20c632
 md"""
 # Project 3: Estimate reachable sets
@@ -705,7 +716,7 @@ end
 # ╔═╡ 307afd9c-6dac-4a6d-89d7-4d8cabfe3fe5
 Markdown.MD(
 	md"""
-$(@bind rerun_small LargeCheckBox(text="⟵ Click to re-run the <code>SmallSystem</code> evaluation."))""",
+$(@bind rerun_small LargeCheckBox(text="⟵ Click to re-run the <code>SmallSystem</code> evaluation.", default=CI_MODE))""",
 	Markdown.parse("""
 	↑ This will re-run **`estimate_reachable_sets(::SmallSystem, ψ)`** and re-save **`$(get_filename(sys_small, ThisProject))`**
 
@@ -716,7 +727,7 @@ $(@bind rerun_small LargeCheckBox(text="⟵ Click to re-run the <code>SmallSyste
 # ╔═╡ 38f26afd-ffa5-48d6-90cc-e3ec189c2bf1
 Markdown.MD(
 	md"""
-$(@bind rerun_medium LargeCheckBox(text="⟵ Click to re-run the <code>MediumSystem</code> evaluation."))""",
+$(@bind rerun_medium LargeCheckBox(text="⟵ Click to re-run the <code>MediumSystem</code> evaluation.", default=CI_MODE))""",
 	Markdown.parse("""
 	↑ This will run **`estimate_reachable_sets(::MediumSystem, ψ)`** and save **`$(get_filename(sys_medium, ThisProject))`**
 
@@ -990,7 +1001,7 @@ We'll automatically test your `estimate_reachable_sets(::LargeSystem, ψ)` funct
 # ╔═╡ 7fe1c3d7-469c-47d9-9d46-e5b8b263edb9
 Markdown.MD(
 	md"""
-$(@bind rerun_large LargeCheckBox(text="⟵ Click to re-run the <code>LargeSystem</code> evaluation."))""",
+$(@bind rerun_large LargeCheckBox(text="⟵ Click to re-run the <code>LargeSystem</code> evaluation.", default=CI_MODE))""",
 	Markdown.parse("""
 	↑ This will re-run **`estimate_reachable_sets(::LargeSystem, ψ)`** and re-save **`$(get_filename(sys_large, ThisProject))`**
 
@@ -1335,6 +1346,7 @@ end;
 
 # ╔═╡ d0a3770a-2c48-42db-9a71-6b7f695f22d8
 begin
+    CI_SOLUTIONS_LOADED  # eval after loading CI
 	global pass_small = false
 	global log_small = nothing
 	global vol_small = Inf
@@ -1399,6 +1411,7 @@ end;
 
 # ╔═╡ 7cb60134-6377-4522-8232-6765e2f1f725
 begin
+    CI_SOLUTIONS_LOADED  # eval after loading CI
 	global pass_medium = false
 	global log_medium = nothing
 	global vol_medium = Inf	
@@ -1457,6 +1470,7 @@ end;
 
 # ╔═╡ 28ba58b2-7cae-4d41-8898-307ba09c5fda
 begin
+    CI_SOLUTIONS_LOADED  # eval after loading CI
 	global pass_large = false
 	global log_large = nothing
 	global vol_large = Inf	
@@ -4308,5 +4322,7 @@ version = "1.13.0+0"
 # ╟─97042a5e-9691-493f-802e-2262f2da4627
 # ╟─9865ed62-b4fd-4e49-9259-3e5997c589f3
 # ╟─ef084fea-bf4d-48d9-9c84-8cc1dd98f2d7
+# ╟─9ad80eba-53b1-470a-ab86-33d0731732dd
+# ╟─93416e1d-d624-4d7a-892f-516000639cee
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
